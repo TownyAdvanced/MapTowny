@@ -68,7 +68,7 @@ public class TownyMapCommand implements TabExecutor {
         }
 
         if (args.length != 2) {
-            sendMsg(sender, PLUGIN_PREFIX + ChatColor.RED + "Usage: /" + label + "render [town name]");
+            sendMsg(sender, ChatColor.RED + "Usage: /" + label + "render [town name]");
             return;
         }
 
