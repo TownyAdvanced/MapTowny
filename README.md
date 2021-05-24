@@ -1,10 +1,10 @@
 # Pl3xMap-Towny
 A Towny and Pl3xMap add-on Spigot plugin that enables towns to show up on the Pl3xMap.
 
-**WARNING: This plugin is still in the alpha stage release, so there may be breaking bugs**. If you encounter any bugs, please report them on the issue tracker.
+**WARNING: This plugin is still in the alpha release stage, so there may be breaking bugs**. If you encounter any bugs, please report them on the issue tracker.
 
 ## Dependencies
-This plugin require you to have the following plugins on your server:
+This plugin requires you to have the following plugins on your server:
 - [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap)
 - [Towny](https://github.com/TownyAdvanced/Towny)
 
@@ -15,7 +15,7 @@ Honestly, nothing uber special about this plugin other than it works, but if you
 - Unit-tested Custom Polygon Outline (contour) Algorithm and Negative Space (contour "hole-finding") Algorithm
 
 ## Installing
-You can install the plugin from the [releases page](https://github.com/silverwolfg11/Pl3xMap-Towny/releases). Simply put it into your `plugins` and start your server.
+You can install the plugin from the [releases page](https://github.com/silverwolfg11/Pl3xMap-Towny/releases). Simply put it into your `plugins` directory and start your server.
 
 ## Usage
 The plugin will immediately render all towns on your Pl3xMap when the server starts up.
