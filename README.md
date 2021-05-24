@@ -41,4 +41,4 @@ The HTML files are used to generate the information for each town when you click
 This plugin is a simple maven project, and thus can be built via `mvn clean install` (or `mvn clean package` whatever you prefer).
 
 ## Licensing
-Currently, this plugin is under full copyright, although an OSS license will be added very soon (most likely MIT).
+This plugin is licensed under the MIT license. While highly permissible, I do kindly hope that you PR any bug fixes or useful features to the this repository to help all of the community.
