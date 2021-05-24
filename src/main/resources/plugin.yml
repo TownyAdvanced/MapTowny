@@ -1,0 +1,39 @@
+name: Pl3xMap-Towny
+version: ${project.version}
+main: me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny
+api-version: 1.16
+depend: [ Pl3xMap, Towny ]
+authors: [ Silverwolfg11 ]
+description: A Pl3x Map addon to support Towny
+
+commands:
+  pl3xmaptowny:
+    description: Command for Pl3xMap-Towny
+    aliases: [plexmaptowny, plextowny]
+    permission: pl3xmaptowny.use
+
+permissions:
+  pl3xmaptowny.admin:
+    description: Admin permission for Pl3xMap-Towny
+    default: false
+    children:
+      pl3xmaptowny.use: true
+      pl3xmaptowny.reload: true
+      pl3xmaptowny.render: true
+      pl3xmaptowny.unrender: true
+
+  pl3xmaptowny.use:
+    description: Permission to use the Pl3xMap-Towny command
+    default: op
+
+  pl3xmaptowny.reload:
+    description: Allows access to sub-cmd to reload Pl3xMap-Towny
+    default: op
+
+  pl3xmaptowny.render:
+    description: Allows access to sub-cmd to render a town on the Pl3xMap
+    default: op
+
+  pl3xmaptowny.unrender:
+    description: Allows access to sub-cmd to unrender a town on the Pl3xMap
+    default: op
