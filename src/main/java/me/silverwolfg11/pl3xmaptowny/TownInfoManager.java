@@ -90,7 +90,10 @@ public class TownInfoManager {
     private void registerParenthesesReplacement(String key, Function<Town, String> func) {
         String wrappedKey = "%" + key + "%";
         String pKey = "(" + wrappedKey + ")";
-        Function<Town, String> pFunc = t -> "(" + func.apply(t) + ")";
+        Function<Town, String> pFunc = t -> {
+            String result = func.apply(t);
+            return (result != null && !result.isEmpty()) ? "(" + result + ")" : "";
+        };
 
         if (!register(clickWindowTxt, clickReplacements, pKey, pFunc))
             register(clickWindowTxt, clickReplacements, wrappedKey, func);
