@@ -17,25 +17,8 @@ Honestly, nothing uber special about this plugin other than it works, but if you
 ## Installing
 You can install the plugin from the [releases page](https://github.com/silverwolfg11/Pl3xMap-Towny/releases). Simply put it into your `plugins` directory and start your server.
 
-## Usage
-The plugin will immediately render all towns on your Pl3xMap when the server starts up.
-
-The plugin has one main command: `pl3xmaptowny` with aliases `plexmaptowny` and `plextowny`. The general permission to use the command is `pl3xmaptowny.use`.
-The command has the following sub-commands:
-| Sub-Command | Description | Permission |
-| --- | --- | --- |
-| `reload` | Reloads the plugin. This includes all files in the plugin directory as well as re-rendering all towns on the map immediately. | `pl3xmaptowny.reload` |
-| `render [town]` | Render a specific town on the Pl3xMap. If a town is already rendered, it will re-render the town. | `pl3xmaptowny.render` |
-| `unrender [town]` | Un-render (remove) a town from the Pl3xMap. | `pl3xmaptowny.unrender` |
-
-The admin permission to allow access to the command and all sub-commands is `pl3xmaptowny.admin`.
-
-## Configuring
-The plugin generates three editable files: `config.yml`, `click_tooltip.html`, and `hover_tooltip.html`. The `config.yml` has comments for each node which should be explanatory.
-You may want to edit the `enabled-worlds` section first to support your specific worlds. 
-The HTML files are used to generate the information for each town when you click or hover over the claim area on the map.
-
-*A wiki-page is on the way for better explanation.*
+## Usage and Configuration
+The plugin should be ready for use out of the box. The one thing that may need to be adjusted is the `enabled-worlds` property in the `config.yml` to add the world names that you want town claims to show up on. For more information about the plugin's commands and configuring the plugin, see the [wiki](https://github.com/silverwolfg11/Pl3xMap-Towny/wiki).
 
 ## Building
 This plugin is a simple maven project, and thus can be built via `mvn clean install` (or `mvn clean package` whatever you prefer).
