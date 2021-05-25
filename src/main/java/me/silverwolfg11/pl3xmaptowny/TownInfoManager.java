@@ -23,9 +23,14 @@
 package me.silverwolfg11.pl3xmaptowny;
 
 import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.TownyEconomyHandler;
+import com.palmergames.bukkit.towny.TownySettings;
+import com.palmergames.bukkit.towny.object.Government;
+import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyObject;
 import me.silverwolfg11.pl3xmaptowny.objects.TwoPair;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -101,10 +107,47 @@ public class TownInfoManager {
             String residents = t.getResidents().stream().map(TownyObject::getName).collect(Collectors.joining(", "));
             return residents.isEmpty() ? "None" : residents;
         });
+        register("residentdisplaynames", t -> {
+            String residents = t.getResidents()
+                    .stream()
+                    .map(r -> {
+                        Player resPlayer = r.getPlayer();
+                        return resPlayer != null ? resPlayer.getDisplayName() : r.getFormattedName();
+                    })
+                    .collect(Collectors.joining(", "));
+
+            return residents.isEmpty() ? "None" : residents;
+        });
+        register("residentcount", t -> String.valueOf(t.getNumResidents()));
+        register("board", Government::getBoard);
+        register("nationstatus", t -> {
+            if (!t.hasNation())
+                return "";
+
+            final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
+            return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
+        });
 
         registerParenthesesReplacement("nation",
                 t-> t.hasNation() ? TownyAPI.getInstance().getTownNationOrNull(t).getName() : ""
         );
+
+        // Register Economy Replacements
+        if (TownyEconomyHandler.isActive() && TownySettings.isUsingEconomy()) {
+            register("tax", t -> {
+                if (t.isTaxPercentage()) {
+                    return "%" + t.getTaxes();
+                }
+
+                return TownyEconomyHandler.getFormattedBalance(t.getTaxes());
+            });
+            register("upkeep", t -> {
+                if (!t.hasUpkeep())
+                    return "";
+
+                return TownyEconomyHandler.getFormattedBalance(TownySettings.getTownUpkeepCost(t));
+            });
+        }
 
         registerRanks();
     }
