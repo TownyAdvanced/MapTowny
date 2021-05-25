@@ -23,6 +23,7 @@
 package me.silverwolfg11.pl3xmaptowny;
 
 import me.silverwolfg11.pl3xmaptowny.listeners.TownClaimListener;
+import me.silverwolfg11.pl3xmaptowny.managers.TownyLayerManager;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
 import me.silverwolfg11.pl3xmaptowny.tasks.RenderTownsTask;
 import org.bukkit.Bukkit;

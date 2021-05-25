@@ -20,12 +20,13 @@
  * SOFTWARE.
  */
 
-package me.silverwolfg11.pl3xmaptowny;
+package me.silverwolfg11.pl3xmaptowny.managers;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
+import me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
@@ -47,7 +48,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
