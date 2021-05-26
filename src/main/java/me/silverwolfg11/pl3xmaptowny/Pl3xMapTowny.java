@@ -22,6 +22,7 @@
 
 package me.silverwolfg11.pl3xmaptowny;
 
+import com.palmergames.bukkit.towny.Towny;
 import me.silverwolfg11.pl3xmaptowny.listeners.TownClaimListener;
 import me.silverwolfg11.pl3xmaptowny.managers.TownyLayerManager;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
@@ -70,8 +71,11 @@ public final class Pl3xMapTowny extends JavaPlugin {
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new TownClaimListener(this), this);
 
-        // Schedule render task
-        new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
+        // If towny is in safe-mode, do not attempt to render towns.
+        if (!Towny.getPlugin().isError()) {
+            // Schedule render task
+            new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
+        }
     }
 
     @Override
