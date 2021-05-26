@@ -27,6 +27,8 @@ import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownBlock;
 import net.pl3x.map.api.Point;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -56,9 +58,10 @@ public class TownRenderEntry {
     private final String homeBlockWorld;
     private final Point homeBlockPoint;
 
-    private Map<String, ? extends Collection<StaticTB>> worldBlocks;
+    private final Map<String, ? extends Collection<StaticTB>> worldBlocks;
+    private final Map<String, List<Point>> outpostSpawns;
 
-    public TownRenderEntry(Town town, Color nationColor, String clickText, String hoverText) {
+    public TownRenderEntry(Town town, boolean findOutposts, Color nationColor, String clickText, String hoverText) {
         this.townUUID = town.getUUID();
         this.townName = town.getName();
         this.capital = town.isCapital();
@@ -72,6 +75,8 @@ public class TownRenderEntry {
         this.homeBlockPoint = getHomeblockPoint(town).orElse(null);
 
         worldBlocks = townblockByWorlds(town);
+
+        outpostSpawns = findOutposts ? getOutpostSpawns(town) : Collections.emptyMap();
     }
 
     @NotNull
@@ -122,6 +127,15 @@ public class TownRenderEntry {
         return Collections.unmodifiableMap(worldBlocks);
     }
 
+    public boolean hasOutpostSpawns() {
+        return !outpostSpawns.isEmpty();
+    }
+
+    @NotNull
+    public Map<String, List<Point>> getOutpostSpawnPoints() {
+        return Collections.unmodifiableMap(outpostSpawns);
+    }
+
     @NotNull
     private Optional<Point> getHomeblockPoint(Town town) {
         TownBlock homeblock;
@@ -141,25 +155,64 @@ public class TownRenderEntry {
         return Optional.of(Point.of(lowerX + centerOffset, lowerZ + centerOffset));
     }
 
-    private final Function<String, List<StaticTB>> mappingFunc = s -> new ArrayList<>();
+
+    @NotNull
+    private Map<String, List<Point>> getOutpostSpawns(Town town) {
+        if (!town.hasOutpostSpawn())
+            return Collections.emptyMap();
+
+        return sortByWorld(
+                town.getAllOutpostSpawns(), Point::fromLocation,
+                l -> {
+                    World world = l.getWorld();
+
+                    if (world == null)
+                        return null;
+
+                    return world.getName();
+                }
+        );
+    }
+
     @NotNull
     private Map<String, ? extends Collection<StaticTB>> townblockByWorlds(Town town) {
-        Map<String, List<StaticTB>> worlds = new HashMap<>();
+        return sortByWorld(
+                town.getTownBlocks(), tb -> StaticTB.from(tb.getX(), tb.getZ()),
+                tb -> tb.getWorld().getName()
+        );
+    }
 
-        List<StaticTB> worldBlocks = null;
+    @NotNull
+    private <T, N> Map<String, List<N>> sortByWorld(Collection<T> items, Function<T, N> conversionFunc,
+                                                    Function<T, String> worldFetchFunc) {
+        if (items.isEmpty())
+            return Collections.emptyMap();
+
+        Map<String, List<N>> worldItems = new HashMap<>();
+
+        final Function<String, List<N>> absentFunc = s -> new ArrayList<>();
+
+        List<N> currWorldItems = null;
         String lastWorld = null;
-        for (TownBlock townBlock : town.getTownBlocks()) {
-            String townblockWorld = townBlock.getWorld().getName();
 
-            if (lastWorld == null || !lastWorld.equals(townblockWorld)) {
-                lastWorld = townblockWorld;
-                worldBlocks = worlds.computeIfAbsent(lastWorld, mappingFunc);
+        for (T item : items) {
+            String worldName = worldFetchFunc.apply(item);
+
+            // Skip invalid world names
+            if (worldName == null)
+                continue;
+
+            if (lastWorld == null || !lastWorld.equals(worldName)) {
+                lastWorld = worldName;
+                currWorldItems = worldItems.computeIfAbsent(lastWorld, absentFunc);
             }
 
-            worldBlocks.add(StaticTB.from(townBlock.getX(), townBlock.getZ()));
+            final N convertedItem = conversionFunc.apply(item);
+
+            currWorldItems.add(convertedItem);
         }
 
-        return worlds;
+        return worldItems;
     }
 
 

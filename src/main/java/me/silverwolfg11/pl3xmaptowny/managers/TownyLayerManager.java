@@ -53,7 +53,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,15 +66,22 @@ public class TownyLayerManager {
     private final Pl3xMapTowny plugin;
     private final TownInfoManager townInfoManager;
 
-    private final Map<String, SimpleLayerProvider> worldProviders = new HashMap<>();
+    private final Map<String, SimpleLayerProvider> worldProviders = new ConcurrentHashMap<>();
     private final Collection<UUID> renderedTowns = ConcurrentHashMap.newKeySet();
 
     private final Key LAYER_KEY = Key.of("towny");
+
+    // Icon Registry Keys
     private final Key TOWN_ICON = Key.of("towny_town_icon");
     private final Key CAPITAL_ICON = Key.of("towny_capital_icon");
+    private final Key OUTPOST_ICON = Key.of("towny_outpost_icon");
 
     private final String TOWN_KEY_PREFIX = "town_";
     private final String TOWN_ICON_KEY_PREFIX = "town_icon_";
+    private final String TOWN_OUTPOST_ICON_KEY_PREFIX = "town_outpost_icon_";
+
+    // Quick Indicators
+    private final boolean usingOutposts;
 
     public TownyLayerManager(Pl3xMapTowny plugin) {
         this.plugin = plugin;
@@ -112,6 +118,14 @@ public class TownyLayerManager {
         if (capitalIcon != null)
             api.iconRegistry().register(CAPITAL_ICON, capitalIcon);
 
+        BufferedImage outpostIcon = plugin.config().loadOutpostIcon(plugin.getLogger());
+        if (outpostIcon != null) {
+            api.iconRegistry().register(OUTPOST_ICON, outpostIcon);
+            usingOutposts = true;
+        }
+        else {
+            usingOutposts = false;
+        }
     }
 
     // Only ran synchronous
@@ -121,10 +135,10 @@ public class TownyLayerManager {
         String clickText = townInfoManager.getClickTooltip(town);
         String hoverText = townInfoManager.getHoverTooltip(town);
 
-        return new TownRenderEntry(town, nationColor, clickText, hoverText);
+        return new TownRenderEntry(town, usingOutposts, nationColor, clickText, hoverText);
     }
 
-    // Thread-Safe-ish
+    // Thread-Safe
     public void renderTown(TownRenderEntry tre) {
         final int townblockSize = TownySettings.getTownBlockSize();
 
@@ -225,7 +239,55 @@ public class TownyLayerManager {
                 }
             }
         }
+
+        // Add outpost markers
+        renderOutpostMarkers(tre, config.getIconSizeX(), config.getIconSizeY());
+
         renderedTowns.add(tre.getTownUUID());
+    }
+
+    private void renderOutpostMarkers(TownRenderEntry tre, int iconSizeX, int iconSizeZ) {
+        final String townUUID = tre.getTownUUID().toString();
+        // Delete previous town outpost icons
+        for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
+            final String worldName = entry.getKey();
+            final SimpleLayerProvider provider = entry.getValue();
+
+            int outpostNum = 1;
+            while (
+                    provider.removeMarker(
+                            Key.of(TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + townUUID + "_" + outpostNum)
+                    ) != null
+            ) {
+                outpostNum++;
+            }
+        }
+
+        // Add new town outpost icons
+        if (tre.hasOutpostSpawns()) {
+            for (Map.Entry<String, List<Point>> entry : tre.getOutpostSpawnPoints().entrySet()) {
+                final String worldName = entry.getKey();
+                SimpleLayerProvider provider = worldProviders.get(worldName);
+
+                if (provider == null)
+                    continue;
+
+                final List<Point> outpostPoints = entry.getValue();
+                int outpostNum = 1;
+                for (Point outpostPoint : outpostPoints) {
+                       Icon icon = Marker.icon(outpostPoint, OUTPOST_ICON, iconSizeX, iconSizeZ);
+                       icon.markerOptions(
+                               MarkerOptions.builder()
+                               .clickTooltip(tre.getClickText())
+                               .hoverTooltip(tre.getHoverText())
+                       );
+
+                       Key outpostKey = Key.of(TOWN_OUTPOST_ICON_KEY_PREFIX + worldName
+                               + "_" + tre.getTownUUID() + "_" + outpostNum);
+                       provider.addMarker(outpostKey, icon);
+                }
+            }
+        }
     }
 
     // Gets the nation color from a town if:
@@ -324,5 +386,8 @@ public class TownyLayerManager {
 
         if (iconReg.hasEntry(CAPITAL_ICON))
             iconReg.unregister(CAPITAL_ICON);
+
+        if (iconReg.hasEntry(OUTPOST_ICON))
+            iconReg.unregister(OUTPOST_ICON);
     }
 }

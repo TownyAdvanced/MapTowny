@@ -42,19 +42,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SerializableConfig
-@ConfigVersion(0.5) // FIXME Change for Production. 0.5 - 0.79 = Alpha Release, 0.8 - 0.99 Beta Release, 1.0 = Production Release
+@ConfigVersion(0.55) // FIXME Change for Production. 0.5 - 0.79 = Alpha Release, 0.8 - 0.99 Beta Release, 1.0 = Production Release
 public class MapConfig {
 
     @Comment("Worlds that should display town claims.")
     @Node("enabled-worlds")
-    private List<String> enabledWorlds = Arrays.asList("world");
+    private List<String> enabledWorlds = Collections.singletonList("world");
 
     @Comment({"", "How often should the plugin render all towns? (In minutes)"})
     @Node("update-period")
@@ -138,6 +137,12 @@ public class MapConfig {
         @Node("capital-icon")
         private String capitalIconImage = "default";
 
+        @Comment({"Icon for an outpost claim that will appear at the location of outpost spawns. Icon must be a valid image URL.",
+                "Put 'default' to use the town icon image.",
+                "Put 'empty' to not place icons at outposts."})
+        @Node("outpost-icon")
+        private String outpostIconImage = "default";
+
         @Comment("Height of the icon")
         @Node("icon-height")
         private int iconSizeX = 35;
@@ -202,6 +207,18 @@ public class MapConfig {
             url = iconInfo.townIconImage;
 
         return loadIcon("capital", url, errorLogger);
+    }
+
+    @Nullable
+    public BufferedImage loadOutpostIcon(Logger errorLogger) {
+        String url = iconInfo.outpostIconImage;
+
+        if (url.isEmpty() || url.equalsIgnoreCase("empty"))
+            return null;
+        else if (url.equalsIgnoreCase("default"))
+            url = iconInfo.townIconImage;
+
+        return loadIcon("outpost", url, errorLogger);
     }
 
     private BufferedImage loadIcon(String type, String urlStr, Logger errorLogger) {
