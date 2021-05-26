@@ -37,7 +37,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -54,6 +56,9 @@ public class TownInfoManager {
 
     private String clickWindowTxt;
     private String hoverWindowTxt;
+
+    // Used for %founded% replacements.
+    private final SimpleDateFormat registeredTimeFormat =  new SimpleDateFormat("MMM d yyyy");
 
     public TownInfoManager(File dataFolder, Logger errorLogger) {
         final String CLICK_FILE_NAME = "click_tooltip.html";
@@ -126,6 +131,14 @@ public class TownInfoManager {
             return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
         });
 
+        register("founded", t -> {
+            long founded = t.getRegistered();
+            if (founded == 0)
+                return "Not Set";
+
+            return registeredTimeFormat.format(new Date(founded));
+        });
+
         registerParenthesesReplacement("nation",
                 t-> t.hasNation() ? TownyAPI.getInstance().getTownNationOrNull(t).getName() : ""
         );
@@ -145,6 +158,9 @@ public class TownInfoManager {
 
                 return TownyEconomyHandler.getFormattedBalance(TownySettings.getTownUpkeepCost(t));
             });
+            register("bank",
+                    t -> TownyEconomyHandler.getFormattedBalance(t.getAccount().getCachedBalance())
+            );
         }
 
         registerRanks();
