@@ -6,7 +6,7 @@ A Towny and Pl3xMap add-on Spigot plugin that enables towns to show up on the Pl
 ## Dependencies
 This plugin requires you to have the following plugins on your server:
 - [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap)
-- [Towny](https://github.com/TownyAdvanced/Towny)
+- [Towny](https://github.com/TownyAdvanced/Towny) 0.97.0 (or later)
 
 ## Features
 Honestly, nothing uber special about this plugin other than it works, but if you really want to know:
