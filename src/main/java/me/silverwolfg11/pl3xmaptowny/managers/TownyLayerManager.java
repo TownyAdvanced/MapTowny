@@ -59,6 +59,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TownyLayerManager {
@@ -132,8 +133,9 @@ public class TownyLayerManager {
     @NotNull
     public TownRenderEntry buildTownEntry(Town town) {
         Color nationColor = getNationColor(town).orElse(null);
-        String clickText = townInfoManager.getClickTooltip(town);
-        String hoverText = townInfoManager.getHoverTooltip(town);
+        Logger logger = plugin.getLogger();
+        String clickText = townInfoManager.getClickTooltip(town, logger);
+        String hoverText = townInfoManager.getHoverTooltip(town, logger);
 
         return new TownRenderEntry(town, usingOutposts, nationColor, clickText, hoverText);
     }

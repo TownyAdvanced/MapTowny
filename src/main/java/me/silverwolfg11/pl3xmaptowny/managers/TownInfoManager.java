@@ -224,22 +224,35 @@ public class TownInfoManager {
         }
     }
 
-    public String getClickTooltip(Town town) {
-        return getWindowHTML(clickWindowTxt, clickReplacements, town);
+    public String getClickTooltip(Town town, Logger errorLogger) {
+        return getWindowHTML(clickWindowTxt, clickReplacements, town, errorLogger);
     }
 
-    public String getHoverTooltip(Town town) {
-        return getWindowHTML(hoverWindowTxt, hoverReplacements, town);
+    public String getHoverTooltip(Town town, Logger errorLogger) {
+        return getWindowHTML(hoverWindowTxt, hoverReplacements, town, errorLogger);
     }
 
-    private String getWindowHTML(String text, List<TwoPair<String, Function<Town, String>>> replacements, Town town) {
+    private String getWindowHTML(String text, List<TwoPair<String, Function<Town, String>>> replacements, Town town, Logger errorLogger) {
         if (text == null || text.isEmpty())
             return "";
 
         for (TwoPair<String, Function<Town, String>> replacement : replacements) {
             String replacementKey = replacement.getFirst();
-            String applied = replacement.getSecond().apply(town);
+            String applied;
+            // Yes, it's bad to catch general exceptions.
+            // However, if there were any expected exceptions, it wouldn't be called an exception.
+            try {
+                applied = replacement.getSecond().apply(town);
+            } catch (Exception e) {
+                errorLogger.log(
+                        Level.SEVERE,
+                        String.format("Error applying the replacement %s for information on town %s!", replacementKey, town),
+                        e
+                );
+                applied = "[Error]";
+            }
 
+            // Replacements are allowed to return a null value.
             if (applied == null)
                 applied = "";
 
