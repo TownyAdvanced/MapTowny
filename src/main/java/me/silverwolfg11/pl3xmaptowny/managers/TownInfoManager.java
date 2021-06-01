@@ -188,6 +188,21 @@ public class TownInfoManager {
         register(hoverWindowTxt, hoverReplacements, wrappedKey, func);
     }
 
+
+    // API Methods
+
+    public void registerReplacement(String key, Function<Town, String> func) {
+        register(clickWindowTxt, clickReplacements, key, func);
+        register(hoverWindowTxt, hoverReplacements, key, func);
+    }
+
+    public void unregisterReplacement(String key) {
+        clickReplacements.removeIf(p -> p.hasFirst() && p.getFirst().equals(key));
+        hoverReplacements.removeIf(p -> p.hasFirst() && p.getFirst().equals(key));
+    }
+
+    // ====
+
     private boolean register(String text, List<TwoPair<String, Function<Town, String>>> replacementList,
                           String key, Function<Town, String> func) {
 

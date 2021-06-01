@@ -59,6 +59,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -398,4 +399,18 @@ public class TownyLayerManager {
         if (iconReg.hasEntry(OUTPOST_ICON))
             iconReg.unregister(OUTPOST_ICON);
     }
+
+    // API Methods
+
+    // Pass-through to TownInfoManager
+
+    public void registerReplacement(String key, Function<Town, String> func) {
+        this.townInfoManager.registerReplacement(key, func);
+    }
+
+    public void unregisterReplacement(String key) {
+        this.townInfoManager.unregisterReplacement(key);
+    }
+
+    // =====
 }
