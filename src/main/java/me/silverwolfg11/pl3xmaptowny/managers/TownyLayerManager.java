@@ -27,6 +27,7 @@ import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny;
+import me.silverwolfg11.pl3xmaptowny.events.WorldRenderTownEvent;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
@@ -44,9 +45,11 @@ import net.pl3x.map.api.marker.Icon;
 import net.pl3x.map.api.marker.Marker;
 import net.pl3x.map.api.marker.MarkerOptions;
 import net.pl3x.map.api.marker.MultiPolygon;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -223,6 +226,14 @@ public class TownyLayerManager {
                     if (config.useNationStrokeColor())
                         optionsBuilder.strokeColor(nationColor.get());
                 }
+
+                // Call event
+                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(), multiPoly, optionsBuilder);
+                Bukkit.getPluginManager().callEvent(event);
+
+                // Skip rendering the town for the world if it is cancelled.
+                if (event.isCancelled())
+                    continue;
 
                 multiPoly.markerOptions(optionsBuilder.build());
 
@@ -402,13 +413,45 @@ public class TownyLayerManager {
 
     // API Methods
 
-    // Pass-through to TownInfoManager
+    /**
+     * Get the {@link SimpleLayerProvider} that the Pl3xMap-Towny plugin uses for a specific world.
+     *
+     * @param worldName Name of the world.
+     * @return the provider for the world if there is one, or {@code null} if there is not.
+     */
+    @Nullable
+    public SimpleLayerProvider getTownyWorldLayerProvider(@NotNull String worldName) {
+        Validate.notNull(worldName);
 
-    public void registerReplacement(String key, Function<Town, String> func) {
-        this.townInfoManager.registerReplacement(key, func);
+        return worldProviders.get(worldName);
     }
 
-    public void unregisterReplacement(String key) {
+    // Pass-through to TownInfoManager
+
+    /**
+     * Register a replacement for the town tooltips (both the click and hover tooltips).
+     *
+     * Note: Replacements are not persistent through plugin reload.
+     * Must be registered again everytime the plugin is reloaded.
+     *
+     * @param key The specific string to be replaced.
+     * @param function The function to produce a valid replacement.
+     */
+    public void registerReplacement(@NotNull String key, @NotNull Function<Town, String> function) {
+        Validate.notNull(key);
+        Validate.notNull(function);
+
+        this.townInfoManager.registerReplacement(key, function);
+    }
+
+    /**
+     * Unregister a replacement for the town tooltips.
+     *
+     * @param key Replacement string.
+     */
+    public void unregisterReplacement(@NotNull String key) {
+        Validate.notNull(key);
+
         this.townInfoManager.unregisterReplacement(key);
     }
 

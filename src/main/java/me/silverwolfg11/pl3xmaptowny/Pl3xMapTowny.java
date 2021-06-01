@@ -23,6 +23,7 @@
 package me.silverwolfg11.pl3xmaptowny;
 
 import com.palmergames.bukkit.towny.Towny;
+import me.silverwolfg11.pl3xmaptowny.events.MapReloadEvent;
 import me.silverwolfg11.pl3xmaptowny.listeners.TownClaimListener;
 import me.silverwolfg11.pl3xmaptowny.managers.TownyLayerManager;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
@@ -100,6 +101,7 @@ public final class Pl3xMapTowny extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
         layerManager.close();
         layerManager = new TownyLayerManager(this);
+        Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
         new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
     }
 
