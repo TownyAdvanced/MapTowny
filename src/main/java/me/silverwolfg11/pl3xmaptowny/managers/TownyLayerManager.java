@@ -214,8 +214,14 @@ public class TownyLayerManager {
                         .clickTooltip(clickTooltip)
                         .hoverTooltip(hoverTooltip);
 
-                // Set nation fill color if there is one
-                nationColor.ifPresent(optionsBuilder::fillColor);
+                // Use nation color if present
+                if (nationColor.isPresent()) {
+                    if (config.useNationFillColor())
+                        optionsBuilder.fillColor(nationColor.get());
+
+                    if (config.useNationStrokeColor())
+                        optionsBuilder.strokeColor(nationColor.get());
+                }
 
                 multiPoly.markerOptions(optionsBuilder.build());
 
@@ -296,7 +302,7 @@ public class TownyLayerManager {
     // config set to use nation colors and town has a valid nation color.
     @NotNull
     private Optional<Color> getNationColor(Town town) {
-        if (plugin.config().useNationFillColor() && town.hasNation()) {
+        if ((plugin.config().useNationFillColor() || plugin.config().useNationStrokeColor()) && town.hasNation()) {
             Nation nation = TownyAPI.getInstance().getTownNationOrNull(town);
             String hex = nation.getMapColorHexCode();
             if (!hex.isEmpty()) {

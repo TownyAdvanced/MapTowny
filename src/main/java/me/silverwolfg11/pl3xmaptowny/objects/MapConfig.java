@@ -48,7 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SerializableConfig
-@ConfigVersion(0.55) // FIXME Change for Production. 0.5 - 0.79 = Alpha Release, 0.8 - 0.99 Beta Release, 1.0 = Production Release
+@ConfigVersion(0.6) // FIXME Change for Production. 0.5 - 0.79 = Alpha Release, 0.8 - 0.99 Beta Release, 1.0 = Production Release
 public class MapConfig {
 
     @Comment("Worlds that should display town claims.")
@@ -106,7 +106,7 @@ public class MapConfig {
 
         @Comment("Use specified nation color as the fill color instead?")
         @Node("use-nation-color-fill")
-        private boolean useNationColors = true;
+        private boolean useNationColorFill = true;
 
         @Comment({"", "Whether to draw a stroke along the claim path."})
         private boolean stroke = true;
@@ -120,6 +120,10 @@ public class MapConfig {
 
         @Node("stroke-opacity")
         private double strokeOpacity = 1.0;
+
+        @Comment("Use specified nation color as the stroke color instead?")
+        @Node("use-nation-color-stroke")
+        private boolean useNationColorStroke = false;
 
         private transient Color awtFillColor, awtStrokeColor;
     }
@@ -190,9 +194,12 @@ public class MapConfig {
     }
 
     public boolean useNationFillColor() {
-        return fillStyle.useNationColors;
+        return fillStyle.useNationColorFill;
     }
 
+    public boolean useNationStrokeColor() {
+        return fillStyle.useNationColorStroke;
+    }
 
     @Nullable
     public BufferedImage loadTownIcon(Logger errorLogger) {
