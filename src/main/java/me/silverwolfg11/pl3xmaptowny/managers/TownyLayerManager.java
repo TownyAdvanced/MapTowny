@@ -239,6 +239,9 @@ public class TownyLayerManager {
 
                 worldProvider.addMarker(townKey, multiPoly);
 
+                // Add outpost markers for the current world
+                renderOutpostMarker(tre, worldName, worldProvider, config.getIconSizeX(), config.getIconSizeY());
+
                 // Check if this is the proper world provider to add the town icon
                 if (homeBlockWorld.equals(worldName)) {
                     // Add icon markers
@@ -260,52 +263,39 @@ public class TownyLayerManager {
             }
         }
 
-        // Add outpost markers
-        renderOutpostMarkers(tre, config.getIconSizeX(), config.getIconSizeY());
-
         renderedTowns.add(tre.getTownUUID());
     }
 
-    private void renderOutpostMarkers(TownRenderEntry tre, int iconSizeX, int iconSizeZ) {
-        final String townUUID = tre.getTownUUID().toString();
+    private void renderOutpostMarker(TownRenderEntry tre, String worldName, SimpleLayerProvider worldProvider, int iconSizeX, int iconSizeZ) {
+        final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + tre.getTownUUID() + "_";
         // Delete previous town outpost icons
-        for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
-            final String worldName = entry.getKey();
-            final SimpleLayerProvider provider = entry.getValue();
-
-            int outpostNum = 1;
-            while (
-                    provider.removeMarker(
-                            Key.of(TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + townUUID + "_" + outpostNum)
-                    ) != null
-            ) {
-                outpostNum++;
-            }
+        int remOutpostNum = 1;
+        while (
+                worldProvider.removeMarker(
+                        Key.of(keyPrefix + remOutpostNum)
+                ) != null
+        ) {
+            remOutpostNum++;
         }
 
         // Add new town outpost icons
         if (tre.hasOutpostSpawns()) {
-            for (Map.Entry<String, List<Point>> entry : tre.getOutpostSpawnPoints().entrySet()) {
-                final String worldName = entry.getKey();
-                SimpleLayerProvider provider = worldProviders.get(worldName);
+            final List<Point> outpostPoints = tre.getOutpostSpawnPoints().get(worldName);
 
-                if (provider == null)
-                    continue;
+            if (outpostPoints == null)
+                return;
 
-                final List<Point> outpostPoints = entry.getValue();
-                int outpostNum = 1;
-                for (Point outpostPoint : outpostPoints) {
-                       Icon icon = Marker.icon(outpostPoint, OUTPOST_ICON, iconSizeX, iconSizeZ);
-                       icon.markerOptions(
-                               MarkerOptions.builder()
-                               .clickTooltip(tre.getClickText())
-                               .hoverTooltip(tre.getHoverText())
-                       );
+            int outpostNum = 1;
+            for (Point outpostPoint : outpostPoints) {
+                Icon icon = Marker.icon(outpostPoint, OUTPOST_ICON, iconSizeX, iconSizeZ);
+                icon.markerOptions(
+                        MarkerOptions.builder()
+                                .clickTooltip(tre.getClickText())
+                                .hoverTooltip(tre.getHoverText())
+                );
 
-                       Key outpostKey = Key.of(TOWN_OUTPOST_ICON_KEY_PREFIX + worldName
-                               + "_" + tre.getTownUUID() + "_" + outpostNum);
-                       provider.addMarker(outpostKey, icon);
-                }
+                Key outpostKey = Key.of(keyPrefix + outpostNum);
+                worldProvider.addMarker(outpostKey, icon);
             }
         }
     }
