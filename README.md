@@ -20,6 +20,9 @@ You can install the plugin from the [releases page](https://github.com/silverwol
 ## Usage and Configuration
 The plugin should be ready for use out of the box. The one thing that may need to be adjusted is the `enabled-worlds` property in the `config.yml` to add the world names that you want town claims to show up on. For more information about the plugin's commands and configuring the plugin, see the [wiki](https://github.com/silverwolfg11/Pl3xMap-Towny/wiki).
 
+## Plugin API:
+See [this wiki page](https://github.com/silverwolfg11/Pl3xMap-Towny/wiki/Pl3xMap-Towny-API) for more info.
+
 ## Building
 This plugin is a simple maven project, and thus can be built via `mvn clean install` (or `mvn clean package` whatever you prefer).
 
