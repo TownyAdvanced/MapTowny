@@ -50,6 +50,8 @@ public class RenderTownsTask extends BukkitRunnable {
         final List<TownRenderEntry> townsToRender = new ArrayList<>();
 
         for (Town town : TownyUniverse.getInstance().getTowns()) {
+            if(town.isRuined())
+                continue;
             townsToRender.add(plugin.getLayerManager().buildTownEntry(town));
             renderedTowns.remove(town.getUUID());
         }
