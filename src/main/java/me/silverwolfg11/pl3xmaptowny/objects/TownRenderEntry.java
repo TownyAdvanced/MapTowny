@@ -51,6 +51,7 @@ public class TownRenderEntry {
     private final boolean capital;
 
     private final Color nationColor;
+    private final Color townColor;
 
     private final String clickText;
     private final String hoverText;
@@ -61,7 +62,9 @@ public class TownRenderEntry {
     private final Map<String, ? extends Collection<StaticTB>> worldBlocks;
     private final Map<String, List<Point>> outpostSpawns;
 
-    public TownRenderEntry(Town town, boolean findOutposts, Color nationColor, String clickText, String hoverText) {
+    public TownRenderEntry(Town town, boolean findOutposts,
+                           Color nationColor, Color townColor,
+                           String clickText, String hoverText) {
         this.townUUID = town.getUUID();
         this.townName = town.getName();
         this.capital = town.isCapital();
@@ -70,6 +73,7 @@ public class TownRenderEntry {
         this.hoverText = hoverText;
 
         this.nationColor = nationColor;
+        this.townColor = townColor;
 
         this.homeBlockWorld = town.getHomeblockWorld().getName();
         this.homeBlockPoint = getHomeblockPoint(town).orElse(null);
@@ -95,7 +99,12 @@ public class TownRenderEntry {
 
     @NotNull
     public Optional<Color> getNationColor() {
-        return nationColor == null ? Optional.empty() : Optional.of(nationColor);
+        return Optional.ofNullable(nationColor);
+    }
+
+    @NotNull
+    public Optional<Color> getTownColor() {
+        return Optional.ofNullable(townColor);
     }
 
     @NotNull

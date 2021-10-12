@@ -24,6 +24,7 @@ package me.silverwolfg11.pl3xmaptowny.managers;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.TownySettings;
+import com.palmergames.bukkit.towny.object.Government;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny;
@@ -137,11 +138,13 @@ public class TownyLayerManager {
     @NotNull
     public TownRenderEntry buildTownEntry(Town town) {
         Color nationColor = getNationColor(town).orElse(null);
+        Color townColor = getTownColor(town).orElse(null);
+
         Logger logger = plugin.getLogger();
         String clickText = townInfoManager.getClickTooltip(town, logger);
         String hoverText = townInfoManager.getHoverTooltip(town, logger);
 
-        return new TownRenderEntry(town, usingOutposts, nationColor, clickText, hoverText);
+        return new TownRenderEntry(town, usingOutposts, townColor, nationColor, clickText, hoverText);
     }
 
     // Thread-Safe
@@ -165,6 +168,7 @@ public class TownyLayerManager {
 
         String homeBlockWorld = tre.getHomeBlockWorld();
         Optional<Color> nationColor = tre.getNationColor();
+        Optional<Color> townColor = tre.getTownColor();
 
         String clickTooltip = tre.getClickText();
         String hoverTooltip = tre.getHoverText();
@@ -225,6 +229,18 @@ public class TownyLayerManager {
 
                     if (config.useNationStrokeColor())
                         optionsBuilder.strokeColor(nationColor.get());
+                }
+
+                // Use town color if present
+                // Town color options will override nation colors
+                if (townColor.isPresent()) {
+                    if (config.useTownFillColor()) {
+                        optionsBuilder.fillColor(townColor.get());
+                    }
+
+                    if (config.useTownStrokeColor()) {
+                        optionsBuilder.strokeColor(townColor.get());
+                    }
                 }
 
                 // Call event
@@ -300,27 +316,48 @@ public class TownyLayerManager {
         }
     }
 
+    @NotNull
+    private Optional<Color> getGovernmentColor(Government government) {
+        String hex = government.getMapColorHexCode();
+        if (!hex.isEmpty()) {
+            if (hex.charAt(0) != '#')
+                hex = "#" + hex;
+
+            try {
+                return Optional.of(Color.decode(hex));
+            } catch (NumberFormatException ex) {
+                String govType = government.getClass().getName();
+                String name = government.getName();
+                plugin.getLogger().warning("Error loading  " + govType + "'" + name + "'s map color: " + hex + "!");
+            }
+        }
+
+        return Optional.empty();
+    }
+
     // Gets the nation color from a town if:
     // config set to use nation colors and town has a valid nation color.
     @NotNull
     private Optional<Color> getNationColor(Town town) {
         if ((plugin.config().useNationFillColor() || plugin.config().useNationStrokeColor()) && town.hasNation()) {
             Nation nation = TownyAPI.getInstance().getTownNationOrNull(town);
-            String hex = nation.getMapColorHexCode();
-            if (!hex.isEmpty()) {
-                if (hex.charAt(0) != '#')
-                    hex = "#" + hex;
-
-                try {
-                    return Optional.of(Color.decode(hex));
-                } catch (NumberFormatException ex) {
-                    plugin.getLogger().warning("Error loading nation " + nation.getName() + "'s map color: " + hex + "!");
-                }
-            }
+            return getGovernmentColor(nation);
         }
 
         return Optional.empty();
     }
+
+    // Gets the town color from a town if:
+    // config set to use town colors
+    @NotNull
+    private Optional<Color> getTownColor(Town town) {
+        if (plugin.config().useTownFillColor() || plugin.config().useTownStrokeColor()) {
+            return getGovernmentColor(town);
+        }
+
+        return Optional.empty();
+    }
+
 
     // Thread-safe
     @NotNull

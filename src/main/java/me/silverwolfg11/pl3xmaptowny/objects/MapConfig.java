@@ -48,7 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SerializableConfig
-@ConfigVersion(0.6) // FIXME Change for Production. 0.5 - 0.79 = Alpha Release, 0.8 - 0.99 Beta Release, 1.0 = Production Release
+@ConfigVersion(1.0)
 public class MapConfig {
 
     @Comment("Worlds that should display town claims.")
@@ -125,6 +125,16 @@ public class MapConfig {
         @Node("use-nation-color-stroke")
         private boolean useNationColorStroke = false;
 
+        @Node("use-town-color-fill")
+        @Comment({"Use specified town color as the fill color instead?",
+                  "This option will take priority over the 'use-nation-color-fill' option if it is enabled."})
+        private boolean useTownColorFill = false;
+
+        @Node("use-town-color-stroke")
+        @Comment({"Use specified town color as the stroke color instead?",
+                "This option will take priority over the 'use-nation-color-stroke' option if it is enabled."})
+        private boolean useTownColorStroke = false;
+
         private transient Color awtFillColor, awtStrokeColor;
     }
 
@@ -199,6 +209,14 @@ public class MapConfig {
 
     public boolean useNationStrokeColor() {
         return fillStyle.useNationColorStroke;
+    }
+
+    public boolean useTownFillColor() {
+        return fillStyle.useTownColorFill;
+    }
+
+    public boolean useTownStrokeColor() {
+        return fillStyle.useTownColorStroke;
     }
 
     @Nullable
