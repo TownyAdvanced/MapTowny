@@ -77,16 +77,17 @@ public class TBCluster {
         return Collections.unmodifiableCollection(townblocks.values());
     }
 
-    
-    // Debug Method
-    // Will remain until production release in case any issues arise during alpha and beta testing.
-    /* public void print() {
+    /*
+    // Debug Method:
+    // This method is kept to visualize a cluster like it would be displayed on the towny map in-game.
+    // This method uses sysout statements so it can be used at runtime and during static testing.
+    public void print() {
         if (isEmpty()) {
             System.out.println("[PTD] EMPTY CLUSTER");
             return;
         }
 
-        Comparator<StaticTB> comparator = (l, r) -> {
+        java.util.Comparator<StaticTB> comparator = (l, r) -> {
           if (l.z() < r.z())
               return -1;
 
@@ -100,7 +101,7 @@ public class TBCluster {
         List<StaticTB> blocks = this.getBlocks()
                 .stream()
                 .sorted(comparator)
-                .collect(Collectors.toList());
+                .collect(java.util.stream.Collectors.toList());
 
         // Find corners
         StaticTB.Edges edges = blocks.stream().collect(StaticTB.Edges.collect());
@@ -108,11 +109,11 @@ public class TBCluster {
         int minX = edges.getMinX(), maxX = edges.getMaxX();
         int minZ = edges.getMinZ(), maxZ = edges.getMaxZ();
 
-        System.out.printf("(%d, %d) - (%d, %d)%n", minX, minZ, maxX, maxX);
+        System.out.printf("(%d, %d) - (%d, %d)%n", minX, minZ, maxX, maxZ);
         int currIndex = 0;
         StaticTB currTB = blocks.get(0);
         for (int posZ = minZ; posZ <= maxZ; posZ++) {
-            StringBuilder line = new StringBuilder();
+            StringBuilder line = new StringBuilder(maxX - minX + 1);
             for (int posX = minX; posX <= maxX; posX++) {
                 if (currIndex < blocks.size() &&
                         currTB.x() == posX && currTB.z() == posZ) {
@@ -123,10 +124,11 @@ public class TBCluster {
                 else
                     line.append('-');
             }
-            System.out.println(line.toString());
+            System.out.println(line);
         }
 
-    } */
+    }
+    */
 
     private static final int[] DIRECTIONS = { -1, 1 };
 

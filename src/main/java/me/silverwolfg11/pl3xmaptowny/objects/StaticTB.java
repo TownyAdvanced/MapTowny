@@ -106,6 +106,10 @@ public class StaticTB {
         return new StaticTB(x, z);
     }
 
+    public static StaticTB fromHashed(long hashed) {
+        return new StaticTB(rawX(hashed), rawZ(hashed));
+    }
+
     public static long toLong(StaticTB tb) {
         return tb.toLong();
     }

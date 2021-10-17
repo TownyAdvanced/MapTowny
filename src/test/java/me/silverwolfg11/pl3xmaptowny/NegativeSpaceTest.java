@@ -142,6 +142,25 @@ public class NegativeSpaceTest {
         assertTrue(negSpace.isEmpty());
     }
 
+    // + +++
+    // + + +
+    // +   +
+    // +++++
+    @Test
+    @DisplayName("No Negative Space: Sideway's G")
+    void testNoNSpaceSidewayG() {
+        TBCluster cluster = clusterOf(
+                tb(0,0 ), tb(2, 0), tb(3, 0), tb(4, 0),
+                tb(0, 1), tb(2, 1), tb(4, 1),
+                tb(0, 2), tb(4, 2),
+                tb(0, 3), tb(1, 3), tb(2, 3), tb(3, 3), tb(4, 3)
+
+        );
+
+        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
+        assertTrue(negSpace.isEmpty());
+    }
+
     // Test shapes that do have negative spaces
 
     // +++
@@ -181,6 +200,29 @@ public class NegativeSpaceTest {
 
         List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
         Collection<StaticTB> expectedMissing = list(tb(0, 1), tb(0, -1));
+
+        assertEquals(output.size(), expectedMissing.size());
+        assertTrue(output.containsAll(expectedMissing));
+    }
+
+    // +++
+    // + +
+    // +++
+    // + +
+    // + +
+    @Test
+    @DisplayName("Negative Space: A-figure")
+    void testNSpaceA() {
+        TBCluster cluster = clusterOf(
+                tb(-1, 2), tb(0, 2), tb(1, 2),
+                tb(-1, 1), tb(1, 1),
+                tb(-1, 0), tb(0, 0), tb(1, 0),
+                tb(-1, -1), tb(1, -1),
+                tb(-1, 2), tb(1, -2)
+        );
+
+        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
+        Collection<StaticTB> expectedMissing = list(tb(0, 1));
 
         assertEquals(output.size(), expectedMissing.size());
         assertTrue(output.containsAll(expectedMissing));
