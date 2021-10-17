@@ -6,7 +6,7 @@
 
     <groupId>me.Silverwolfg11</groupId>
     <artifactId>Pl3xMap-Towny</artifactId>
-    <version>1.0.0-ALPHA-3</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Pl3xMap Towny</name>
