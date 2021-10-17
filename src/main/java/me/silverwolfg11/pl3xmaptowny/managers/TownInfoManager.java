@@ -221,8 +221,8 @@ public class TownInfoManager {
 
         while (matcher.find()) {
             String rankReplacement = textToReplace.substring(matcher.start(), matcher.end());
-            // %rank_test% Just need test part. So substring at 5.
-            final String rank = rankReplacement.substring(5);
+            // %rank_test% - Just need "test" part so substring at 6 and go up to the %.
+            final String rank = rankReplacement.substring(6, rankReplacement.length() - 1);
             textReplacement.registerReplacement(rankReplacement, t -> {
                 String rankResidents = t.getRank(rank).stream().map(TownyObject::getName).collect(Collectors.joining(", "));
                 return rankResidents.isEmpty() ? "None" : rankResidents;
