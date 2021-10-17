@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 public class MapReloadEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
 
-
     @NotNull
     @Override
     public HandlerList getHandlers() {

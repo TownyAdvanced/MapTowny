@@ -137,6 +137,9 @@ public class TownyLayerManager {
     // Only ran synchronous
     @NotNull
     public TownRenderEntry buildTownEntry(Town town) {
+        // Get all objects that must be fetched synchronously
+        // This includes anything that uses the Towny or Bukkit API.
+
         Color nationColor = getNationColor(town).orElse(null);
         Color townColor = getTownColor(town).orElse(null);
 
@@ -185,7 +188,7 @@ public class TownyLayerManager {
             // If no world provider, then we can discard rendering
             if (worldProvider == null)
                 continue;
-
+            // Sort the townblocks into clusters
             List<TBCluster> clusters = TBCluster.findClusters(blocks);
             List<MultiPolygon.MultiPolygonPart> parts = new ArrayList<>();
 
@@ -231,7 +234,7 @@ public class TownyLayerManager {
                         optionsBuilder.strokeColor(nationColor.get());
                 }
 
-                // Use town color if present
+                // Use town color if present.
                 // Town color options will override nation colors
                 if (townColor.isPresent()) {
                     if (config.useTownFillColor()) {
@@ -316,6 +319,7 @@ public class TownyLayerManager {
         }
     }
 
+    // Get government color with error handling.
     @NotNull
     private Optional<Color> getGovernmentColor(Government government) {
         String hex = government.getMapColorHexCode();
@@ -368,7 +372,7 @@ public class TownyLayerManager {
 
     public void removeAllMarkers() {
         // Remove town markers based on key string comparison
-        // This will also make sure to get rid of any deleted town markers
+        // This will also make sure to get rid of any deleted town's markers
         for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
             final SimpleLayerProvider worldProvider = entry.getValue();
             Collection<Key> registeredTownKeys = new ArrayList<>();

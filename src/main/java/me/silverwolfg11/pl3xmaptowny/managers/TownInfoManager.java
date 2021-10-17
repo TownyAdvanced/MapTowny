@@ -28,8 +28,9 @@ import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.object.Government;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyObject;
-import me.silverwolfg11.pl3xmaptowny.objects.TwoPair;
+import me.silverwolfg11.pl3xmaptowny.objects.TextReplacement;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,11 +50,8 @@ import java.util.stream.Collectors;
 // This class handles loading the tooltip HTML files as well as filling in the placeholders
 public class TownInfoManager {
 
-    private final List<TwoPair<String, Function<Town, String>>> clickReplacements = new ArrayList<>();
-    private final List<TwoPair<String, Function<Town, String>>> hoverReplacements = new ArrayList<>();
-
-    private String clickWindowTxt;
-    private String hoverWindowTxt;
+    private final TextReplacement<Town> clickReplacements;
+    private final TextReplacement<Town> hoverReplacements;
 
     // Used for %founded% replacements.
     private final SimpleDateFormat registeredTimeFormat =  new SimpleDateFormat("MMM d yyyy");
@@ -64,6 +60,7 @@ public class TownInfoManager {
         final String CLICK_FILE_NAME = "click_tooltip.html";
         final String HOVER_FILE_NAME = "hover_tooltip.html";
 
+        // Create the parent directory if it doesn't exist
         if (!dataFolder.exists())
             dataFolder.mkdir();
 
@@ -72,33 +69,36 @@ public class TownInfoManager {
         if (!clickWindowFile.exists())
             copyFile(errorLogger, CLICK_FILE_NAME, clickWindowFile);
 
-        try {
-            clickWindowTxt = readFile(clickWindowFile);
-        } catch (IOException e) {
-            errorLogger.log(Level.SEVERE, "Unable to read file " + CLICK_FILE_NAME, e);
-        }
-
-        if (clickWindowTxt != null)
-            clickWindowTxt = removeComments(clickWindowTxt);
+        clickReplacements = readHTMLReplacementFile(clickWindowFile, errorLogger);
 
         File hoverWindowFile = new File(dataFolder, HOVER_FILE_NAME);
         if (!hoverWindowFile.exists())
             copyFile(errorLogger, HOVER_FILE_NAME, hoverWindowFile);
 
-        try {
-            hoverWindowTxt = readFile(hoverWindowFile);
-        } catch (IOException e) {
-            errorLogger.log(Level.SEVERE, "Unable to read file " + HOVER_FILE_NAME, e);
-        }
-
-        if (hoverWindowTxt != null)
-            hoverWindowTxt = removeComments(hoverWindowTxt);
+        hoverReplacements = readHTMLReplacementFile(hoverWindowFile, errorLogger);
 
         registerReplacements();
     }
 
-    // Replacement Registration Methods
+    // Read the replacement HTML file and return the associated text replacement object.
+    @NotNull
+    private TextReplacement<Town> readHTMLReplacementFile(File file, Logger errorLogger) {
+        String replacementFileRaw = null;
+        try {
+            replacementFileRaw = readFile(file);
+        } catch (IOException e) {
+            errorLogger.log(Level.SEVERE, "Unable to read file " + file.getName(), e);
+        }
 
+        if (replacementFileRaw != null) {
+            return TextReplacement.fromHTML(replacementFileRaw);
+        }
+        else {
+            return TextReplacement.empty();
+        }
+    }
+
+    // Replacement Registration Methods
     private void registerReplacements() {
         register("town", TownyObject::getName);
         register("mayor", t -> t.getMayor().getName());
@@ -166,6 +166,8 @@ public class TownInfoManager {
         registerRanks();
     }
 
+    // Register a replacement that will replace parenthesis if empty.
+    // E.g. For the key "nation", the replacement "(%nation%)" or "%nation%" would be valid.
     private void registerParenthesesReplacement(String key, Function<Town, String> func) {
         String wrappedKey = "%" + key + "%";
         String pKey = "(" + wrappedKey + ")";
@@ -174,113 +176,84 @@ public class TownInfoManager {
             return (result != null && !result.isEmpty()) ? "(" + result + ")" : "";
         };
 
-        if (!register(clickWindowTxt, clickReplacements, pKey, pFunc))
-            register(clickWindowTxt, clickReplacements, wrappedKey, func);
+        if (!clickReplacements.registerReplacement(pKey, pFunc)) {
+            clickReplacements.registerReplacement(wrappedKey, func);
+        }
 
-
-        if (!register(hoverWindowTxt, hoverReplacements, pKey, pFunc))
-            register(hoverWindowTxt, hoverReplacements, wrappedKey, func);
+        if (!hoverReplacements.registerReplacement(pKey, pFunc)) {
+            hoverReplacements.registerReplacement(wrappedKey, func);
+        }
     }
 
     private void register(String key, Function<Town, String> func) {
         String wrappedKey = "%" + key + "%";
-        register(clickWindowTxt, clickReplacements, wrappedKey, func);
-        register(hoverWindowTxt, hoverReplacements, wrappedKey, func);
+        registerReplacement(wrappedKey, func);
     }
 
 
     // API Methods
 
-    public void registerReplacement(String key, Function<Town, String> func) {
-        register(clickWindowTxt, clickReplacements, key, func);
-        register(hoverWindowTxt, hoverReplacements, key, func);
+    public void registerReplacement(@NotNull String key, @NotNull Function<Town, String> func) {
+        clickReplacements.registerReplacement(key, func);
+        hoverReplacements.registerReplacement(key, func);
     }
 
-    public void unregisterReplacement(String key) {
-        clickReplacements.removeIf(p -> p.hasFirst() && p.getFirst().equals(key));
-        hoverReplacements.removeIf(p -> p.hasFirst() && p.getFirst().equals(key));
-    }
-
-    // ====
-
-    private boolean register(String text, List<TwoPair<String, Function<Town, String>>> replacementList,
-                          String key, Function<Town, String> func) {
-
-        if (text != null && text.contains(key)) {
-            replacementList.add(TwoPair.of(key, func));
-            return true;
-        }
-
-        return false;
+    public void unregisterReplacement(@NotNull String key) {
+        clickReplacements.unregisterReplacement(key);
+        hoverReplacements.unregisterReplacement(key);
     }
 
     // Does not validate ranks.
     private void registerRanks() {
+        // Pattern gets anything matching "%rank_<rank name>%"
         Pattern pattern = Pattern.compile("%rank_.+%");
-        for (int i = 0; i < 2; ++i) {
-            String text = i == 0 ? clickWindowTxt : hoverWindowTxt;
+        registerRanks(clickReplacements, pattern);
+        registerRanks(hoverReplacements, pattern);
+    }
 
-            if (text == null)
-                continue;
+    private void registerRanks(TextReplacement<Town> textReplacement, Pattern rankPattern) {
+        String textToReplace = textReplacement.getTextToReplace();
 
-            List<TwoPair<String, Function<Town, String>>> replacementList = i == 0 ? clickReplacements : hoverReplacements;
+        if (textToReplace == null)
+            return;
 
-            Matcher matcher = pattern.matcher(text);
+        Matcher matcher = rankPattern.matcher(textToReplace);
 
-            while (matcher.find()) {
-                String rankReplacement = text.substring(matcher.start(), matcher.end());
-                // %rank_test% Just need test part. So substring at 5.
-                String rank = rankReplacement.substring(5);
-                replacementList.add(TwoPair.of(rankReplacement, t -> {
-                   String rankResidents = t.getRank(rank).stream().map(TownyObject::getName).collect(Collectors.joining(", "));
-                   return rankResidents.isEmpty() ? "None" : rankResidents;
-                }));
-            }
+        while (matcher.find()) {
+            String rankReplacement = textToReplace.substring(matcher.start(), matcher.end());
+            // %rank_test% Just need test part. So substring at 5.
+            final String rank = rankReplacement.substring(5);
+            textReplacement.registerReplacement(rankReplacement, t -> {
+                String rankResidents = t.getRank(rank).stream().map(TownyObject::getName).collect(Collectors.joining(", "));
+                return rankResidents.isEmpty() ? "None" : rankResidents;
+            });
         }
     }
 
     public String getClickTooltip(Town town, Logger errorLogger) {
-        return getWindowHTML(clickWindowTxt, clickReplacements, town, errorLogger);
+        final String townName = town.getName();
+        return clickReplacements.getReplacedText(town, (replacementKey, ex) -> {
+            errorLogger.log(
+                    Level.SEVERE,
+                    String.format("Error applying the replacement '%s' for click information on town '%s'!", replacementKey, townName),
+                    ex
+            );
+        });
     }
 
     public String getHoverTooltip(Town town, Logger errorLogger) {
-        return getWindowHTML(hoverWindowTxt, hoverReplacements, town, errorLogger);
-    }
-
-    private String getWindowHTML(String text, List<TwoPair<String, Function<Town, String>>> replacements, Town town, Logger errorLogger) {
-        if (text == null || text.isEmpty())
-            return "";
-
-        for (TwoPair<String, Function<Town, String>> replacement : replacements) {
-            String replacementKey = replacement.getFirst();
-            String applied;
-            // Yes, it's bad to catch general exceptions.
-            // However, if there were any expected exceptions, it wouldn't be called an exception.
-            try {
-                applied = replacement.getSecond().apply(town);
-            } catch (Exception e) {
-                errorLogger.log(
-                        Level.SEVERE,
-                        String.format("Error applying the replacement %s for information on town %s!", replacementKey, town),
-                        e
-                );
-                applied = "[Error]";
-            }
-
-            // Replacements are allowed to return a null value.
-            if (applied == null)
-                applied = "";
-
-            // Use replace because we want to match exactly, not based on regex.
-            text = text.replace(replacementKey, applied);
-        }
-
-        return text;
+        final String townName = town.getName();
+        return hoverReplacements.getReplacedText(town, (replacementKey, ex) -> {
+            errorLogger.log(
+                    Level.SEVERE,
+                    String.format("Error applying the replacement '%s' for hover information on town '%s'!", replacementKey, townName),
+                    ex
+            );
+        });
     }
 
 
     // Utility Methods
-
 
     private void copyFile(Logger errorLogger, String resource, File dest) {
         InputStream input = getClass().getClassLoader().getResourceAsStream(resource);
@@ -293,13 +266,8 @@ public class TownInfoManager {
         try {
             Files.copy(input, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            errorLogger.log(Level.SEVERE, "Unable to copy " + resource + " to plugin directory!");
+            errorLogger.log(Level.SEVERE, "Unable to copy \"" + resource + "\" to plugin directory!");
         }
-    }
-
-    // Removes HTML comments from a string.
-    private static String removeComments(String htmlStr) {
-        return Pattern.compile("<!--.*?-->", Pattern.DOTALL).matcher(htmlStr).replaceAll("");
     }
 
     // Read file as string

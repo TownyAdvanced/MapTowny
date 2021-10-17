@@ -44,6 +44,7 @@ import java.util.function.Function;
 
 // Entry for a town that is going to be rendered
 // Stores all data needed for async rendering
+// All TownRenderEntries are immutable and contain immutable data.
 public class TownRenderEntry {
 
     private final UUID townUUID;
