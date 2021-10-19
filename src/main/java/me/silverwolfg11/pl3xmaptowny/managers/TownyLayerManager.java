@@ -147,7 +147,7 @@ public class TownyLayerManager {
         String clickText = townInfoManager.getClickTooltip(town, logger);
         String hoverText = townInfoManager.getHoverTooltip(town, logger);
 
-        return new TownRenderEntry(town, usingOutposts, townColor, nationColor, clickText, hoverText);
+        return new TownRenderEntry(town, usingOutposts, nationColor, townColor, clickText, hoverText);
     }
 
     // Thread-Safe
