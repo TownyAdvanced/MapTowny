@@ -6,6 +6,10 @@ This plugin requires you to have the following plugins on your server:
 - [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap)
 - [Towny](https://github.com/TownyAdvanced/Towny) 0.97.1 (or later)
 
+## Pl3xMap Archival
+Pl3xMap has been archived and will no longer be receiving any updates. Thus, for versions past 1.17.1, there is no gurantee that this plugin or Pl3xMap will continue to work.
+Any bugs specifically attributed towards this plugin will still be fixed, however, there will be no more major feature additions.
+
 ## Features
 Honestly, nothing uber special about this plugin other than it works, but if you really want to know:
 - Pretty Configurable
