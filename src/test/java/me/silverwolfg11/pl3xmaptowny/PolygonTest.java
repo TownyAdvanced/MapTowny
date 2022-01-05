@@ -25,10 +25,10 @@ package me.silverwolfg11.pl3xmaptowny;
 import static org.junit.jupiter.api.Assertions.*;
 import static me.silverwolfg11.pl3xmaptowny.TestHelpers.*;
 
+import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
 import me.silverwolfg11.pl3xmaptowny.util.PolygonUtil;
-import net.pl3x.map.api.Point;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +43,7 @@ import java.util.List;
 public class PolygonTest {
 
     // Compare two lists of points finding the first element
-    void polygonHasPoints(List<Point> output, List<Point> expected) {
+    void polygonHasPoints(List<Point2D> output, List<Point2D> expected) {
         assertNotNull(output, "Polygon output was null!");
 
         // Quickly validate size
@@ -86,12 +86,12 @@ public class PolygonTest {
         StaticTB tb = tb(0, 0);
         TBCluster cluster = clusterOf(tb);
 
-        Point ur = cornerPoint(tb, CORNER.UPPER_RIGHT);
-        Point lr = cornerPoint(tb, CORNER.LOWER_RIGHT);
-        Point ll = cornerPoint(tb, CORNER.LOWER_LEFT);
-        Point ul = cornerPoint(tb, CORNER.UPPER_LEFT);
-        List<Point> expected = list(ur, lr, ll, ul);
-        List<Point> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
+        Point2D ur = cornerPoint(tb, CORNER.UPPER_RIGHT);
+        Point2D lr = cornerPoint(tb, CORNER.LOWER_RIGHT);
+        Point2D ll = cornerPoint(tb, CORNER.LOWER_LEFT);
+        Point2D ul = cornerPoint(tb, CORNER.UPPER_LEFT);
+        List<Point2D> expected = list(ur, lr, ll, ul);
+        List<Point2D> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
 
         polygonHasPoints(output, expected);
     }
@@ -105,13 +105,13 @@ public class PolygonTest {
 
         TBCluster cluster = clusterOf(originTB, tb(1,0), endingTB);
 
-        Point ulOrigin = cornerPoint(originTB, CORNER.UPPER_LEFT);
-        Point urEnding = cornerPoint(endingTB, CORNER.UPPER_RIGHT);
-        Point lrEnding = cornerPoint(endingTB, CORNER.LOWER_RIGHT);
-        Point llOrigin = cornerPoint(originTB, CORNER.LOWER_LEFT);
+        Point2D ulOrigin = cornerPoint(originTB, CORNER.UPPER_LEFT);
+        Point2D urEnding = cornerPoint(endingTB, CORNER.UPPER_RIGHT);
+        Point2D lrEnding = cornerPoint(endingTB, CORNER.LOWER_RIGHT);
+        Point2D llOrigin = cornerPoint(originTB, CORNER.LOWER_LEFT);
 
-        List<Point> expected = list(ulOrigin, urEnding, lrEnding, llOrigin);
-        List<Point> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
+        List<Point2D> expected = list(ulOrigin, urEnding, lrEnding, llOrigin);
+        List<Point2D> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
 
         polygonHasPoints(output, expected);
     }
@@ -131,29 +131,29 @@ public class PolygonTest {
 
         TBCluster cluster = clusterOf(topTB, centerTB, bottomTB, leftTB, rightTB);
 
-        Point startingPt = cornerPoint(topTB, CORNER.UPPER_RIGHT);
+        Point2D startingPt = cornerPoint(topTB, CORNER.UPPER_RIGHT);
 
-        Point rightCorner1 = cornerPoint(rightTB, CORNER.UPPER_LEFT);
-        Point rightCorner2 = cornerPoint(rightTB, CORNER.UPPER_RIGHT);
-        Point rightCorner3 = cornerPoint(rightTB, CORNER.LOWER_RIGHT);
+        Point2D rightCorner1 = cornerPoint(rightTB, CORNER.UPPER_LEFT);
+        Point2D rightCorner2 = cornerPoint(rightTB, CORNER.UPPER_RIGHT);
+        Point2D rightCorner3 = cornerPoint(rightTB, CORNER.LOWER_RIGHT);
 
-        Point bottomCorner1 = cornerPoint(bottomTB, CORNER.UPPER_RIGHT);
-        Point bottomCorner2 = cornerPoint(bottomTB, CORNER.LOWER_RIGHT);
-        Point bottomCorner3 = cornerPoint(bottomTB, CORNER.LOWER_LEFT);
+        Point2D bottomCorner1 = cornerPoint(bottomTB, CORNER.UPPER_RIGHT);
+        Point2D bottomCorner2 = cornerPoint(bottomTB, CORNER.LOWER_RIGHT);
+        Point2D bottomCorner3 = cornerPoint(bottomTB, CORNER.LOWER_LEFT);
 
-        Point leftCorner1 = cornerPoint(leftTB, CORNER.LOWER_RIGHT);
-        Point leftCorner2 = cornerPoint(leftTB, CORNER.LOWER_LEFT);
-        Point leftCorner3 = cornerPoint(leftTB, CORNER.UPPER_LEFT);
+        Point2D leftCorner1 = cornerPoint(leftTB, CORNER.LOWER_RIGHT);
+        Point2D leftCorner2 = cornerPoint(leftTB, CORNER.LOWER_LEFT);
+        Point2D leftCorner3 = cornerPoint(leftTB, CORNER.UPPER_LEFT);
 
-        Point topCorner1 = cornerPoint(topTB, CORNER.LOWER_LEFT);
+        Point2D topCorner1 = cornerPoint(topTB, CORNER.LOWER_LEFT);
 
-        Point endingPt = cornerPoint(topTB, CORNER.UPPER_LEFT);
+        Point2D endingPt = cornerPoint(topTB, CORNER.UPPER_LEFT);
 
-        List<Point> expected = list(startingPt, rightCorner1, rightCorner2, rightCorner3,
+        List<Point2D> expected = list(startingPt, rightCorner1, rightCorner2, rightCorner3,
                 bottomCorner1, bottomCorner2, bottomCorner3, leftCorner1, leftCorner2, leftCorner3,
                 topCorner1, endingPt);
 
-        List<Point> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
+        List<Point2D> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
 
         polygonHasPoints(output, expected);
     }
@@ -174,13 +174,13 @@ public class PolygonTest {
 
         // Should only generate 4 points that we care about
         // Upper Left, Upper Right, Lower Left, Lower Right points (not in that order)
-        Point ul = cornerPoint(originCornerTB, CORNER.UPPER_LEFT);
-        Point ur = cornerPoint(urCornerTB, CORNER.UPPER_RIGHT);
-        Point lr = cornerPoint(lrCornerTB, CORNER.LOWER_RIGHT);
-        Point ll = cornerPoint(llCornerTB, CORNER.LOWER_LEFT);
+        Point2D ul = cornerPoint(originCornerTB, CORNER.UPPER_LEFT);
+        Point2D ur = cornerPoint(urCornerTB, CORNER.UPPER_RIGHT);
+        Point2D lr = cornerPoint(lrCornerTB, CORNER.LOWER_RIGHT);
+        Point2D ll = cornerPoint(llCornerTB, CORNER.LOWER_LEFT);
 
-        List<Point> expected = list(ul, ur, lr, ll);
-        List<Point> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
+        List<Point2D> expected = list(ul, ur, lr, ll);
+        List<Point2D> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
 
         polygonHasPoints(output, expected);
     }

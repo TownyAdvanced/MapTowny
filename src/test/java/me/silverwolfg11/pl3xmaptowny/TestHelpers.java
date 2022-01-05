@@ -22,9 +22,9 @@
 
 package me.silverwolfg11.pl3xmaptowny;
 
+import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
-import net.pl3x.map.api.Point;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class TestHelpers {
     }
 
     enum CORNER { LOWER_LEFT, LOWER_RIGHT, UPPER_LEFT, UPPER_RIGHT }
-    static Point cornerPoint(StaticTB tb, CORNER corner) {
+    static Point2D cornerPoint(StaticTB tb, CORNER corner) {
         int xOffset = 0;
         if (corner == CORNER.LOWER_RIGHT || corner == CORNER.UPPER_RIGHT)
             xOffset = (TILE_SIZE - 1);
@@ -71,7 +71,7 @@ public class TestHelpers {
         if (corner == CORNER.UPPER_LEFT || corner == CORNER.UPPER_RIGHT)
             zOffset = (TILE_SIZE - 1);
 
-        return Point.of((tb.x() * TILE_SIZE) + xOffset, (tb.z() * TILE_SIZE) + zOffset);
+        return Point2D.of((tb.x() * TILE_SIZE) + xOffset, (tb.z() * TILE_SIZE) + zOffset);
     }
 
 }

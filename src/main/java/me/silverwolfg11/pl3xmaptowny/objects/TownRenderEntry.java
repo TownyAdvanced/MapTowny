@@ -26,8 +26,6 @@ import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownBlock;
-import net.pl3x.map.api.Point;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,10 +56,10 @@ public class TownRenderEntry {
     private final String hoverText;
 
     private final String homeBlockWorld;
-    private final Point homeBlockPoint;
+    private final Point2D homeBlockPoint;
 
     private final Map<String, ? extends Collection<StaticTB>> worldBlocks;
-    private final Map<String, List<Point>> outpostSpawns;
+    private final Map<String, List<Point2D>> outpostSpawns;
 
     public TownRenderEntry(Town town, boolean findOutposts,
                            Color nationColor, Color townColor,
@@ -124,7 +122,7 @@ public class TownRenderEntry {
     }
 
     @NotNull
-    public Optional<Point> getHomeBlockPoint() {
+    public Optional<Point2D> getHomeBlockPoint() {
         return Optional.of(homeBlockPoint);
     }
 
@@ -142,12 +140,12 @@ public class TownRenderEntry {
     }
 
     @NotNull
-    public Map<String, List<Point>> getOutpostSpawnPoints() {
+    public Map<String, List<Point2D>> getOutpostSpawnPoints() {
         return Collections.unmodifiableMap(outpostSpawns);
     }
 
     @NotNull
-    private Optional<Point> getHomeblockPoint(Town town) {
+    private Optional<Point2D> getHomeblockPoint(Town town) {
         TownBlock homeblock;
 
         try {
@@ -162,17 +160,17 @@ public class TownRenderEntry {
         int lowerX = homeblock.getX() * townblockSize;
         int lowerZ = homeblock.getZ() * townblockSize;
 
-        return Optional.of(Point.of(lowerX + centerOffset, lowerZ + centerOffset));
+        return Optional.of(Point2D.of(lowerX + centerOffset, lowerZ + centerOffset));
     }
 
 
     @NotNull
-    private Map<String, List<Point>> getOutpostSpawns(Town town) {
+    private Map<String, List<Point2D>> getOutpostSpawns(Town town) {
         if (!town.hasOutpostSpawn())
             return Collections.emptyMap();
 
         return sortByWorld(
-                town.getAllOutpostSpawns(), Point::fromLocation,
+                town.getAllOutpostSpawns(), Point2D::fromLocation,
                 l -> {
                     World world = l.getWorld();
 

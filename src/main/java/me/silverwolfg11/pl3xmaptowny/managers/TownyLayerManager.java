@@ -29,23 +29,19 @@ import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny;
 import me.silverwolfg11.pl3xmaptowny.events.WorldRenderTownEvent;
+import me.silverwolfg11.pl3xmaptowny.objects.LayerOptions;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
+import me.silverwolfg11.pl3xmaptowny.objects.MarkerOptions;
+import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
+import me.silverwolfg11.pl3xmaptowny.objects.Polygon;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
 import me.silverwolfg11.pl3xmaptowny.objects.TownRenderEntry;
+import me.silverwolfg11.pl3xmaptowny.platform.MapLayer;
+import me.silverwolfg11.pl3xmaptowny.platform.MapPlatform;
+import me.silverwolfg11.pl3xmaptowny.platform.MapWorld;
 import me.silverwolfg11.pl3xmaptowny.util.NegativeSpaceFinder;
 import me.silverwolfg11.pl3xmaptowny.util.PolygonUtil;
-import net.pl3x.map.api.Key;
-import net.pl3x.map.api.MapWorld;
-import net.pl3x.map.api.Pl3xMap;
-import net.pl3x.map.api.Pl3xMapProvider;
-import net.pl3x.map.api.Point;
-import net.pl3x.map.api.Registry;
-import net.pl3x.map.api.SimpleLayerProvider;
-import net.pl3x.map.api.marker.Icon;
-import net.pl3x.map.api.marker.Marker;
-import net.pl3x.map.api.marker.MarkerOptions;
-import net.pl3x.map.api.marker.MultiPolygon;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -71,16 +67,17 @@ public class TownyLayerManager {
 
     private final Pl3xMapTowny plugin;
     private final TownInfoManager townInfoManager;
+    private final MapPlatform mapPlatform;
 
-    private final Map<String, SimpleLayerProvider> worldProviders = new ConcurrentHashMap<>();
+    private final Map<String, MapLayer> worldProviders = new ConcurrentHashMap<>();
     private final Collection<UUID> renderedTowns = ConcurrentHashMap.newKeySet();
 
-    private final Key LAYER_KEY = Key.of("towny");
+    private final String LAYER_KEY = "towny";
 
     // Icon Registry Keys
-    private final Key TOWN_ICON = Key.of("towny_town_icon");
-    private final Key CAPITAL_ICON = Key.of("towny_capital_icon");
-    private final Key OUTPOST_ICON = Key.of("towny_outpost_icon");
+    private final String TOWN_ICON = "towny_town_icon";
+    private final String CAPITAL_ICON = "towny_capital_icon";
+    private final String OUTPOST_ICON = "towny_outpost_icon";
 
     private final String TOWN_KEY_PREFIX = "town_";
     private final String TOWN_ICON_KEY_PREFIX = "town_icon_";
@@ -89,12 +86,12 @@ public class TownyLayerManager {
     // Quick Indicators
     private final boolean usingOutposts;
 
-    public TownyLayerManager(Pl3xMapTowny plugin) {
+    public TownyLayerManager(Pl3xMapTowny plugin, MapPlatform platform) {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
+        this.mapPlatform = platform;
 
         // Load world providers
-        Pl3xMap api = Pl3xMapProvider.get();
         for (String worldName : plugin.config().getEnabledWorlds()) {
             World world = Bukkit.getWorld(worldName);
 
@@ -103,30 +100,28 @@ public class TownyLayerManager {
                 continue;
             }
 
-            MapWorld mapWorld = api.getWorldIfEnabled(world).orElse(null);
-
-            if (mapWorld == null) {
-                plugin.getLogger().severe(worldName + " is not an enabled world for Pl3xMap!");
+            if (!platform.isWorldEnabled(world)) {
+                plugin.getLogger().severe(worldName + " is not an enabled world for " + platform.getPlatformName() + "!");
                 continue;
             }
 
-            SimpleLayerProvider layerProvider = plugin.config().buildLayerProvider();
-            mapWorld.layerRegistry().register(LAYER_KEY, layerProvider);
-            worldProviders.put(world.getName(), layerProvider);
+            LayerOptions layerOptions = plugin.config().getLayerOptions();
+            MapLayer mapLayer = platform.getWorld(world).registerLayer(LAYER_KEY, layerOptions);
+            worldProviders.put(world.getName(), mapLayer);
         }
 
         // Load icons
         BufferedImage townIcon = plugin.config().loadTownIcon(plugin.getLogger());
         if (townIcon != null)
-            api.iconRegistry().register(TOWN_ICON, townIcon);
+            platform.registerIcon(TOWN_ICON, townIcon);
 
         BufferedImage capitalIcon = plugin.config().loadCapitalIcon(plugin.getLogger());
         if (capitalIcon != null)
-            api.iconRegistry().register(CAPITAL_ICON, capitalIcon);
+            platform.registerIcon(CAPITAL_ICON, capitalIcon);
 
         BufferedImage outpostIcon = plugin.config().loadOutpostIcon(plugin.getLogger());
         if (outpostIcon != null) {
-            api.iconRegistry().register(OUTPOST_ICON, outpostIcon);
+            platform.registerIcon(OUTPOST_ICON, outpostIcon);
             usingOutposts = true;
         }
         else {
@@ -166,8 +161,8 @@ public class TownyLayerManager {
         MapConfig config = plugin.config();
 
         // Universal Town Data
-        Key townKey = Key.of(TOWN_KEY_PREFIX + tre.getTownUUID());
-        Key townIconKey = Key.of(TOWN_ICON_KEY_PREFIX + tre.getTownUUID());
+        final String townKey = TOWN_KEY_PREFIX + tre.getTownUUID();
+        final String townIconKey = TOWN_ICON_KEY_PREFIX + tre.getTownUUID();
 
         String homeBlockWorld = tre.getHomeBlockWorld();
         Optional<Color> nationColor = tre.getNationColor();
@@ -183,19 +178,19 @@ public class TownyLayerManager {
             final String worldName = entry.getKey();
             final Collection<StaticTB> blocks = entry.getValue();
 
-            SimpleLayerProvider worldProvider = worldProviders.get(worldName);
+            MapLayer worldProvider = worldProviders.get(worldName);
 
             // If no world provider, then we can discard rendering
             if (worldProvider == null)
                 continue;
             // Sort the townblocks into clusters
             List<TBCluster> clusters = TBCluster.findClusters(blocks);
-            List<MultiPolygon.MultiPolygonPart> parts = new ArrayList<>();
+            List<Polygon> parts = new ArrayList<>();
 
             for (TBCluster cluster : clusters) {
                 // Check if the cluster has negative space
                 List<StaticTB> negativeSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-                List<List<Point>> negSpacePolys = Collections.emptyList();
+                List<List<Point2D>> negSpacePolys = Collections.emptyList();
 
                 // If the cluster does have negative space, get the outlines of the negative space polygons
                 if (!negativeSpace.isEmpty()) {
@@ -208,10 +203,10 @@ public class TownyLayerManager {
                 }
 
                 // Form the main polygon
-                List<Point> poly = PolygonUtil.formPolyFromCluster(cluster, townblockSize);
+                List<Point2D> poly = PolygonUtil.formPolyFromCluster(cluster, townblockSize);
 
                 if (poly != null) {
-                    MultiPolygon.MultiPolygonPart part = MultiPolygon.part(poly, negSpacePolys);
+                    Polygon part = new Polygon(poly, negSpacePolys);
                     parts.add(part);
                 }
                 else {
@@ -220,7 +215,6 @@ public class TownyLayerManager {
             }
 
             if (!parts.isEmpty()) {
-                MultiPolygon multiPoly = MultiPolygon.multiPolygon(parts);
                 MarkerOptions.Builder optionsBuilder = config.buildMarkerOptions()
                         .clickTooltip(clickTooltip)
                         .hoverTooltip(hoverTooltip);
@@ -247,16 +241,14 @@ public class TownyLayerManager {
                 }
 
                 // Call event
-                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(), multiPoly, optionsBuilder);
+                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(), parts, optionsBuilder);
                 Bukkit.getPluginManager().callEvent(event);
 
                 // Skip rendering the town for the world if it is cancelled.
                 if (event.isCancelled())
                     continue;
 
-                multiPoly.markerOptions(optionsBuilder.build());
-
-                worldProvider.addMarker(townKey, multiPoly);
+                worldProvider.addMultiPolyMarker(townKey, parts, optionsBuilder.build());
 
                 // Add outpost markers for the current world
                 renderOutpostMarker(tre, worldName, worldProvider, config.getIconSizeX(), config.getIconSizeY());
@@ -264,19 +256,18 @@ public class TownyLayerManager {
                 // Check if this is the proper world provider to add the town icon
                 if (homeBlockWorld.equals(worldName)) {
                     // Add icon markers
-                    Optional<Point> homeblockPoint = tre.getHomeBlockPoint();
-                    Key iconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
+                    Optional<Point2D> homeblockPoint = tre.getHomeBlockPoint();
+                    final String iconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
                     // Check if icon exists
-                    if (homeblockPoint.isPresent() && Pl3xMapProvider.get().iconRegistry().hasEntry(iconKey)) {
-                        Icon iconMarker = Marker.icon(homeblockPoint.get(), iconKey, config.getIconSizeX(), config.getIconSizeY());
+                    if (homeblockPoint.isPresent() && mapPlatform.hasIcon(iconKey)) {
+                        MarkerOptions iconOptions = MarkerOptions.builder()
+                                                                 .clickTooltip(clickTooltip)
+                                                                 .hoverTooltip(hoverTooltip)
+                                                                 .build();
 
-                        iconMarker.markerOptions(
-                                MarkerOptions.builder()
-                                .clickTooltip(clickTooltip)
-                                .hoverTooltip(hoverTooltip)
-                        );
-
-                        worldProvider.addMarker(townIconKey, iconMarker);
+                        worldProvider.addIconMarker(townIconKey, iconKey, homeblockPoint.get(),
+                                                    config.getIconSizeX(), config.getIconSizeY(),
+                                                    iconOptions);
                     }
                 }
             }
@@ -285,36 +276,30 @@ public class TownyLayerManager {
         renderedTowns.add(tre.getTownUUID());
     }
 
-    private void renderOutpostMarker(TownRenderEntry tre, String worldName, SimpleLayerProvider worldProvider, int iconSizeX, int iconSizeZ) {
+    private void renderOutpostMarker(TownRenderEntry tre, String worldName, MapLayer worldProvider, int iconSizeX, int iconSizeZ) {
         final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + tre.getTownUUID() + "_";
         // Delete previous town outpost icons
         int remOutpostNum = 1;
-        while (
-                worldProvider.removeMarker(
-                        Key.of(keyPrefix + remOutpostNum)
-                ) != null
-        ) {
+        while (worldProvider.removeMarker(keyPrefix + remOutpostNum)) {
             remOutpostNum++;
         }
 
         // Add new town outpost icons
         if (tre.hasOutpostSpawns()) {
-            final List<Point> outpostPoints = tre.getOutpostSpawnPoints().get(worldName);
+            final List<Point2D> outpostPoints = tre.getOutpostSpawnPoints().get(worldName);
 
             if (outpostPoints == null)
                 return;
 
             int outpostNum = 1;
-            for (Point outpostPoint : outpostPoints) {
-                Icon icon = Marker.icon(outpostPoint, OUTPOST_ICON, iconSizeX, iconSizeZ);
-                icon.markerOptions(
-                        MarkerOptions.builder()
-                                .clickTooltip(tre.getClickText())
-                                .hoverTooltip(tre.getHoverText())
-                );
+            for (Point2D outpostPoint : outpostPoints) {
+                MarkerOptions iconOptions = MarkerOptions.builder()
+                                                         .clickTooltip(tre.getClickText())
+                                                         .hoverTooltip(tre.getHoverText())
+                                                         .build();
 
-                Key outpostKey = Key.of(keyPrefix + outpostNum);
-                worldProvider.addMarker(outpostKey, icon);
+                worldProvider.addIconMarker(keyPrefix + outpostNum, OUTPOST_ICON, outpostPoint,
+                                            iconSizeX, iconSizeZ, iconOptions);
             }
         }
     }
@@ -373,19 +358,11 @@ public class TownyLayerManager {
     public void removeAllMarkers() {
         // Remove town markers based on key string comparison
         // This will also make sure to get rid of any deleted town's markers
-        for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
-            final SimpleLayerProvider worldProvider = entry.getValue();
-            Collection<Key> registeredTownKeys = new ArrayList<>();
-
-            for (Map.Entry<Key, Marker> markerEntry : worldProvider.registeredMarkers().entrySet()) {
-                final Key markerKey = markerEntry.getKey();
-                final String markerKeyStr = markerKey.getKey();
-                if (markerKeyStr.contains(TOWN_KEY_PREFIX)
-                        || markerKeyStr.contains(TOWN_ICON_KEY_PREFIX))
-                    registeredTownKeys.add(markerKey);
-            }
-
-            registeredTownKeys.forEach(worldProvider::removeMarker);
+        for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
+            final MapLayer worldProvider = entry.getValue();
+            worldProvider.removeMarkers(
+                    (markerKey) -> markerKey.contains(TOWN_KEY_PREFIX)  || markerKey.contains(TOWN_ICON_KEY_PREFIX)
+            );
         }
     }
 
@@ -396,12 +373,12 @@ public class TownyLayerManager {
     // Returns if the town was successfully unrendered
     public boolean removeTownMarker(UUID townUUID) {
         boolean unrendered = false;
-        Key townKey = Key.of(TOWN_KEY_PREFIX + townUUID);
-        Key townIconKey = Key.of(TOWN_ICON_KEY_PREFIX + townUUID);
+        final String townKey = TOWN_KEY_PREFIX + townUUID;
+        final String townIconKey = TOWN_ICON_KEY_PREFIX + townUUID;
 
-        for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
-            final SimpleLayerProvider worldProvider = entry.getValue();
-            unrendered |= worldProvider.removeMarker(townKey) != null;
+        for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
+            final MapLayer worldProvider = entry.getValue();
+            unrendered |= worldProvider.removeMarker(townKey);
             worldProvider.removeMarker(townIconKey);
         }
         renderedTowns.remove(townUUID);
@@ -415,43 +392,42 @@ public class TownyLayerManager {
         removeAllMarkers();
 
         // Unregister world providers and clear
-        Pl3xMap api = Pl3xMapProvider.get();
-        for (Map.Entry<String, SimpleLayerProvider> entry : worldProviders.entrySet()) {
+        for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
             World world = Bukkit.getWorld(entry.getKey());
             if (world == null)
                 continue;
 
-            MapWorld mapWorld = api.getWorldIfEnabled(world).orElse(null);
+            final MapWorld mapWorld = mapPlatform.getWorld(world);
+
             if (mapWorld == null)
                 continue;
 
-            mapWorld.layerRegistry().unregister(LAYER_KEY);
+            mapWorld.unregisterLayer(LAYER_KEY);
         }
 
         worldProviders.clear();
 
         // Unregister icons
-        Registry<BufferedImage> iconReg = api.iconRegistry();
-        if (iconReg.hasEntry(TOWN_ICON))
-            iconReg.unregister(TOWN_ICON);
+        if (mapPlatform.hasIcon(TOWN_ICON))
+            mapPlatform.unregisterIcon(TOWN_ICON);
 
-        if (iconReg.hasEntry(CAPITAL_ICON))
-            iconReg.unregister(CAPITAL_ICON);
+        if (mapPlatform.hasIcon(CAPITAL_ICON))
+            mapPlatform.unregisterIcon(CAPITAL_ICON);
 
-        if (iconReg.hasEntry(OUTPOST_ICON))
-            iconReg.unregister(OUTPOST_ICON);
+        if (mapPlatform.hasIcon(OUTPOST_ICON))
+            mapPlatform.unregisterIcon(OUTPOST_ICON);
     }
 
     // API Methods
 
     /**
-     * Get the {@link SimpleLayerProvider} that the Pl3xMap-Towny plugin uses for a specific world.
+     * Get the {@link MapLayer} that the Pl3xMap-Towny plugin uses for a specific world.
      *
      * @param worldName Name of the world.
      * @return the provider for the world if there is one, or {@code null} if there is not.
      */
     @Nullable
-    public SimpleLayerProvider getTownyWorldLayerProvider(@NotNull String worldName) {
+    public MapLayer getTownyWorldLayerProvider(@NotNull String worldName) {
         Validate.notNull(worldName);
 
         return worldProviders.get(worldName);

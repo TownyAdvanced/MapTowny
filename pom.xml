@@ -6,7 +6,7 @@
 
     <groupId>me.Silverwolfg11</groupId>
     <artifactId>Pl3xMap-Towny</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0-ALPHA</version>
     <packaging>jar</packaging>
 
     <name>Pl3xMap Towny</name>
@@ -85,8 +85,8 @@
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
         <repository>
-            <id>pl3x-repo</id>
-            <url>https://repo.pl3x.net/</url>
+            <id>squaremap-snapshots</id>
+            <url>https://repo.jpenilla.xyz/snapshots/</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -96,15 +96,16 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>23.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.pl3x.map</groupId>
-            <artifactId>pl3xmap-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.github.TownyAdvanced</groupId>
@@ -122,6 +123,12 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.4.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>xyz.jpenilla</groupId>
+            <artifactId>squaremap-api</artifactId>
+            <version>1.1.0-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

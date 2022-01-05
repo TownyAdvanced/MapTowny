@@ -27,11 +27,14 @@ import me.silverwolfg11.pl3xmaptowny.events.MapReloadEvent;
 import me.silverwolfg11.pl3xmaptowny.listeners.TownClaimListener;
 import me.silverwolfg11.pl3xmaptowny.managers.TownyLayerManager;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
+import me.silverwolfg11.pl3xmaptowny.platform.MapPlatform;
+import me.silverwolfg11.pl3xmaptowny.platform.squremap.SquareMapPlatform;
 import me.silverwolfg11.pl3xmaptowny.tasks.RenderTownsTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -39,6 +42,7 @@ import java.util.logging.Level;
 public final class Pl3xMapTowny extends JavaPlugin {
 
     private TownyLayerManager layerManager;
+    private MapPlatform mapPlatform;
     private MapConfig config;
 
     @Override
@@ -60,8 +64,18 @@ public final class Pl3xMapTowny extends JavaPlugin {
             return;
         }
 
+        // Try to load the map platform
+        mapPlatform = loadPlatform();
+
+        // No map platform found so disable
+        if (mapPlatform == null) {
+            getLogger().severe("Error no valid map plugin found! Valid map plugins: squaremap");
+            setEnabled(false);
+            return;
+        }
+
         // Load layer manager
-        layerManager = new TownyLayerManager(this);
+        layerManager = new TownyLayerManager(this, mapPlatform);
 
         // Register command
         TownyMapCommand commandExec = new TownyMapCommand(this);
@@ -86,6 +100,17 @@ public final class Pl3xMapTowny extends JavaPlugin {
             layerManager.close();
     }
 
+    // Load the appropriate map platform or the map plugin that Pl3xMapTowny should use.
+    // For right now this only supports SquareMap, but eventually should support Pl3xMap
+    @Nullable
+    private MapPlatform loadPlatform() {
+        if (Bukkit.getPluginManager().isPluginEnabled("squaremap")) {
+            return new SquareMapPlatform();
+        }
+
+        return null;
+    }
+
     @NotNull
     public MapConfig config() {
         return config;
@@ -100,7 +125,7 @@ public final class Pl3xMapTowny extends JavaPlugin {
         config = MapConfig.loadConfig(getDataFolder(), getLogger());
         Bukkit.getScheduler().cancelTasks(this);
         layerManager.close();
-        layerManager = new TownyLayerManager(this);
+        layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
         new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
     }

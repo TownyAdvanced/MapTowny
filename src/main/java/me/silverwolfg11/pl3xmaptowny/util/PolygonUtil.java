@@ -22,9 +22,9 @@
 
 package me.silverwolfg11.pl3xmaptowny.util;
 
+import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
 import me.silverwolfg11.pl3xmaptowny.objects.StaticTB;
 import me.silverwolfg11.pl3xmaptowny.objects.TBCluster;
-import net.pl3x.map.api.Point;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -41,15 +41,15 @@ public class PolygonUtil {
     // Forms a polygon given a townblock cluster
     // Returns
     @Nullable
-    public static List<Point> formPolyFromCluster(TBCluster cluster, final int tbSize) {
+    public static List<Point2D> formPolyFromCluster(TBCluster cluster, final int tbSize) {
 
         StaticTB rightMostBlock = findRightMost(cluster);
 
         // Path algorithm inserts unnecessary duplicate points
-        Set<Point> poly = new LinkedHashSet<>();
+        Set<Point2D> poly = new LinkedHashSet<>();
 
         // Origin point is the upper left of the townblock
-        Point originPoint = rightMostBlock.getUL(tbSize);
+        Point2D originPoint = rightMostBlock.getUL(tbSize);
 
         Queue<Long> townBlocksToVisit = new ArrayDeque<>(1);
         townBlocksToVisit.add(rightMostBlock.toLong());
@@ -75,7 +75,7 @@ public class PolygonUtil {
 
             switch (currDir) {
                 case RIGHT: {
-                    Point upperLeft = townBlock.getUL(tbSize);
+                    Point2D upperLeft = townBlock.getUL(tbSize);
                     // We approach the origin from the right so verify we are not back at the origin
                     if (!isOriginPoint && upperLeft.equals(originPoint))
                         continue;
@@ -200,7 +200,7 @@ public class PolygonUtil {
             }
         }
 
-        List<Point> polyList = new ArrayList<>(poly);
+        List<Point2D> polyList = new ArrayList<>(poly);
 
         // Help GC
         poly.clear();

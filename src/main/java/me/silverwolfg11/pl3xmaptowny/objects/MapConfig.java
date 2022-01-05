@@ -30,8 +30,6 @@ import me.Silverwolfg11.CommentConfig.node.ParentConfigNode;
 import me.Silverwolfg11.CommentConfig.serialization.ClassDeserializer;
 import me.Silverwolfg11.CommentConfig.serialization.ClassSerializer;
 import me.Silverwolfg11.CommentConfig.serialization.NodeSerializer;
-import net.pl3x.map.api.SimpleLayerProvider;
-import net.pl3x.map.api.marker.MarkerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,14 +173,14 @@ public class MapConfig {
     }
 
     @NotNull
-    public SimpleLayerProvider buildLayerProvider() {
-        return SimpleLayerProvider
-                .builder(layerInfo.name)
-                .showControls(layerInfo.showControls)
-                .defaultHidden(layerInfo.defaultHidden)
-                .layerPriority(layerInfo.layerPriority)
-                .zIndex(layerInfo.zIndex)
-                .build();
+    public LayerOptions getLayerOptions() {
+        return new LayerOptions(
+                layerInfo.name,
+                layerInfo.showControls,
+                layerInfo.defaultHidden,
+                layerInfo.layerPriority,
+                layerInfo.zIndex
+        );
     }
 
     @NotNull

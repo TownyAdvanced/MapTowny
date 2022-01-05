@@ -22,7 +22,6 @@
 
 package me.silverwolfg11.pl3xmaptowny.objects;
 
-import net.pl3x.map.api.Point;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -58,27 +57,27 @@ public class StaticTB {
 
     // Get lower left
     @NotNull
-    public Point getLL(int tbSize) {
-        return Point.of(getLLX(tbSize), getLLZ(tbSize));
+    public Point2D getLL(int tbSize) {
+        return Point2D.of(getLLX(tbSize), getLLZ(tbSize));
     }
 
     // Get lower right
     @NotNull
-    public Point getLR(int tbSize) {
-        return Point.of(getLLX(tbSize) + (tbSize - 1), getLLZ(tbSize));
+    public Point2D getLR(int tbSize) {
+        return Point2D.of(getLLX(tbSize) + (tbSize - 1), getLLZ(tbSize));
     }
 
     // Get upper left
     @NotNull
-    public Point getUL(int tbSize) {
-        return Point.of(getLLX(tbSize), getLLZ(tbSize) + (tbSize - 1));
+    public Point2D getUL(int tbSize) {
+        return Point2D.of(getLLX(tbSize), getLLZ(tbSize) + (tbSize - 1));
     }
 
     // Get upper right
     @NotNull
-    public Point getUR(int tbSize) {
+    public Point2D getUR(int tbSize) {
         final int offset = tbSize - 1;
-        return Point.of(getLLX(tbSize) + offset, getLLZ(tbSize) + offset);
+        return Point2D.of(getLLX(tbSize) + offset, getLLZ(tbSize) + offset);
     }
 
     public long toLong() {

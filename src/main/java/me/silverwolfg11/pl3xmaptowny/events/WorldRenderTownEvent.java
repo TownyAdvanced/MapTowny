@@ -22,14 +22,16 @@
 
 package me.silverwolfg11.pl3xmaptowny.events;
 
-import net.pl3x.map.api.marker.MarkerOptions;
-import net.pl3x.map.api.marker.MultiPolygon;
+import me.silverwolfg11.pl3xmaptowny.objects.MarkerOptions;
+import me.silverwolfg11.pl3xmaptowny.objects.Polygon;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,17 +46,17 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     private final String worldName;
     private final String townName;
     private final UUID townUUID;
-    private final MultiPolygon multiPolygon;
+    private final List<Polygon> polygons;
     private final MarkerOptions.Builder markerOptionsBuilder;
 
     private boolean cancelled = false;
 
-    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, MultiPolygon poly, MarkerOptions.Builder markerOptionsBuilder) {
+    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, List<Polygon> polys, MarkerOptions.Builder markerOptionsBuilder) {
         super(!Bukkit.isPrimaryThread());
         this.worldName = worldName;
         this.townName = townName;
         this.townUUID = townUUID;
-        this.multiPolygon = poly;
+        this.polygons = polys;
         this.markerOptionsBuilder = markerOptionsBuilder;
     }
 
@@ -74,8 +76,8 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     }
 
     @NotNull
-    public MultiPolygon getMultiPolygon() {
-        return multiPolygon;
+    public List<Polygon> getMultiPolygon() {
+        return polygons;
     }
 
     @NotNull

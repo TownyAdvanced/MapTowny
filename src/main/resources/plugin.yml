@@ -2,7 +2,8 @@ name: Pl3xMap-Towny
 version: ${project.version}
 main: me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny
 api-version: 1.16
-depend: [ Pl3xMap, Towny ]
+depend: [ Towny ]
+softdepend: [ squaremap ]
 authors: [ Silverwolfg11 ]
 description: A Pl3x Map addon to support Towny
 
