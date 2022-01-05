@@ -83,7 +83,7 @@ public class SquareMapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public void addMultiPolyMarker(String markerKey, List<Polygon> polygons, MarkerOptions markerOptions) {
+    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
         List<MultiPolygon.MultiPolygonPart> parts = new ArrayList<>(polygons.size());
         for (Polygon polygon : polygons) {
             List<Point> polyPoints = toPoints(polygon.getPoints());
@@ -100,7 +100,7 @@ public class SquareMapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public void addIconMarker(String markerKey, String iconKey, Point2D iconLoc, int sizeX, int sizeY, MarkerOptions markerOptions) {
+    public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
         Icon icon = Marker.icon(toPoint(iconLoc), Key.of(iconKey), sizeX, sizeY);
         // Convert marker options
         xyz.jpenilla.squaremap.api.marker.MarkerOptions iconOptions = xyz.jpenilla.squaremap.api.marker.MarkerOptions.builder()
@@ -113,12 +113,12 @@ public class SquareMapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public boolean removeMarker(String markerKey) {
+    public boolean removeMarker(@NotNull String markerKey) {
         return layerProvider.removeMarker(Key.of(markerKey)) != null;
     }
 
     @Override
-    public void removeMarkers(Predicate<String> markerKeyFilter) {
+    public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
         List<Key> markersToRemove = layerProvider.registeredMarkers().keySet().stream()
                 .filter(k -> markerKeyFilter.test(k.getKey()))
                 .collect(Collectors.toList());

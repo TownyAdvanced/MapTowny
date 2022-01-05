@@ -25,6 +25,8 @@ package me.silverwolfg11.pl3xmaptowny.platform;
 import me.silverwolfg11.pl3xmaptowny.objects.MarkerOptions;
 import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
 import me.silverwolfg11.pl3xmaptowny.objects.Polygon;
+import org.checkerframework.checker.units.qual.N;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -40,7 +42,7 @@ public interface MapLayer {
      * @param polygons List of polygons to associate with the marker.
      * @param markerOptions Options influencing the style of the marker.
      */
-    void addMultiPolyMarker(String markerKey, List<Polygon> polygons, MarkerOptions markerOptions);
+    void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions);
 
     /**
      * Add an icon marker to the layer.
@@ -52,7 +54,9 @@ public interface MapLayer {
      * @param sizeY Icon height.
      * @param markerOptions Options influencing the style of the marker.
      */
-    void addIconMarker(String markerKey, String iconKey, Point2D iconLoc, int sizeX, int sizeY, MarkerOptions markerOptions);
+    void addIconMarker(@NotNull String markerKey, @NotNull String iconKey,
+                       @NotNull Point2D iconLoc, int sizeX, int sizeY,
+                       @NotNull MarkerOptions markerOptions);
 
     /**
      * Remove a marker associated with the specific marker key.
@@ -60,12 +64,12 @@ public interface MapLayer {
      * @param markerKey Unique marker key.
      * @return whether a marker matching the marker key was removed.
      */
-    boolean removeMarker(String markerKey);
+    boolean removeMarker(@NotNull String markerKey);
 
     /**
      * Remove all markers that have keys that pass the filter.
      *
      * @param markerKeyFilter Filter acting upon the marker's unique key.
      */
-    void removeMarkers(Predicate<String> markerKeyFilter);
+    void removeMarkers(@NotNull Predicate<String> markerKeyFilter);
 }

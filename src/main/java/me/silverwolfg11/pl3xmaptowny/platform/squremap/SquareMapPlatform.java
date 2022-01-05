@@ -36,7 +36,7 @@ import java.awt.image.BufferedImage;
 
 public class SquareMapPlatform implements MapPlatform {
     @Override
-    public String getPlatformName() {
+    public @NotNull String getPlatformName() {
         return "squaremap";
     }
 

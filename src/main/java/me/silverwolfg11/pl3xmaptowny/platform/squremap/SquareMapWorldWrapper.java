@@ -41,7 +41,7 @@ public class SquareMapWorldWrapper implements MapWorld {
     }
 
     @Override
-    public MapLayer registerLayer(@NotNull String layerKey, LayerOptions options) {
+    public @NotNull MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options) {
         SimpleLayerProvider layerProvider = SimpleLayerProvider.builder(options.getName())
                 .defaultHidden(options.isDefaultHidden())
                 .layerPriority(options.getLayerPriority())

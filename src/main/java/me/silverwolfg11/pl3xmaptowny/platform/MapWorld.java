@@ -33,6 +33,7 @@ public interface MapWorld {
      * @param options Options on how the layer should be set up.
      * @return a layer wrapper to the specific layer.
      */
+    @NotNull
     MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options);
 
     /**
