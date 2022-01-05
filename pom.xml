@@ -4,14 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.Silverwolfg11</groupId>
-    <artifactId>Pl3xMap-Towny</artifactId>
+    <groupId>me.silverwolfg11</groupId>
+    <artifactId>MapTowny</artifactId>
     <version>2.0.0-ALPHA</version>
     <packaging>jar</packaging>
 
-    <name>Pl3xMap Towny</name>
+    <name>MapTowny</name>
 
-    <description>A Pl3x Map addon to support Towny</description>
+    <description>A web-map addon plugin to support Towny.</description>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,7 +53,7 @@
                     <relocations>
                         <relocation>
                             <pattern>me.Silverwolfg11.CommentConfig</pattern>
-                            <shadedPattern>me.silverwolfg11.pl3xmaptowny.commentconfig</shadedPattern>
+                            <shadedPattern>me.silverwolfg11.maptowny.commentconfig</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

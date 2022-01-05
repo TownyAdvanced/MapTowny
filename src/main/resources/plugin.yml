@@ -1,40 +1,39 @@
-name: Pl3xMap-Towny
+name: MapTowny
 version: ${project.version}
-main: me.silverwolfg11.pl3xmaptowny.Pl3xMapTowny
+main: me.silverwolfg11.maptowny.MapTowny
 api-version: 1.16
 depend: [ Towny ]
 softdepend: [ squaremap, Pl3xMap ]
 authors: [ Silverwolfg11 ]
-description: A Pl3x Map addon to support Towny
+description: A web-map addon to support Towny.
 
 commands:
-  pl3xmaptowny:
-    description: Command for Pl3xMap-Towny
-    aliases: [plexmaptowny, plextowny]
-    permission: pl3xmaptowny.use
+  maptowny:
+    description: Command for MapTowny
+    permission: maptowny.use
 
 permissions:
-  pl3xmaptowny.admin:
-    description: Admin permission for Pl3xMap-Towny
+  maptowny.admin:
+    description: Admin permission for MapTowny
     default: false
     children:
-      pl3xmaptowny.use: true
-      pl3xmaptowny.reload: true
-      pl3xmaptowny.render: true
-      pl3xmaptowny.unrender: true
+      maptowny.use: true
+      maptowny.reload: true
+      maptowny.render: true
+      maptowny.unrender: true
 
-  pl3xmaptowny.use:
-    description: Permission to use the Pl3xMap-Towny command
+  maptowny.use:
+    description: Permission to use the MapTowny command
     default: op
 
-  pl3xmaptowny.reload:
-    description: Allows access to sub-cmd to reload Pl3xMap-Towny
+  maptowny.reload:
+    description: Allows access to sub-cmd to reload MapTowny
     default: op
 
-  pl3xmaptowny.render:
-    description: Allows access to sub-cmd to render a town on the Pl3xMap
+  maptowny.render:
+    description: Allows access to sub-cmd to render a town on the web-map.
     default: op
 
-  pl3xmaptowny.unrender:
-    description: Allows access to sub-cmd to unrender a town on the Pl3xMap
+  maptowny.unrender:
+    description: Allows access to sub-cmd to unrender a town on the web-map.
     default: op
