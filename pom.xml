@@ -53,7 +53,7 @@
                     <relocations>
                         <relocation>
                             <pattern>me.Silverwolfg11.CommentConfig</pattern>
-                            <shadedPattern>me.Silverwolfg11.pl3xmaptowny.commentconfig</shadedPattern>
+                            <shadedPattern>me.silverwolfg11.pl3xmaptowny.commentconfig</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -111,6 +111,7 @@
             <groupId>com.github.TownyAdvanced</groupId>
             <artifactId>Towny</artifactId>
             <version>0.97.1.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.github.silverwolfg11</groupId>
@@ -129,6 +130,23 @@
             <artifactId>squaremap-api</artifactId>
             <version>1.1.0-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.NeumimTo</groupId>
+            <artifactId>Pl3xMap</artifactId>
+            <version>1.18-2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

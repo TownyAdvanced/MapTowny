@@ -28,6 +28,7 @@ import me.silverwolfg11.pl3xmaptowny.listeners.TownClaimListener;
 import me.silverwolfg11.pl3xmaptowny.managers.TownyLayerManager;
 import me.silverwolfg11.pl3xmaptowny.objects.MapConfig;
 import me.silverwolfg11.pl3xmaptowny.platform.MapPlatform;
+import me.silverwolfg11.pl3xmaptowny.platform.pl3xmap.Pl3xMapPlatform;
 import me.silverwolfg11.pl3xmaptowny.platform.squremap.SquareMapPlatform;
 import me.silverwolfg11.pl3xmaptowny.tasks.RenderTownsTask;
 import org.bukkit.Bukkit;
@@ -69,7 +70,7 @@ public final class Pl3xMapTowny extends JavaPlugin {
 
         // No map platform found so disable
         if (mapPlatform == null) {
-            getLogger().severe("Error no valid map plugin found! Valid map plugins: squaremap");
+            getLogger().severe("Error no valid map plugin found! Valid map plugins: squaremap or Pl3xMap");
             setEnabled(false);
             return;
         }
@@ -101,10 +102,13 @@ public final class Pl3xMapTowny extends JavaPlugin {
     }
 
     // Load the appropriate map platform or the map plugin that Pl3xMapTowny should use.
-    // For right now this only supports SquareMap, but eventually should support Pl3xMap
+    // For right now this only supports squaremap and Pl3xMap
     @Nullable
     private MapPlatform loadPlatform() {
-        if (Bukkit.getPluginManager().isPluginEnabled("squaremap")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("Pl3xMap")) {
+            return new Pl3xMapPlatform();
+        }
+        else if (Bukkit.getPluginManager().isPluginEnabled("squaremap")) {
             return new SquareMapPlatform();
         }
 
