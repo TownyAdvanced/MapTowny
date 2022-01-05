@@ -31,11 +31,41 @@ import java.util.function.Predicate;
 
 public interface MapLayer {
 
+    /**
+     * Add a multi-polygon marker to the layer.
+     *
+     * The platform is associated with rendering the marker.
+     *
+     * @param markerKey Unique marker key to associate with the marker.
+     * @param polygons List of polygons to associate with the marker.
+     * @param markerOptions Options influencing the style of the marker.
+     */
     void addMultiPolyMarker(String markerKey, List<Polygon> polygons, MarkerOptions markerOptions);
 
+    /**
+     * Add an icon marker to the layer.
+     *
+     * @param markerKey Unique marker key to associate with the marker.
+     * @param iconKey Unique icon key to tell the platform to render a specific image associated with the icon key.
+     * @param iconLoc Location to place the icon on the map.
+     * @param sizeX Icon width.
+     * @param sizeY Icon height.
+     * @param markerOptions Options influencing the style of the marker.
+     */
     void addIconMarker(String markerKey, String iconKey, Point2D iconLoc, int sizeX, int sizeY, MarkerOptions markerOptions);
 
+    /**
+     * Remove a marker associated with the specific marker key.
+     *
+     * @param markerKey Unique marker key.
+     * @return whether a marker matching the marker key was removed.
+     */
     boolean removeMarker(String markerKey);
 
+    /**
+     * Remove all markers that have keys that pass the filter.
+     *
+     * @param markerKeyFilter Filter acting upon the marker's unique key.
+     */
     void removeMarkers(Predicate<String> markerKeyFilter);
 }

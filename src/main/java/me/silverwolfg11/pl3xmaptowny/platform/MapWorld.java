@@ -27,8 +27,19 @@ import org.jetbrains.annotations.NotNull;
 
 public interface MapWorld {
 
+    /**
+     * Register a specific layer on top of the world.
+     * @param layerKey Unique layer key to associate with the layer.
+     * @param options Options on how the layer should be set up.
+     * @return a layer wrapper to the specific layer.
+     */
     MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options);
 
+    /**
+     * Unregister a layer associated with the layer key.
+     *
+     * @param layerKey Unique layer key.
+     */
     void unregisterLayer(@NotNull String layerKey);
 
 }

@@ -28,20 +28,56 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 
+// Simple interface to connect to an arbitrary web-map provider
 public interface MapPlatform {
+    /**
+     * Get the platform name which is most likely the name of the web-map plugin.
+     *
+     * @return platform name.
+     */
+    @NotNull String getPlatformName();
 
-    String getPlatformName();
-
+    /**
+     * Check if the map plugin renders the specific world.
+     *
+     * @param world Bukkit world to check.
+     * @return whether the world is enabled to rendered.
+     */
     boolean isWorldEnabled(@NotNull World world);
 
+    /**
+     * Get a world wrapper associated by a specific platform.
+     * @param world Bukkit world
+     * @return MapWorld associated with the Bukkit world.
+     */
     @Nullable
     MapWorld getWorld(@NotNull World world);
 
     // Icon Related Functions
+
+    /**
+     * Associate a specific icon key with an image.
+     *
+     * @param iconKey Unique string specific to the image icon.
+     * @param icon Image to associate with.
+     */
     void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon);
 
+    /**
+     * Check if the platform has an icon matching the specific string.
+     *
+     * @param iconKey unique icon string.
+     * @return if platform has icon associated with the icon key.
+     */
     boolean hasIcon(@NotNull String iconKey);
 
+    /**
+     * Unregister an icon.
+     *
+     * @param iconKey Unique string representing the icon key.
+     * @return whether the platform successfully unregistered an icon matching a string.
+     *         If no icon was associated with the icon string, then this will return false.
+     */
     boolean unregisterIcon(@NotNull String iconKey);
 
 }
