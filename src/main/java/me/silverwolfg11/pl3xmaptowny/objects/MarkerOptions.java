@@ -1,7 +1,7 @@
 package me.silverwolfg11.pl3xmaptowny.objects;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.Objects;
@@ -35,13 +35,13 @@ public final class MarkerOptions {
 
     private MarkerOptions(
             final boolean stroke,
-            final @NonNull Color strokeColor,
+            final @NotNull Color strokeColor,
             final int strokeWeight,
             final double strokeOpacity,
             final boolean fill,
             final @Nullable Color fillColor,
             final double fillOpacity,
-            final @NonNull FillRule fillRule,
+            final @NotNull FillRule fillRule,
             final @Nullable String clickTooltip,
             final @Nullable String hoverTooltip
     ) {
@@ -62,7 +62,7 @@ public final class MarkerOptions {
      *
      * @return default options
      */
-    public static @NonNull MarkerOptions defaultOptions() {
+    public static @NotNull MarkerOptions defaultOptions() {
         return MarkerOptions.DEFAULT_OPTIONS;
     }
 
@@ -80,7 +80,7 @@ public final class MarkerOptions {
      *
      * @return color
      */
-    public @NonNull Color strokeColor() {
+    public @NotNull Color strokeColor() {
         return this.strokeColor;
     }
 
@@ -134,7 +134,7 @@ public final class MarkerOptions {
      *
      * @return fill mode
      */
-    public @NonNull FillRule fillRule() {
+    public @NotNull FillRule fillRule() {
         return this.fillRule;
     }
 
@@ -165,7 +165,7 @@ public final class MarkerOptions {
      *
      * @return new builder
      */
-    public @NonNull Builder asBuilder() {
+    public @NotNull Builder asBuilder() {
         return new Builder(
                 this.stroke,
                 this.strokeColor,
@@ -185,7 +185,7 @@ public final class MarkerOptions {
      *
      * @return new builder
      */
-    public static @NonNull Builder builder() {
+    public static @NotNull Builder builder() {
         return new Builder();
     }
 
@@ -245,13 +245,13 @@ public final class MarkerOptions {
 
         private Builder(
                 final boolean stroke,
-                final @NonNull Color strokeColor,
+                final @NotNull Color strokeColor,
                 final int strokeWeight,
                 final double strokeOpacity,
                 final boolean fill,
                 final @Nullable Color fillColor,
                 final double fillOpacity,
-                final @NonNull FillRule fillRule,
+                final @NotNull FillRule fillRule,
                 final @Nullable String clickTooltip,
                 final @Nullable String hoverTooltip
         ) {
@@ -275,7 +275,7 @@ public final class MarkerOptions {
          * @param stroke new stroke
          * @return this builder
          */
-        public @NonNull Builder stroke(final boolean stroke) {
+        public @NotNull Builder stroke(final boolean stroke) {
             this.stroke = stroke;
             return this;
         }
@@ -288,7 +288,7 @@ public final class MarkerOptions {
          * @param color new color
          * @return this builder
          */
-        public @NonNull Builder strokeColor(final @NonNull Color color) {
+        public @NotNull Builder strokeColor(final @NotNull Color color) {
             this.strokeColor = color;
             return this;
         }
@@ -301,7 +301,7 @@ public final class MarkerOptions {
          * @param weight new weight
          * @return this builder
          */
-        public @NonNull Builder strokeWeight(final int weight) {
+        public @NotNull Builder strokeWeight(final int weight) {
             this.strokeWeight = weight;
             return this;
         }
@@ -314,7 +314,7 @@ public final class MarkerOptions {
          * @param opacity new opacity
          * @return this builder
          */
-        public @NonNull Builder strokeOpacity(final double opacity) {
+        public @NotNull Builder strokeOpacity(final double opacity) {
             this.strokeOpacity = opacity;
             return this;
         }
@@ -327,7 +327,7 @@ public final class MarkerOptions {
          * @param fill new fill
          * @return this builder
          */
-        public @NonNull Builder fill(final boolean fill) {
+        public @NotNull Builder fill(final boolean fill) {
             this.fill = fill;
             return this;
         }
@@ -340,7 +340,7 @@ public final class MarkerOptions {
          * @param color new color
          * @return this builder
          */
-        public @NonNull Builder fillColor(final @NonNull Color color) {
+        public @NotNull Builder fillColor(final @NotNull Color color) {
             this.fillColor = color;
             return this;
         }
@@ -353,7 +353,7 @@ public final class MarkerOptions {
          * @param opacity new opacity
          * @return this builder
          */
-        public @NonNull Builder fillOpacity(final double opacity) {
+        public @NotNull Builder fillOpacity(final double opacity) {
             this.fillOpacity = opacity;
             return this;
         }
@@ -366,7 +366,7 @@ public final class MarkerOptions {
          * @param fillRule new fill rule
          * @return this builder
          */
-        public @NonNull Builder fillRule(final @NonNull FillRule fillRule) {
+        public @NotNull Builder fillRule(final @NotNull FillRule fillRule) {
             this.fillRule = fillRule;
             return this;
         }
@@ -379,7 +379,7 @@ public final class MarkerOptions {
          * @param tooltip new tooltip
          * @return this builder
          */
-        public @NonNull Builder clickTooltip(final @Nullable String tooltip) {
+        public @NotNull Builder clickTooltip(final @Nullable String tooltip) {
             this.clickTooltip = tooltip;
             return this;
         }
@@ -392,7 +392,7 @@ public final class MarkerOptions {
          * @param tooltip new tooltip
          * @return this builder
          */
-        public @NonNull Builder hoverTooltip(final @Nullable String tooltip) {
+        public @NotNull Builder hoverTooltip(final @Nullable String tooltip) {
             this.hoverTooltip = tooltip;
             return this;
         }
@@ -402,7 +402,7 @@ public final class MarkerOptions {
          *
          * @return new marker options
          */
-        public @NonNull MarkerOptions build() {
+        public @NotNull MarkerOptions build() {
             return new MarkerOptions(
                     this.stroke,
                     this.strokeColor,

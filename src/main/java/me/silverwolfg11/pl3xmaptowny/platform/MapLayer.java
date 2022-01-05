@@ -25,7 +25,6 @@ package me.silverwolfg11.pl3xmaptowny.platform;
 import me.silverwolfg11.pl3xmaptowny.objects.MarkerOptions;
 import me.silverwolfg11.pl3xmaptowny.objects.Point2D;
 import me.silverwolfg11.pl3xmaptowny.objects.Polygon;
-import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
