@@ -22,6 +22,7 @@ public final class MarkerOptions {
 
     private static final MarkerOptions DEFAULT_OPTIONS = builder().build();
 
+    private final String name;
     private final boolean stroke;
     private final Color strokeColor;
     private final int strokeWeight;
@@ -34,6 +35,7 @@ public final class MarkerOptions {
     private final String hoverTooltip;
 
     private MarkerOptions(
+            final String name,
             final boolean stroke,
             final @NotNull Color strokeColor,
             final int strokeWeight,
@@ -45,6 +47,7 @@ public final class MarkerOptions {
             final @Nullable String clickTooltip,
             final @Nullable String hoverTooltip
     ) {
+        this.name = name;
         this.stroke = stroke;
         this.strokeColor = strokeColor;
         this.strokeWeight = strokeWeight;
@@ -64,6 +67,16 @@ public final class MarkerOptions {
      */
     public static @NotNull MarkerOptions defaultOptions() {
         return MarkerOptions.DEFAULT_OPTIONS;
+    }
+
+    /**
+     * Get the plain-text name of the marker.
+     * Also known as the marker label.
+     *
+     * @return plain-text name of the marker.
+     */
+    public String name() {
+        return name;
     }
 
     /**
@@ -229,6 +242,7 @@ public final class MarkerOptions {
      */
     public static final class Builder {
 
+        private String name = null;
         private boolean stroke = true;
         private Color strokeColor = Color.BLUE;
         private int strokeWeight = 3;
@@ -265,6 +279,18 @@ public final class MarkerOptions {
             this.fillRule = fillRule;
             this.clickTooltip = clickTooltip;
             this.hoverTooltip = hoverTooltip;
+        }
+
+        /**
+         * Set the name of the marker.
+         * Also known as the marker label.
+         *
+         * @param name name of the marker.
+         * @return this builder
+         */
+        public @NotNull Builder name(final @NotNull String name) {
+            this.name = name;
+            return this;
         }
 
         /**
@@ -404,6 +430,7 @@ public final class MarkerOptions {
          */
         public @NotNull MarkerOptions build() {
             return new MarkerOptions(
+                    this.name,
                     this.stroke,
                     this.strokeColor,
                     this.strokeWeight,

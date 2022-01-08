@@ -28,6 +28,7 @@ import me.silverwolfg11.maptowny.listeners.TownClaimListener;
 import me.silverwolfg11.maptowny.managers.TownyLayerManager;
 import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.dynmap.DynmapPlatform;
 import me.silverwolfg11.maptowny.platform.pl3xmap.Pl3xMapPlatform;
 import me.silverwolfg11.maptowny.platform.squremap.SquareMapPlatform;
 import me.silverwolfg11.maptowny.tasks.RenderTownsTask;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 
 public final class MapTowny extends JavaPlugin {
@@ -70,7 +72,7 @@ public final class MapTowny extends JavaPlugin {
 
         // No map platform found so disable
         if (mapPlatform == null) {
-            getLogger().severe("Error no valid map plugin found! Valid map plugins: squaremap or Pl3xMap");
+            getLogger().severe("Error no valid map plugin found! Valid map plugins: Pl3xMap, squaremap, dynmap");
             setEnabled(false);
             return;
         }
@@ -105,11 +107,16 @@ public final class MapTowny extends JavaPlugin {
     // For right now this only supports squaremap and Pl3xMap
     @Nullable
     private MapPlatform loadPlatform() {
-        if (Bukkit.getPluginManager().isPluginEnabled("Pl3xMap")) {
+        Predicate<String> pluginEnabled = (pluginName) -> Bukkit.getPluginManager().isPluginEnabled(pluginName);
+
+        if (pluginEnabled.test("Pl3xMap")) {
             return new Pl3xMapPlatform();
         }
-        else if (Bukkit.getPluginManager().isPluginEnabled("squaremap")) {
+        else if (pluginEnabled.test("squaremap")) {
             return new SquareMapPlatform();
+        }
+        else if (pluginEnabled.test("dynmap")) {
+            return new DynmapPlatform();
         }
 
         return null;

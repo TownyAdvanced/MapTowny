@@ -216,6 +216,7 @@ public class TownyLayerManager {
 
             if (!parts.isEmpty()) {
                 MarkerOptions.Builder optionsBuilder = config.buildMarkerOptions()
+                        .name(tre.getTownName())
                         .clickTooltip(clickTooltip)
                         .hoverTooltip(hoverTooltip);
 
@@ -261,6 +262,7 @@ public class TownyLayerManager {
                     // Check if icon exists
                     if (homeblockPoint.isPresent() && mapPlatform.hasIcon(iconKey)) {
                         MarkerOptions iconOptions = MarkerOptions.builder()
+                                                                 .name(tre.getTownName())
                                                                  .clickTooltip(clickTooltip)
                                                                  .hoverTooltip(hoverTooltip)
                                                                  .build();
@@ -294,6 +296,7 @@ public class TownyLayerManager {
             int outpostNum = 1;
             for (Point2D outpostPoint : outpostPoints) {
                 MarkerOptions iconOptions = MarkerOptions.builder()
+                                                         .name(tre.getTownName())
                                                          .clickTooltip(tre.getClickText())
                                                          .hoverTooltip(tre.getHoverText())
                                                          .build();

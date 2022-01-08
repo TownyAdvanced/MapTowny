@@ -3,7 +3,7 @@ version: ${project.version}
 main: me.silverwolfg11.maptowny.MapTowny
 api-version: 1.16
 depend: [ Towny ]
-softdepend: [ squaremap, Pl3xMap ]
+softdepend: [ squaremap, Pl3xMap, dynmap ]
 authors: [ Silverwolfg11 ]
 description: A web-map addon to support Towny.
 
