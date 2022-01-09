@@ -77,6 +77,8 @@ public final class MapTowny extends JavaPlugin {
             return;
         }
 
+        getLogger().info("Using web-map plugin: " + mapPlatform.getPlatformName());
+
         // Load layer manager
         layerManager = new TownyLayerManager(this, mapPlatform);
 
