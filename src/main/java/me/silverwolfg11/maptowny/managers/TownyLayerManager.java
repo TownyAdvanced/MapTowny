@@ -279,13 +279,10 @@ public class TownyLayerManager {
     }
 
     private void renderOutpostMarker(TownRenderEntry tre, String worldName, MapLayer worldProvider, int iconSizeX, int iconSizeZ) {
-        final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + tre.getTownUUID() + "_";
         // Delete previous town outpost icons
-        int remOutpostNum = 1;
-        while (worldProvider.removeMarker(keyPrefix + remOutpostNum)) {
-            remOutpostNum++;
-        }
+        unrenderOutpostMarkers(worldProvider, worldName, tre.getTownUUID());
 
+        final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + tre.getTownUUID() + "_";
         // Add new town outpost icons
         if (tre.hasOutpostSpawns()) {
             final List<Point2D> outpostPoints = tre.getOutpostSpawnPoints().get(worldName);
@@ -304,6 +301,14 @@ public class TownyLayerManager {
                 worldProvider.addIconMarker(keyPrefix + outpostNum, OUTPOST_ICON, outpostPoint,
                                             iconSizeX, iconSizeZ, iconOptions);
             }
+        }
+    }
+
+    private void unrenderOutpostMarkers(MapLayer mapLayer, String worldName, UUID townUUID) {
+        final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + townUUID + "_";
+        int outpostNum = 1;
+        while (mapLayer.removeMarker(keyPrefix + outpostNum)) {
+            outpostNum++;
         }
     }
 
@@ -380,9 +385,11 @@ public class TownyLayerManager {
         final String townIconKey = TOWN_ICON_KEY_PREFIX + townUUID;
 
         for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
-            final MapLayer worldProvider = entry.getValue();
-            unrendered |= worldProvider.removeMarker(townKey);
-            worldProvider.removeMarker(townIconKey);
+            final String worldName = entry.getKey();
+            final MapLayer mapLayer = entry.getValue();
+            unrendered |= mapLayer.removeMarker(townKey);
+            mapLayer.removeMarker(townIconKey);
+            unrenderOutpostMarkers(mapLayer, worldName, townUUID);
         }
         renderedTowns.remove(townUUID);
         return unrendered;
