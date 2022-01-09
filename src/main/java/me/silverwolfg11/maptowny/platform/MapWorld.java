@@ -25,10 +25,16 @@ package me.silverwolfg11.maptowny.platform;
 import me.silverwolfg11.maptowny.objects.LayerOptions;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An interface for a specific world on a web-map.
+ *
+ * @since 2.0.0
+ */
 public interface MapWorld {
 
     /**
      * Register a specific layer on top of the world.
+     *
      * @param layerKey Unique layer key to associate with the layer.
      * @param options Options on how the layer should be set up.
      * @return a layer wrapper to the specific layer.

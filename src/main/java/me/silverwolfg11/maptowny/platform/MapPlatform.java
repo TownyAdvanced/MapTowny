@@ -28,7 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 
-// Simple interface to connect to an arbitrary web-map provider
+/**
+ * Simple interface to connect to an arbitrary web-map plugin.
+ *
+ * @since 2.0.0
+ */
 public interface MapPlatform {
     /**
      * Get the platform name which is most likely the name of the web-map plugin.
@@ -58,6 +62,8 @@ public interface MapPlatform {
     /**
      * Associate a specific icon key with an image.
      *
+     * NOTE: Some platforms may only accept specific image types.
+     *
      * @param iconKey Unique string specific to the image icon.
      * @param icon Image to associate with.
      */
@@ -67,7 +73,7 @@ public interface MapPlatform {
      * Check if the platform has an icon matching the specific string.
      *
      * @param iconKey unique icon string.
-     * @return if platform has icon associated with the icon key.
+     * @return if platform has an icon associated with the icon key.
      */
     boolean hasIcon(@NotNull String iconKey);
 

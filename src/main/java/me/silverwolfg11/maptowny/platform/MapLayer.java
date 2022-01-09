@@ -30,12 +30,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Predicate;
 
+/**
+ * An abstract layer on top of a web-map that can display markers (icons or shapes).
+ * A layer is associated with a specific world.
+ *
+ * @since 2.0.0
+ */
 public interface MapLayer {
 
     /**
      * Add a multi-polygon marker to the layer.
      *
-     * The platform is associated with rendering the marker.
+     * The platform is tasked with rendering the marker.
      *
      * @param markerKey Unique marker key to associate with the marker.
      * @param polygons List of polygons to associate with the marker.
@@ -45,6 +51,8 @@ public interface MapLayer {
 
     /**
      * Add an icon marker to the layer.
+     *
+     * NOTE: Not all platforms will obey the icon size arguments.
      *
      * @param markerKey Unique marker key to associate with the marker.
      * @param iconKey Unique icon key to tell the platform to render a specific image associated with the icon key.
