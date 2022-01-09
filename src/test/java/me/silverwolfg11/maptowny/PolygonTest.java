@@ -31,6 +31,7 @@ import me.silverwolfg11.maptowny.objects.TBCluster;
 import me.silverwolfg11.maptowny.util.PolygonUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ import java.util.List;
 // Manual Testing: Manually create a cluster and a set of points to validate against the class.
 public class PolygonTest {
 
-    // Compare two lists of points finding the first element
+    // Validate that the output list contains all the expected points in a sequential order.
     void polygonHasPoints(List<Point2D> output, List<Point2D> expected) {
         assertNotNull(output, "Polygon output was null!");
 
@@ -59,9 +60,15 @@ public class PolygonTest {
         int startingIndex = output.indexOf(expected.get(0));
 
         // Couldn't find starting point
-        assertNotEquals(startingIndex, -1, "Could not find first expected point in Polygon output!");
+        assertNotEquals(startingIndex, -1,
+                () -> {
+                    Point2D startingPoint = expected.get(0);
+                    int x = (int) startingPoint.x();
+                    int z = (int) startingPoint.z();
+                    return String.format("Could not find first expected point (%d, %d) in Polygon output!", x, z);
+                });
 
-        int outputIndex = startingIndex + 1;
+        int outputIndex = (startingIndex + 1) % output.size();
         int expectedIndex = 1;
 
         while (outputIndex != startingIndex && expectedIndex < expected.size()) {
@@ -77,6 +84,44 @@ public class PolygonTest {
                         expected.get(missingIndex).x(), expected.get(missingIndex).z(), missingIndex)
         );
     }
+
+    // Test polygonHasPoints algorithm
+    @Test
+    @DisplayName("Verify: polygonHasPoints")
+    void testPolyHasPoints() {
+        // All these checks are done in a single test to avoid cluttering the test class for a verification check.
+
+        // Test perfectly matched lists
+        {
+            List<Point2D> actualPts = pointsOf(0, 0, 1, 0, 1, 1);
+            List<Point2D> expectedPts = pointsOf(0, 0, 1, 0, 1, 1);
+            polygonHasPoints(actualPts, expectedPts);
+        }
+
+        // Test offset list
+        {
+            List<Point2D> actualPts = pointsOf(1, 1, 0, 0, 1, 0);
+            List<Point2D> expectedPts = pointsOf(0, 0, 1, 0, 1, 1);
+            polygonHasPoints(actualPts, expectedPts);
+        }
+
+        // Test incorrect order of points
+        {
+            List<Point2D> actualPts = pointsOf(1, 1, 1, 0, 0, 0);
+            List<Point2D> expectedPts = pointsOf(0, 0, 1, 0, 1, 1);
+
+            assertThrows(AssertionFailedError.class, () -> polygonHasPoints(actualPts, expectedPts));
+        }
+
+        // Test missing point points
+        {
+            List<Point2D> actualPts = pointsOf(1, 1, 1, 0);
+            List<Point2D> expectedPts = pointsOf(0, 0, 1, 0, 1, 1);
+
+            assertThrows(AssertionFailedError.class, () -> polygonHasPoints(actualPts, expectedPts));
+        }
+    }
+
 
 
     // Test a single townblock in a cluster
@@ -131,27 +176,22 @@ public class PolygonTest {
 
         TBCluster cluster = clusterOf(topTB, centerTB, bottomTB, leftTB, rightTB);
 
+        // The path of points
         Point2D startingPt = cornerPoint(topTB, CORNER.UPPER_RIGHT);
+        Point2D centerUR = cornerPoint(centerTB, CORNER.UPPER_RIGHT);
+        Point2D rightTop = cornerPoint(rightTB, CORNER.UPPER_RIGHT);
+        Point2D rightBottom = cornerPoint(rightTB, CORNER.LOWER_RIGHT);
+        Point2D centerLR = cornerPoint(centerTB, CORNER.LOWER_RIGHT);
+        Point2D bottomLR = cornerPoint(bottomTB, CORNER.LOWER_RIGHT);
+        Point2D bottomLL = cornerPoint(bottomTB, CORNER.LOWER_LEFT);
+        Point2D centerLL = cornerPoint(centerTB, CORNER.LOWER_LEFT);
+        Point2D leftLL = cornerPoint(leftTB, CORNER.LOWER_LEFT);
+        Point2D leftUL = cornerPoint(leftTB, CORNER.UPPER_LEFT);
+        Point2D centerUL = cornerPoint(centerTB, CORNER.UPPER_LEFT);
+        Point2D topUL = cornerPoint(topTB, CORNER.UPPER_LEFT);
 
-        Point2D rightCorner1 = cornerPoint(rightTB, CORNER.UPPER_LEFT);
-        Point2D rightCorner2 = cornerPoint(rightTB, CORNER.UPPER_RIGHT);
-        Point2D rightCorner3 = cornerPoint(rightTB, CORNER.LOWER_RIGHT);
-
-        Point2D bottomCorner1 = cornerPoint(bottomTB, CORNER.UPPER_RIGHT);
-        Point2D bottomCorner2 = cornerPoint(bottomTB, CORNER.LOWER_RIGHT);
-        Point2D bottomCorner3 = cornerPoint(bottomTB, CORNER.LOWER_LEFT);
-
-        Point2D leftCorner1 = cornerPoint(leftTB, CORNER.LOWER_RIGHT);
-        Point2D leftCorner2 = cornerPoint(leftTB, CORNER.LOWER_LEFT);
-        Point2D leftCorner3 = cornerPoint(leftTB, CORNER.UPPER_LEFT);
-
-        Point2D topCorner1 = cornerPoint(topTB, CORNER.LOWER_LEFT);
-
-        Point2D endingPt = cornerPoint(topTB, CORNER.UPPER_LEFT);
-
-        List<Point2D> expected = list(startingPt, rightCorner1, rightCorner2, rightCorner3,
-                bottomCorner1, bottomCorner2, bottomCorner3, leftCorner1, leftCorner2, leftCorner3,
-                topCorner1, endingPt);
+        List<Point2D> expected = list(startingPt, centerUR, rightTop, rightBottom,
+                centerLR, bottomLR, bottomLL, centerLL, leftLL, leftUL, centerUL, topUL);
 
         List<Point2D> output = PolygonUtil.formPolyFromCluster(cluster, TILE_SIZE);
 

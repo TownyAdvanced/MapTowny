@@ -54,21 +54,10 @@ public class PolygonUtil {
         Queue<Long> townBlocksToVisit = new ArrayDeque<>(1);
         townBlocksToVisit.add(rightMostBlock.toLong());
 
-        // Fast-fail infinite loops by checking that we don't have too many iterations
-        // There should only be 4 iterations per townblock + an extra iteration to check if back at origin.
-//        final int pointsErrorBound = (cluster.size() * 4) + 1;
-
         DIRECTION currDir = DIRECTION.RIGHT;
 
-        int pathIterations = 0;
         boolean isOriginPoint = true;
         while(!townBlocksToVisit.isEmpty()) {
-            pathIterations++;
-
-//            // Fast fail
-//            if (pathIterations > pointsErrorBound) {
-//                return null;
-//            }
 
             long tbHash = townBlocksToVisit.poll();
             StaticTB townBlock = cluster.at(tbHash);
@@ -82,7 +71,6 @@ public class PolygonUtil {
                     else if (isOriginPoint)
                         isOriginPoint = false;
 
-                    boolean corner = false;
                     long offsetHash;
                     // Check if there's a townblock above us
                     // Theoretically can only happen if we are going towards the origin, not away
@@ -90,29 +78,25 @@ public class PolygonUtil {
                     if (cluster.has(offsetHash = townBlock.offsetLong(0, 1))) {
                         townBlocksToVisit.add(offsetHash);
                         currDir = DIRECTION.UP;
-                        corner = true;
+                        // Mark UL
+                        poly.add(upperLeft);
                     }
                     // Check if there's a townblock to the right of us
                     else if (cluster.has(offsetHash = townBlock.offsetLong(1, 0))) {
                         // Keep Going Right
+                        // Don't mark anything
                         townBlocksToVisit.add(offsetHash);
                     }
                     else {
                         // We're the rightmost, so switch direction to down and queue the same block
                         currDir = DIRECTION.DOWN;
                         townBlocksToVisit.add(tbHash);
-                        corner = true;
+                        // Mark UR
+                        poly.add(townBlock.getUR(tbSize));
                     }
-
-                    // Add upper left and upper right points to the poly (ORDER MATTERS)
-                    poly.add(upperLeft); // Upper Left
-                    if (!corner)
-                        poly.add(townBlock.getUR(tbSize)); // Upper Right
-
                     break;
                 }
                 case LEFT: {
-                    boolean corner = false;
                     long offsetHash;
                     // Check if there's a townblock below us (This happens at corners)
                     if (cluster.has(offsetHash = townBlock.offsetLong(0, -1))) {
@@ -120,28 +104,26 @@ public class PolygonUtil {
                         townBlocksToVisit.add(offsetHash);
                         // Set direction as down
                         currDir = DIRECTION.DOWN;
-                        corner = true;
+                        // Mark LR
+                        poly.add(townBlock.getLR(tbSize));
                     }
                     // Check if there's a townblock to the left of us
                     else if (cluster.has(offsetHash = townBlock.offsetLong(-1, 0))) {
                         // Keep Going Left
+                        // Don't mark anything
                         townBlocksToVisit.add(offsetHash);
                     }
                     else {
                         // We're the leftmost, so switch direction to up
                         currDir = DIRECTION.UP;
                         townBlocksToVisit.add(tbHash);
-                        corner = true;
+                        // Mark LL
+                        poly.add(townBlock.getLL(tbSize));
                     }
 
-                    // Add lower right and lower left (ORDER MATTERS)
-                    poly.add(townBlock.getLR(tbSize)); // Lower Right
-                    if (!corner)
-                        poly.add(townBlock.getLL(tbSize)); // Lower Left
                     break;
                 }
                 case DOWN: {
-                    boolean corner = false;
                     long offsetHash;
                     // Check if there's a townblock to the right us (We have hit a corner)
                     if (cluster.has(offsetHash = townBlock.offsetLong(1, 0))) {
@@ -149,52 +131,48 @@ public class PolygonUtil {
                         townBlocksToVisit.add(offsetHash);
                         // Set direction as right
                         currDir = DIRECTION.RIGHT;
-                        corner = true;
+                        // Mark UR
+                        poly.add(townBlock.getUR(tbSize));
                     }
                     // Check if there's a townblock below us
                     else if (cluster.has(offsetHash = townBlock.offsetLong(0, -1))) {
                         // Keep Going Down
+                        // Don't mark anything
                         townBlocksToVisit.add(offsetHash);
                     }
                     else {
                         // We're the bottom most, so make a left turn
                         currDir = DIRECTION.LEFT;
                         townBlocksToVisit.add(tbHash);
-                        corner = true;
+                        // Mark LR
+                        poly.add(townBlock.getLR(tbSize));
                     }
-
-                    // Add upper right and lower right points to the poly (ORDER MATTERS)
-                    poly.add(townBlock.getUR(tbSize)); // Upper Right
-                    if (!corner)
-                        poly.add(townBlock.getLR(tbSize)); // Lower Right
 
                     break;
                 }
                 case UP: {
-                    boolean corner = false;
                     long offsetHash;
                     // Check if there's a townblock to the left of us (We have hit a corner)
                     if (cluster.has(offsetHash = townBlock.offsetLong(-1, 0))) {
                         townBlocksToVisit.add(offsetHash);
                         currDir = DIRECTION.LEFT;
-                        corner = true;
+                        // Mark LL
+                        poly.add(townBlock.getLL(tbSize));
                     }
                     // Check if there's a townblock above us
                     else if (cluster.has(offsetHash = townBlock.offsetLong(0, 1))) {
                         // Keep Going up
+                        // Don't mark anything
                         townBlocksToVisit.add(offsetHash);
                     }
                     else {
                         // We're the top most, so make a right turn
                         currDir = DIRECTION.RIGHT;
                         townBlocksToVisit.add(tbHash);
-                        corner = true;
+                        // Mark UL
+                        poly.add(townBlock.getUL(tbSize));
                     }
 
-                    // Add lower left and upper left points to the poly (ORDER MATTERS)
-                    poly.add(townBlock.getLL(tbSize)); // Lower left
-                    if (!corner)
-                        poly.add(townBlock.getUL(tbSize)); // Upper Left
                     break;
                 }
             }
@@ -205,7 +183,6 @@ public class PolygonUtil {
         // Help GC
         poly.clear();
         townBlocksToVisit.clear();
-
 
         return polyList;
     }

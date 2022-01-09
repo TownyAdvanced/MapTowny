@@ -26,6 +26,7 @@ import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.StaticTB;
 import me.silverwolfg11.maptowny.objects.TBCluster;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -59,6 +60,24 @@ public class TestHelpers {
 
     static List<TBCluster> clustersOf(Collection<StaticTB> tbs) {
         return TBCluster.findClusters(tbs);
+    }
+
+    static Point2D point(double x, double z) {
+        return Point2D.of(x, z);
+    }
+
+    static List<Point2D> pointsOf(double...pts) {
+        // Validate points list
+        if (pts == null || (pts.length % 2 != 0))
+            return null;
+
+        List<Point2D> points = new ArrayList<>(pts.length / 2);
+
+        for (int i = 0; i < pts.length; i += 2) {
+            points.add(Point2D.of(pts[i], pts[i + 1]));
+        }
+
+        return points;
     }
 
     enum CORNER { LOWER_LEFT, LOWER_RIGHT, UPPER_LEFT, UPPER_RIGHT }
