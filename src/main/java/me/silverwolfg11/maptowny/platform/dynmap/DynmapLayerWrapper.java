@@ -26,7 +26,6 @@ import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
-import org.bukkit.Bukkit;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.AreaMarker;
 import org.dynmap.markers.Marker;
@@ -34,12 +33,12 @@ import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class DynmapLayerWrapper implements MapLayer {
     private final DynmapAPI dynmapAPI;
@@ -61,6 +60,12 @@ public class DynmapLayerWrapper implements MapLayer {
     // Transform marker keys into per-world marker keys
     private String toWorldKey(String markerKey) {
         return markerKey + "_" + worldName;
+    }
+
+    // Convert color to dynmap's weird RGB format.
+    private int toDynmapRGB(Color color) {
+        // 0xRRGGBBFF
+        return (color.getRGB() << 8) | 0x0FF;
     }
 
     @Override
@@ -94,17 +99,14 @@ public class DynmapLayerWrapper implements MapLayer {
                 x[j] = point.x();
                 z[j] = point.z();
             }
-            // TODO Order of x and z may not work out for dynmap
 
             AreaMarker areaMarker = markerSet.createAreaMarker(worldKey + i, markerOptions.name(), false, worldName, x, z, false);
             areaMarker.setDescription(markerOptions.clickTooltip());
             if (markerOptions.fillColor() != null) {
-                areaMarker.setFillStyle(markerOptions.fillOpacity(), markerOptions.fillColor().getRGB());
+                areaMarker.setFillStyle(markerOptions.fillOpacity(), toDynmapRGB(markerOptions.fillColor()));
             }
-            else {
-                areaMarker.setFillStyle(1, 0xFFFF);
-            }
-            areaMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), markerOptions.strokeColor().getRGB());
+
+            areaMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
         }
 
         multiPolys.put(markerKey, polygons.size());
@@ -125,7 +127,7 @@ public class DynmapLayerWrapper implements MapLayer {
         if (multiPolys.containsKey(markerKey)) {
             int polySize = multiPolys.get(markerKey);
             for (int i = 0; i < polySize; ++i) {
-                Marker marker = markerSet.findMarker(worldKey + i);
+                AreaMarker marker = markerSet.findAreaMarker(worldKey + i);
                 if (marker != null) {
                     marker.deleteMarker();
                 }
