@@ -63,7 +63,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class TownyLayerManager {
+public class TownyLayerManager implements LayerManager {
 
     private final MapTowny plugin;
     private final TownInfoManager townInfoManager;
@@ -374,12 +374,14 @@ public class TownyLayerManager {
         }
     }
 
-    public boolean removeTownMarker(Town town) {
+    @Override
+    public boolean removeTownMarker(@NotNull Town town) {
         return removeTownMarker(town.getUUID());
     }
 
     // Returns if the town was successfully unrendered
-    public boolean removeTownMarker(UUID townUUID) {
+    @Override
+    public boolean removeTownMarker(@NotNull UUID townUUID) {
         boolean unrendered = false;
         final String townKey = TOWN_KEY_PREFIX + townUUID;
         final String townIconKey = TOWN_ICON_KEY_PREFIX + townUUID;
@@ -430,12 +432,42 @@ public class TownyLayerManager {
 
     // API Methods
 
-    /**
-     * Get the {@link MapLayer} that the Pl3xMap-Towny plugin uses for a specific world.
-     *
-     * @param worldName Name of the world.
-     * @return the provider for the world if there is one, or {@code null} if there is not.
-     */
+    @Override
+    public void renderTown(final @NotNull Town town) {
+        Runnable renderTown = () -> {
+            final TownRenderEntry tre = buildTownEntry(town);
+            plugin.async(() -> renderTown(tre));
+        };
+
+        if (!Bukkit.isPrimaryThread()) {
+            // Can only get TRE from sync thread
+            Bukkit.getScheduler().runTask(plugin, renderTown);
+        }
+        else {
+            renderTown.run();
+        }
+    }
+
+    @Override
+    public void renderTowns(@NotNull Collection<Town> towns) {
+        Runnable renderTowns = () -> {
+            final Collection<TownRenderEntry> tres = towns.stream()
+                    .map(this::buildTownEntry)
+                    .collect(Collectors.toList());
+
+            plugin.async(() -> tres.forEach(this::renderTown));
+        };
+
+        if (!Bukkit.isPrimaryThread()) {
+            // Can only get TRE from sync thread
+            Bukkit.getScheduler().runTask(plugin, renderTowns);
+        }
+        else {
+            renderTowns.run();
+        }
+    }
+
+    @Override
     @Nullable
     public MapLayer getTownyWorldLayerProvider(@NotNull String worldName) {
         Validate.notNull(worldName);
@@ -444,16 +476,7 @@ public class TownyLayerManager {
     }
 
     // Pass-through to TownInfoManager
-
-    /**
-     * Register a replacement for the town tooltips (both the click and hover tooltips).
-     *
-     * Note: Replacements are not persistent through plugin reload.
-     * Must be registered again everytime the plugin is reloaded.
-     *
-     * @param key The specific string to be replaced.
-     * @param function The function to produce a valid replacement.
-     */
+    @Override
     public void registerReplacement(@NotNull String key, @NotNull Function<Town, String> function) {
         Validate.notNull(key);
         Validate.notNull(function);
@@ -461,11 +484,7 @@ public class TownyLayerManager {
         this.townInfoManager.registerReplacement(key, function);
     }
 
-    /**
-     * Unregister a replacement for the town tooltips.
-     *
-     * @param key Replacement string.
-     */
+    @Override
     public void unregisterReplacement(@NotNull String key) {
         Validate.notNull(key);
 

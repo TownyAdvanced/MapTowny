@@ -28,9 +28,6 @@ import me.silverwolfg11.maptowny.listeners.TownClaimListener;
 import me.silverwolfg11.maptowny.managers.TownyLayerManager;
 import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
-import me.silverwolfg11.maptowny.platform.dynmap.DynmapPlatform;
-import me.silverwolfg11.maptowny.platform.pl3xmap.Pl3xMapPlatform;
-import me.silverwolfg11.maptowny.platform.squremap.SquareMapPlatform;
 import me.silverwolfg11.maptowny.tasks.RenderTownsTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -42,7 +39,7 @@ import java.io.IOException;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 
-public final class MapTowny extends JavaPlugin {
+public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     private TownyLayerManager layerManager;
     private MapPlatform mapPlatform;
@@ -112,16 +109,31 @@ public final class MapTowny extends JavaPlugin {
         Predicate<String> pluginEnabled = (pluginName) -> Bukkit.getPluginManager().isPluginEnabled(pluginName);
 
         if (pluginEnabled.test("Pl3xMap")) {
-            return new Pl3xMapPlatform();
+            return loadPlatformClass("pl3xmap.Pl3xMapPlatform");
         }
         else if (pluginEnabled.test("squaremap")) {
-            return new SquareMapPlatform();
+            return loadPlatformClass("squaremap.SquareMapPlatform");
         }
         else if (pluginEnabled.test("dynmap")) {
-            return new DynmapPlatform();
+            return loadPlatformClass("dynmap.DynmapPlatform");
         }
 
         return null;
+    }
+
+    // Load class using reflection because some classes are compiled on different Java versions
+    @Nullable
+    private MapPlatform loadPlatformClass(String abridgedPath) {
+        String platformClassPrefix = "me.silverwolfg11.maptowny.platform.";
+        String platformClassPath = platformClassPrefix + abridgedPath;
+        try {
+            Class<?> platformClass = Class.forName(platformClassPath);
+            return (MapPlatform) platformClass.getConstructor().newInstance();
+        } catch (ReflectiveOperationException ex) {
+            String msg = String.format("Error trying to load class '%s'", platformClassPath);
+            getLogger().log(Level.SEVERE, msg, ex);
+            return null;
+        }
     }
 
     @NotNull
@@ -129,9 +141,16 @@ public final class MapTowny extends JavaPlugin {
         return config;
     }
 
+    @Override
     @NotNull
     public TownyLayerManager getLayerManager() {
         return layerManager;
+    }
+
+    @Override
+    @Nullable
+    public MapPlatform getPlatform() {
+        return mapPlatform;
     }
 
     public void reload() throws IOException {

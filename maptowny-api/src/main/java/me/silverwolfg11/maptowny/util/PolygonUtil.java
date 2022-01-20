@@ -39,7 +39,7 @@ public class PolygonUtil {
     private enum DIRECTION { RIGHT, DOWN, UP, LEFT };
 
     // Forms a polygon given a townblock cluster
-    // Returns
+    // Returns a list of points that outline the polygon.
     @Nullable
     public static List<Point2D> formPolyFromCluster(TBCluster cluster, final int tbSize) {
 
