@@ -14,6 +14,7 @@
         <module>maptowny-dynmap</module>
         <module>maptowny-pl3xmap</module>
         <module>maptowny-squaremap</module>
+        <module>maptowny-bluemap</module>
     </modules>
     <packaging>pom</packaging>
 

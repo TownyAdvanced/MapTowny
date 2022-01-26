@@ -97,9 +97,17 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     @Override
     public void onDisable() {
+        // Initiaize map platform shutdown
+        if (mapPlatform != null)
+            mapPlatform.startShutdown();
+
         // Plugin shutdown logic
         if (layerManager != null)
             layerManager.close();
+
+        // Finalize map platform shutdown
+        if (mapPlatform != null)
+            mapPlatform.shutdown();
     }
 
     // Load the appropriate map platform or the map plugin that Pl3xMapTowny should use.
@@ -117,18 +125,30 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         else if (pluginEnabled.test("dynmap")) {
             return loadPlatformClass("dynmap.DynmapPlatform");
         }
+        else if (pluginEnabled.test("BlueMap")) {
+            return loadPlatformClass("bluemap.BlueMapPlatform", this);
+        }
 
         return null;
     }
 
+    private MapPlatform loadPlatformClass(@NotNull String abridgedPath) {
+        return loadPlatformClass(abridgedPath, null);
+    }
+
     // Load class using reflection because some classes are compiled on different Java versions
     @Nullable
-    private MapPlatform loadPlatformClass(String abridgedPath) {
+    private MapPlatform loadPlatformClass(@NotNull String abridgedPath, @Nullable JavaPlugin plugin) {
         String platformClassPrefix = "me.silverwolfg11.maptowny.platform.";
         String platformClassPath = platformClassPrefix + abridgedPath;
         try {
             Class<?> platformClass = Class.forName(platformClassPath);
-            return (MapPlatform) platformClass.getConstructor().newInstance();
+            if (plugin != null) {
+                return (MapPlatform) platformClass.getConstructor(JavaPlugin.class).newInstance(plugin);
+            }
+            else {
+                return (MapPlatform) platformClass.getConstructor().newInstance();
+            }
         } catch (ReflectiveOperationException ex) {
             String msg = String.format("Error trying to load class '%s'", platformClassPath);
             getLogger().log(Level.SEVERE, msg, ex);

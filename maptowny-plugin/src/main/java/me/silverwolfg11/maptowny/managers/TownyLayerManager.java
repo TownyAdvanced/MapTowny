@@ -84,12 +84,18 @@ public class TownyLayerManager implements LayerManager {
     private final String TOWN_OUTPOST_ICON_KEY_PREFIX = "town_outpost_icon_";
 
     // Quick Indicators
-    private final boolean usingOutposts;
+    private boolean usingOutposts;
 
     public TownyLayerManager(MapTowny plugin, MapPlatform platform) {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
         this.mapPlatform = platform;
+        // Schedule initialization
+        mapPlatform.onInitialize(this::initialize);
+    }
+
+    private void initialize() {
+        MapPlatform platform = mapPlatform;
 
         // Load world providers
         for (String worldName : plugin.config().getEnabledWorlds()) {

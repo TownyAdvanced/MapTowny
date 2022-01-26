@@ -136,6 +136,11 @@
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>me.silverwolfg11</groupId>
+            <artifactId>maptowny-bluemap</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

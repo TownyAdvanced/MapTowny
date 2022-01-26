@@ -42,6 +42,17 @@ public interface MapPlatform {
     @NotNull String getPlatformName();
 
     /**
+     * Execute a callback when the platform's API has initialized.
+     *
+     * Platforms that are already initialized will execute the callback immediately on the calling thread.
+     *
+     * @param callback Callback to execute.
+     */
+    default void onInitialize(Runnable callback) {
+        callback.run();
+    }
+
+    /**
      * Check if the map plugin renders the specific world.
      *
      * @param world Bukkit world to check.
@@ -85,5 +96,21 @@ public interface MapPlatform {
      *         If no icon was associated with the icon string, then this will return false.
      */
     boolean unregisterIcon(@NotNull String iconKey);
+
+    /**
+     * Indicate to the platform that it should switch to shutdown mode.
+     *
+     * The platform will still be able to process all operations during this period.
+     */
+    default void startShutdown() {
+    }
+
+    /**
+     * Runs any platform-dependent cleanup code when the MapTowny plugin is disabling.
+     *
+     * After this method is executed, there is no guarantee that the platform will be able to process any operations.
+     */
+    default void shutdown() {
+    }
 
 }
