@@ -161,6 +161,25 @@ public class NegativeSpaceTest {
         assertTrue(negSpace.isEmpty());
     }
 
+    // The purpose of this test is to test unclaimed diagonal blocks.
+    // ++++---
+    // +++++-+
+    // ++-++-+
+    // --+++++
+    @Test
+    @DisplayName("No Negative Space: Free Diagonal")
+    void testNoNSpaceEnclosed() {
+        TBCluster cluster = clusterOf(
+                tb(0, 0), tb(1, 0), tb(2, 0), tb(3, 0),
+                tb(0, 1), tb(1, 1), tb(2, 1), tb(3, 1), tb(4, 1), tb(6, 1),
+                tb(0, 2), tb(1, 2), tb(3, 2), tb(4, 2), tb(6, 2),
+                tb(2, 3), tb(3, 3), tb(4, 3), tb(5, 3), tb(6, 3)
+        );
+
+        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
+        assertTrue(negSpace.isEmpty());
+    }
+
     // Test shapes that do have negative spaces
 
     // +++
@@ -184,7 +203,7 @@ public class NegativeSpaceTest {
 
     // +++
     // + +
-    // +++
+    // +++ (-1,0) -> (1, 0)
     // + +
     // +++
     @Test
@@ -195,7 +214,7 @@ public class NegativeSpaceTest {
                 tb(-1, 1), tb(1, 1),
                 tb(-1, 0), tb(0, 0), tb(1, 0),
                 tb(-1, -1), tb(1, -1),
-                tb(-1, 2), tb(0, -2), tb(1, -2)
+                tb(-1, -2), tb(0, -2), tb(1, -2)
         );
 
         List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
@@ -225,6 +244,27 @@ public class NegativeSpaceTest {
         Collection<StaticTB> expectedMissing = list(tb(0, 1));
 
         assertEquals(output.size(), expectedMissing.size());
+        assertTrue(output.containsAll(expectedMissing));
+    }
+
+    // ++++
+    // +--+
+    // ++-+
+    // ++++
+    @Test
+    @DisplayName("Negative Space: Several Empty Spaces")
+    void testNSpaceSeveralEmptys() {
+        TBCluster cluster = clusterOf(
+                tb(0, 0), tb(1, 0), tb(2, 0), tb(3, 0),
+                tb(0, 1), tb(3, 1),
+                tb(0, 2), tb(1, 2), tb(3, 2),
+                tb(0, 3), tb(1, 3), tb(2, 3), tb(3, 3)
+        );
+
+        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
+        Collection<StaticTB> expectedMissing = list(tb(1, 1), tb(2, 1), tb(2, 2));
+
+        assertEquals(expectedMissing.size(), output.size());
         assertTrue(output.containsAll(expectedMissing));
     }
 

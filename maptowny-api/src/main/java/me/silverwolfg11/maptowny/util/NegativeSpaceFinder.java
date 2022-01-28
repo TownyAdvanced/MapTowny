@@ -38,16 +38,20 @@ import java.util.function.BiConsumer;
 
 public class NegativeSpaceFinder {
 
+    /**
+     * Complex algorithm to detect negative spaces in a cluster.
+     *
+     * @param cluster static townblock cluster.
+     * @return a list of static townblocks that are negative space.
+     */
     @NotNull
     public static List<StaticTB> findNegativeSpace(TBCluster cluster) {
         // There can be no negative space if a cluster has less than 8 townblocks
         if (cluster.size() < 8)
             return Collections.emptyList();
-
-        Deque<Long> potentialNSpace = new ArrayDeque<>();
         Set<Long> freeSpaces = new HashSet<>();
 
-        sortClusterIntoSpaces(cluster, freeSpaces, potentialNSpace);
+        Deque<Long> potentialNSpace = sortClusterIntoSpaces(cluster, freeSpaces);
 
         List<StaticTB> negativeSpace = propagateFreeSpaces(cluster, freeSpaces, potentialNSpace);
 
@@ -59,9 +63,11 @@ public class NegativeSpaceFinder {
 
     // Sort the townblock cluster into free space and potential negative space.
     // It is potential negative space because some negative spaces may be connected to free spaces.
-    // Mutates both freeSpace and potentialNSpace parameters.
-    private static void sortClusterIntoSpaces(TBCluster cluster,
-                                               Collection<Long> freeSpace, Deque<Long> potentialNSpace) {
+    // Mutates both freeSpace parameters.
+    private static Deque<Long> sortClusterIntoSpaces(TBCluster cluster,
+                                                     Collection<Long> freeSpace) {
+        Deque<Long> potentialNSpace = new ArrayDeque<>();
+
         // Find the edge corners of the cluster (corners don't need to be in cluster)
         StaticTB.Edges edges = cluster.getBlocks().stream().collect(StaticTB.Edges.collect());
         int minX = edges.getMinX(), maxX = edges.getMaxX();
@@ -99,9 +105,14 @@ public class NegativeSpaceFinder {
                     if (startNegativeSpace != endNegativeSpace) {
                         for (int negSpaceX = startNegativeSpace + 1; negSpaceX <= endNegativeSpace; negSpaceX++) {
                             long currHash = StaticTB.hashPos(negSpaceX, posZ);
-                            // Check if it is near the edge
+                            // Check if the potential space matches one of the following conditions to be a free space:
+                            // - On the Z-border
+                            // - Above an unclaimed wild-space
+                            // - Diagonally touching an unclaimed space on the Z-border
+                            // - Surrounded by a free space.
                             if (posZ == maxZ || posZ == minZ
                                     || negSpaceX < firstLastEncounteredTBX || negSpaceX > lastLastEncounteredTBX
+                                    || touchingDiagonalBorders(negSpaceX, posZ, maxZ, minZ, cluster)
                                     || isNextToHashedCoord(freeSpace, negSpaceX, posZ))
                                 freeSpace.add(currHash);
                             else {
@@ -122,6 +133,8 @@ public class NegativeSpaceFinder {
             firstLastEncounteredTBX = encounteredTBX;
             lastLastEncounteredTBX = Math.max(firstLastEncounteredTBX, startNegativeSpace);
         }
+
+        return potentialNSpace;
     }
 
     /**
@@ -137,20 +150,23 @@ public class NegativeSpaceFinder {
         if (potentialNSpace.isEmpty())
             return Collections.emptyList();
 
+        // Potential Negative Spaces are ordered from min X min Z to max X max Z.
+
         Set<Long> negSpaceSet = new HashSet<>(potentialNSpace.size());
         Deque<StaticTB> newFreeSpaces = new ArrayDeque<>();
 
-        // First pass, check if any potential negative space is
-        // adjacent to a free space.
+        // First pass, check if any potential negative space is adjacent to a free space.
         // If it is, convert it to a free space, and add it to the list to be propagated
         // in the second pass.
         while (!potentialNSpace.isEmpty()) {
-            long hash = potentialNSpace.pop();
+            // Pop the negative space with min X min Z (going from -z -> z, -x -> x)
+            // Poll Last removes from the tail of the queue (pop() actually removes from the head)
+            long hash = potentialNSpace.pollLast();
             int x = StaticTB.rawX(hash);
             int z = StaticTB.rawZ(hash);
             // Check if the potential negative space
             // is adjacent to a free space
-            // or is above an empty space (the bottom border of the cluster).
+            // or is above an empty space (hits the min Z border)
             if (isNextToHashedCoord(freeSpace, x, z)
                     || isEmptyBelow(negSpaceSet, cluster, x, z)) {
                 freeSpace.add(hash);
@@ -178,11 +194,15 @@ public class NegativeSpaceFinder {
                 int x = freeTB.x();
                 int z = freeTB.z();
 
-                // Do a neighbor check in 4 directions
-                addAdjacentNeighbor.accept(x, z + 1);
-                addAdjacentNeighbor.accept(x, z - 1);
-                addAdjacentNeighbor.accept(x - 1, z);
-                addAdjacentNeighbor.accept(x + 1, z);
+                // Do a surrounding check on the specificed TB
+                for (int xOffset = -1; xOffset <= 1; ++xOffset) {
+                    for (int zOffset = -1; zOffset <= 1; ++zOffset) {
+                        if (xOffset == 0 && zOffset == 0)
+                            continue;
+
+                        addAdjacentNeighbor.accept(x + xOffset, z + zOffset);
+                    }
+                }
             }
         }
 
@@ -205,16 +225,18 @@ public class NegativeSpaceFinder {
         return Collections.emptyList();
     }
 
-    private static final int[] DIRECTIONS = { -1, 1 };
-
+    // Checks if the specific TB is surrounded by any free space
+    // +++
+    // +x+
+    // +++
     private static boolean isNextToHashedCoord(Collection<Long> hashCoords, int posX, int posZ) {
         if (hashCoords.isEmpty())
             return false;
 
-        for (int i = 0; i < 2; ++i) {
-            for (int dir : DIRECTIONS) {
-                int xOffset = i == 0 ? dir : 0;
-                int zOffset = i == 1 ? dir : 0;
+        for (int xOffset = -1; xOffset <= 1; ++xOffset) {
+            for (int zOffset = -1; zOffset <= 1; ++zOffset) {
+                if (xOffset == 0 && zOffset == 0)
+                    continue;
 
                 long offSetHash = StaticTB.hashPos(posX + xOffset, posZ + zOffset);
                 if (hashCoords.contains(offSetHash))
@@ -232,6 +254,31 @@ public class NegativeSpaceFinder {
     private static boolean isEmptyBelow(Collection<Long> negSpace, TBCluster cluster, int posX, int posZ) {
         long belowHash = StaticTB.hashPos(posX, posZ - 1);
         return !negSpace.contains(belowHash) && !cluster.has(belowHash);
+    }
+
+    // Check if a TB is diagonal to an unclaimed TB on the Z borders.
+    // Any TBs on the Z-borders are guaranteed to not be negative space
+    // Thus if any TB passes this check, it should be considered a free-space / empty-space.
+    private static boolean touchingDiagonalBorders(int posX, int posZ, int maxZ, int minZ, TBCluster cluster) {
+        int newZ;
+
+        // Check if Z is one below the upper Z-border
+        if ((posZ + 1) == maxZ) {
+            newZ = posZ + 1;
+        }
+        // Check if Z is one above the bottom Z-border
+        else if ((posZ - 1) == minZ) {
+            newZ = posZ - 1;
+        }
+        // If neither are true, return false.
+        else {
+            return false;
+        }
+
+        long leftDiag = StaticTB.hashPos(posX - 1, newZ);
+        long rightDiag = StaticTB.hashPos(posX + 1, newZ);
+
+        return !cluster.has(leftDiag) || !cluster.has(rightDiag);
     }
 
 
