@@ -25,6 +25,7 @@ package me.silverwolfg11.maptowny.platform.bluemap;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Map;
@@ -43,13 +44,25 @@ public class BlueMapIconMapper {
         this.errorLogger = errorLogger;
     }
 
-    public void registerIcon(String iconKey, BufferedImage img) {
+    // Resize a BufferedImg
+    private BufferedImage resizeImg(BufferedImage img, int height, int width) {
+        BufferedImage outputImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics = outputImg.createGraphics();
+        graphics.drawImage(img, 0, 0, width, height, null);
+        graphics.dispose();
+
+        return outputImg;
+    }
+
+    public void registerIcon(String iconKey, BufferedImage img, int height, int width) {
         BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
         if (api == null)
             return;
 
         try {
-            String imgPath = api.createImage(img, iconKey);
+            BufferedImage resizedImg = resizeImg(img, height, width);
+            String imgPath = api.createImage(resizedImg, iconKey);
             keyPaths.put(iconKey, imgPath);
         } catch (IOException e) {
             errorLogger.log(Level.SEVERE, String.format("Error creating image for icon keyed '%s'!", iconKey), e);
