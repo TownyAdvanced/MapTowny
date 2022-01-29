@@ -117,17 +117,20 @@ public class TownyLayerManager implements LayerManager {
         }
 
         // Load icons
+        int iconWidth = plugin.config().getIconSizeX();
+        int iconHeight = plugin.config().getIconSizeY();
+
         BufferedImage townIcon = plugin.config().loadTownIcon(plugin.getLogger());
         if (townIcon != null)
-            platform.registerIcon(TOWN_ICON, townIcon);
+            platform.registerIcon(TOWN_ICON, townIcon, iconHeight, iconWidth);
 
         BufferedImage capitalIcon = plugin.config().loadCapitalIcon(plugin.getLogger());
         if (capitalIcon != null)
-            platform.registerIcon(CAPITAL_ICON, capitalIcon);
+            platform.registerIcon(CAPITAL_ICON, capitalIcon, iconHeight, iconWidth);
 
         BufferedImage outpostIcon = plugin.config().loadOutpostIcon(plugin.getLogger());
         if (outpostIcon != null) {
-            platform.registerIcon(OUTPOST_ICON, outpostIcon);
+            platform.registerIcon(OUTPOST_ICON, outpostIcon, iconHeight, iconWidth);
             usingOutposts = true;
         }
         else {

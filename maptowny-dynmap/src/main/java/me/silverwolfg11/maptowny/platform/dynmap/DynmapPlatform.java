@@ -62,7 +62,7 @@ public class DynmapPlatform implements MapPlatform {
     }
 
     @Override
-    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon) {
+    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         // Delete icon if it's been previously registered
         final MarkerIcon oldMarkerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
         if (oldMarkerIcon != null) {

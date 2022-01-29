@@ -52,7 +52,7 @@ public class Pl3xMapPlatform implements MapPlatform {
     }
 
     @Override
-    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon) {
+    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         Pl3xMapProvider.get().iconRegistry().register(Key.of(iconKey), icon);
     }
 

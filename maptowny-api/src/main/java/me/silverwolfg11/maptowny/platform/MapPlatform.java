@@ -73,12 +73,15 @@ public interface MapPlatform {
     /**
      * Associate a specific icon key with an image.
      *
-     * NOTE: Some platforms may only accept specific image types.
+     * NOTE: Some platforms may only accept specific image types and/or
+     * may not abide by the image size parameters.
      *
      * @param iconKey Unique string specific to the image icon.
      * @param icon Image to associate with.
+     * @param height Height of the image (in pixels).
+     * @param width Width of the image (in pixels).
      */
-    void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon);
+    void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width);
 
     /**
      * Check if the platform has an icon matching the specific string.

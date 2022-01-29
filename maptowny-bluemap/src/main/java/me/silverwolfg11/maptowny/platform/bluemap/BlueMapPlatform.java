@@ -88,8 +88,8 @@ public class BlueMapPlatform implements MapPlatform {
     }
 
     @Override
-    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon) {
-        iconMapper.registerIcon(iconKey, icon);
+    public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
+        iconMapper.registerIcon(iconKey, icon, height, width);
     }
 
     @Override

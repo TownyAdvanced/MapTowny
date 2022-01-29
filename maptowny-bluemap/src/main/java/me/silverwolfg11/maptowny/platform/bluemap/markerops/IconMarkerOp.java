@@ -78,6 +78,6 @@ public class IconMarkerOp implements MarkerOp {
             return;
         }
 
-        poiMarker.setIcon(bluePath, sizeX, sizeY);
+        poiMarker.setIcon(bluePath, (int) point.x(), (int) point.z());
     }
 }
