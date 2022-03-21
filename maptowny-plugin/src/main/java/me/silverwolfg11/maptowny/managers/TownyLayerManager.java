@@ -22,10 +22,7 @@
 
 package me.silverwolfg11.maptowny.managers;
 
-import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.TownySettings;
-import com.palmergames.bukkit.towny.object.Government;
-import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.maptowny.MapTowny;
 import me.silverwolfg11.maptowny.events.WorldRenderTownEvent;
@@ -321,10 +318,9 @@ public class TownyLayerManager implements LayerManager {
         }
     }
 
-    // Get government color with error handling.
+    // Convert given town hex code to color with error handling.
     @NotNull
-    private Optional<Color> getGovernmentColor(Government government) {
-        String hex = government.getMapColorHexCode();
+    private Optional<Color> convertTownHexCodeToColor(String hex, Town town) {
         if (!hex.isEmpty()) {
             if (hex.charAt(0) != '#')
                 hex = "#" + hex;
@@ -332,9 +328,8 @@ public class TownyLayerManager implements LayerManager {
             try {
                 return Optional.of(Color.decode(hex));
             } catch (NumberFormatException ex) {
-                String govType = government.getClass().getName();
-                String name = government.getName();
-                plugin.getLogger().warning("Error loading  " + govType + "'" + name + "'s map color: " + hex + "!");
+                String name = town.getName();
+                plugin.getLogger().warning("Error loading town " + name + "'s map color: " + hex + "!");
             }
         }
 
@@ -345,9 +340,9 @@ public class TownyLayerManager implements LayerManager {
     // config set to use nation colors and town has a valid nation color.
     @NotNull
     private Optional<Color> getNationColor(Town town) {
-        if ((plugin.config().useNationFillColor() || plugin.config().useNationStrokeColor()) && town.hasNation()) {
-            Nation nation = TownyAPI.getInstance().getTownNationOrNull(town);
-            return getGovernmentColor(nation);
+        if (plugin.config().useNationFillColor() || plugin.config().useNationStrokeColor()) {
+            String hex = town.getNationMapColorHexCode();
+            return hex == null ? Optional.empty() : convertTownHexCodeToColor(hex, town);
         }
 
         return Optional.empty();
@@ -358,7 +353,8 @@ public class TownyLayerManager implements LayerManager {
     @NotNull
     private Optional<Color> getTownColor(Town town) {
         if (plugin.config().useTownFillColor() || plugin.config().useTownStrokeColor()) {
-            return getGovernmentColor(town);
+            String hex = town.getMapColorHexCode();
+            return hex == null ? Optional.empty() : convertTownHexCodeToColor(hex, town);
         }
 
         return Optional.empty();
