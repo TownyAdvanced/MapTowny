@@ -23,6 +23,7 @@
 package me.silverwolfg11.maptowny.objects;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,47 +33,103 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-// A cluster represents a group of townblocks which are all connected
-// Functions mostly as an easy-to-use wrapper to generate polygons
+/**
+ * A cluster represents a group of {@link StaticTB}s which are all connected
+ *
+ * Functions mostly as an easy-to-use wrapper to generate polygons.
+ *
+ * @since 2.0.0
+ */
 public class TBCluster {
 
     private final Map<Long, StaticTB> townblocks = new HashMap<>();
 
     private TBCluster() {}
 
+    /**
+     * Check if the cluster is empty.
+     *
+     * @return if the cluster is empty.
+     */
     public boolean isEmpty() {
         return townblocks.isEmpty();
     }
 
+    /**
+     * Get the number of unique {@link StaticTB}s in the cluster.
+     *
+     * @return the size of the cluster.
+     */
     public int size() {
         return townblocks.size();
     }
 
+    /**
+     * Check if a {@link StaticTB} is in the cluster.
+     * @param tb {@link StaticTB} to check.
+     *
+     * @return if the tb is in the cluster.
+     */
     public boolean has(StaticTB tb) {
         return townblocks.containsKey(tb.toLong());
     }
 
+    /**
+     * Check if the hashed {@link StaticTB} is in the cluster.
+     *
+     * @see StaticTB#toLong()
+     *
+     * @param hash Long hash of the {@link StaticTB}.
+     * @return if the hashed tb is in the cluster.
+     */
     public boolean has(long hash) {
         return townblocks.containsKey(hash);
     }
 
+    /**
+     * Get the {@link StaticTB} in the cluster specified by the hash.
+     *
+     * @param hash Hash of the {@link StaticTB}
+     * @return the {@link StaticTB} in the cluster or {@code null} if the tb is not in the cluster.
+     */
+    @Nullable
     public StaticTB at(long hash) {
         return townblocks.get(hash);
     }
 
+    /**
+     * Add a {@link StaticTB} to the cluster.
+     *
+     * @param tb {@link StaticTB} to add.
+     */
     public void add(StaticTB tb) {
-        townblocks.put(tb.toLong(), tb);
+        this.add(tb.toLong(), tb);
     }
 
-    public void add(long hash, StaticTB tb) {
+    private void add(long hash, StaticTB tb) {
         townblocks.put(hash, tb);
     }
 
+    /**
+     * Get the first available {@link StaticTB} in the cluster.
+     *
+     * @return a {@link StaticTB} if any, or {@code null} if none in the cluster.
+     */
+    @Nullable
     public StaticTB findAny() {
         return townblocks.values().stream().findAny().orElse(null);
     }
 
+    /**
+     * Get a collection of all the unique {@link StaticTB}s in the cluster.
+     * <br><br>
+     * NOTE: This collection is immutable.
+     *
+     * @return all unique {@link StaticTB}s in the cluster.
+     */
+    @NotNull
     public Collection<StaticTB> getBlocks() {
         return Collections.unmodifiableCollection(townblocks.values());
     }
@@ -132,10 +189,21 @@ public class TBCluster {
 
     private static final int[] DIRECTIONS = { -1, 1 };
 
-    // Get all clusters of connected townblocks
+    /**
+     * Create clusters from groups of connected {@link StaticTB}s.
+     * <br>
+     * A {@link StaticTB} is connected if it is directly above, below,
+     * to the left of, or to the right of another {@link StaticTB}.
+     *
+     * @param townBlocks Collection of townblocks to cluster.
+     *
+     * @return a list of clusters.
+     */
     @NotNull
-    public static List<TBCluster> findClusters(Collection<StaticTB> townBlocks) {
-        if (townBlocks == null || townBlocks.isEmpty())
+    public static List<TBCluster> findClusters(@NotNull Collection<StaticTB> townBlocks) {
+        Objects.requireNonNull(townBlocks);
+
+        if (townBlocks.isEmpty())
             return Collections.emptyList();
 
         Map<Long, StaticTB> hashedMap = collectionToMap(townBlocks);
@@ -144,7 +212,7 @@ public class TBCluster {
         while (!hashedMap.isEmpty()) {
             TBCluster cluster = new TBCluster();
             Deque<Long> visited = new ArrayDeque<>();
-            // Push the first entry key of the map onto the stackk
+            // Push the first entry key of the map onto the stack
             visited.push(hashedMap.entrySet().stream().findFirst().get().getKey());
 
             while (!visited.isEmpty()) {

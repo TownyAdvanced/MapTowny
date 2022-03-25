@@ -23,6 +23,7 @@
 package me.silverwolfg11.maptowny.managers;
 
 import com.palmergames.bukkit.towny.object.Town;
+import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,5 +98,15 @@ public interface LayerManager {
      * @param key Replacement string.
      */
     void unregisterReplacement(@NotNull String key);
+
+    /**
+     * Get the marker options for a town that includes
+     * click tooltip, hover tooltip, and town name.
+     *
+     * @param town {@link Town} to get the info for.
+     * @return the info marker options for a town.
+     */
+    @NotNull
+    MarkerOptions getTownInfoMarker(@NotNull Town town);
 
 }

@@ -27,8 +27,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.stream.Collector;
 
-// Wrapper function for a townblock
-// This simpy holds the x, z position so that processing can be async in the future.
+/**
+ * Immutable wrapper class for a townblock.
+ *
+ * @since 2.0.0
+ */
 public class StaticTB {
 
     private final int x, z;

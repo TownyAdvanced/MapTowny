@@ -26,7 +26,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-// A simple wrapper class that stores a polygon as a list of points and negative space.
+/**
+ * Simple wrapper class that stores a polygon as a list of points and negative space.
+ * <br>
+ * All points in a polygon are connected and stored in sequence of connection.
+ * <br>
+ * The negative space of a polygon represents holes inside the polygon. These holes are also represented
+ * as a list of points.
+ *
+ * @since 2.0.0
+ */
 public class Polygon {
 
     private final List<Point2D> polygon;
@@ -37,14 +46,36 @@ public class Polygon {
         this.negativeSpace = negativeSpace;
     }
 
+    /**
+     * Get a list of {@link Point2D} that make up the polygon.
+     *
+     * The points are all connected and stored in a specific order.
+     *
+     * This list can be directly modified to affect the shape of the polygon.
+     *
+     * @return list of {@link Point2D} that make up the polygon.
+     */
+    @NotNull
     public List<Point2D> getPoints() {
         return polygon;
     }
 
+    /**
+     * Check if the polygon has negative space (holes) inside it.
+     *
+     * @return if the polygon has negative space (holes) inside it.
+     */
     public boolean hasNegativeSpace() {
         return !negativeSpace.isEmpty();
     }
 
+    /**
+     * Get the negative space inside the polygon.
+     *
+     * @return a list of polygons that make up the holes inside the original polygon.
+     *         Each hole polygon is represented as list of {@link Point2D}.
+     */
+    @NotNull
     public List<List<Point2D>> getNegativeSpace() {
         return negativeSpace;
     }

@@ -496,5 +496,19 @@ public class TownyLayerManager implements LayerManager {
         this.townInfoManager.unregisterReplacement(key);
     }
 
+    @Override
+    public @NotNull MarkerOptions getTownInfoMarker(@NotNull Town town) {
+        Validate.notNull(town);
+
+        String clickText = townInfoManager.getClickTooltip(town, plugin.getLogger());
+        String hoverText = townInfoManager.getHoverTooltip(town, plugin.getLogger());
+
+        return MarkerOptions.builder()
+                            .name(town.getName())
+                            .clickTooltip(clickText)
+                            .hoverTooltip(hoverText)
+                            .build();
+    }
+
     // =====
 }
