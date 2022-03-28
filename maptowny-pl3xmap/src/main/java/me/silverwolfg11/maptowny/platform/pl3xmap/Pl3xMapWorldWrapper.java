@@ -45,7 +45,7 @@ public class Pl3xMapWorldWrapper implements MapWorld {
         net.pl3x.map.api.SimpleLayerProvider layerProvider = SimpleLayerProvider.builder(options.getName())
                 .defaultHidden(options.isDefaultHidden())
                 .layerPriority(options.getLayerPriority())
-                .zIndex(options.getzIndex())
+                .zIndex(options.getZIndex())
                 .showControls(options.showControls())
                 .build();
 

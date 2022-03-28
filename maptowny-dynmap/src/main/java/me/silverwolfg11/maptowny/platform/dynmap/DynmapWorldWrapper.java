@@ -50,7 +50,7 @@ public class DynmapWorldWrapper implements MapWorld {
             markerSet.setMarkerSetLabel(options.getName());
         }
 
-        return new DynmapLayerWrapper(dynmapAPI, worldName, markerSet, options.getzIndex());
+        return new DynmapLayerWrapper(dynmapAPI, worldName, markerSet, options.getZIndex());
     }
 
     @Override

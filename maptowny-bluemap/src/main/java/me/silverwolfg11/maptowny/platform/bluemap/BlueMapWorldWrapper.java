@@ -71,7 +71,7 @@ public class BlueMapWorldWrapper implements MapWorld {
             }
         }
 
-        return new BlueMapLayerWrapper(markerProcessor, layerKey, worldIdentifier, options.getzIndex());
+        return new BlueMapLayerWrapper(markerProcessor, layerKey, worldIdentifier, options.getZIndex());
     }
 
     @Override

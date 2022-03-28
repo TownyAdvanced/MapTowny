@@ -54,7 +54,7 @@ public class LayerOptions {
         return layerPriority;
     }
 
-    public int getzIndex() {
+    public int getZIndex() {
         return zIndex;
     }
 }

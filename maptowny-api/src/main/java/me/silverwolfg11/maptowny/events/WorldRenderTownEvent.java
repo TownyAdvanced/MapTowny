@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Event called when a town is about to be rendered on the Pl3xMap for a specific world.
+ * Event called when a town is about to be rendered on the web-map for a specific world.
  *
  * Cancelling this event will prevent this town from being rendered in the world on the Pl3xMap.
  * This includes not rendering any homeblock or outpost icons for the town in the world.
@@ -59,26 +59,55 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
         this.markerOptionsBuilder = markerOptionsBuilder;
     }
 
+    /**
+     * Get the name of the town being rendered.
+     *
+     * @return name of town being rendered.
+     */
     @NotNull
     public String getTownName() {
         return townName;
     }
 
+    /**
+     * Get the UUID of the town being rendered.
+     *
+     * @return uuid of town being rendered.
+     */
     @NotNull
     public UUID getTownUUID() {
         return townUUID;
     }
 
+    /**
+     * Get the name of the world where the town is being rendered.
+     *
+     * @return name of world.
+     */
     @NotNull
     public String getWorldName() {
         return worldName;
     }
 
+    /**
+     * Get the list of polygons that make up the outline of the town being rendered.
+     *
+     * NOTE: This list is directly modifiable.
+     *
+     * @return list of polygons that make up town outline.
+     */
     @NotNull
     public List<Polygon> getMultiPolygon() {
         return polygons;
     }
 
+    /**
+     * Get the marker options for the town outline.
+     *
+     * NOTE: These options are directly modifiable.
+     *
+     * @return marker options for the town outline.
+     */
     @NotNull
     public MarkerOptions.Builder getMarkerOptions() {
         return markerOptionsBuilder;

@@ -46,7 +46,7 @@ public interface MapTownyPlugin {
     LayerManager getLayerManager();
 
     /**
-     * Get the indepdent platform interface for the web-map being used.
+     * Get the independent platform interface for the web-map being used.
      *
      * May be null if plugin failed to load correctly.
      *

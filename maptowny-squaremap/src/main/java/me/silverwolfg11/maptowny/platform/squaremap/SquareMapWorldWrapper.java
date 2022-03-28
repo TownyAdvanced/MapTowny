@@ -45,7 +45,7 @@ public class SquareMapWorldWrapper implements MapWorld {
         SimpleLayerProvider layerProvider = SimpleLayerProvider.builder(options.getName())
                 .defaultHidden(options.isDefaultHidden())
                 .layerPriority(options.getLayerPriority())
-                .zIndex(options.getzIndex())
+                .zIndex(options.getZIndex())
                 .showControls(options.showControls())
                 .build();
 
