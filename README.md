@@ -20,13 +20,13 @@ Honestly, nothing uber special about this plugin other than it works, but if you
 - Unit-tested Custom Polygon Outline (contour) Algorithm and Negative Space (contour "hole-finding") Algorithm
 
 ## Installing
-Install the plugin from the [releases page](https://github.com/silverwolfg11/Pl3xMap-Towny/releases). Simply put the jar file into your `plugins` directory and start your server.
+Install the plugin from the [releases page](https://github.com/TownyAdvanced/MapTowny/releases). Simply put the jar file into your `plugins` directory and start your server.
 
 ## Usage and Configuration
-The plugin should be ready for use out of the box. The one thing that may need to be adjusted is the `enabled-worlds` property in the `config.yml` to add the world names that you want town claims to show up on. For more information about the plugin's commands and configuring the plugin, see the [wiki](https://github.com/silverwolfg11/Pl3xMap-Towny/wiki).
+The plugin should be ready for use out of the box. The one thing that may need to be adjusted is the `enabled-worlds` property in the `config.yml` to add the world names that you want town claims to show up on. For more information about the plugin's commands and configuring the plugin, see the [wiki](https://github.com/TownyAdvanced/MapTowny/wiki).
 
 ## Plugin API:
-See [this wiki page](https://github.com/silverwolfg11/Pl3xMap-Towny/wiki/Pl3xMap-Towny-API) for more info.
+See [this wiki page](https://github.com/TownyAdvanced/MapTowny/wiki/MapTowny-API) for more info.
 
 ## Building
 This plugin is a standard maven project and can be built via `mvn clean install` (or `mvn clean package`).
