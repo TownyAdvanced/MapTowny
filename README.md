@@ -1,7 +1,7 @@
 # MapTowny
 A Towny add-on Spigot plugin that enables towns to show up on a web-map.
 
-**Supported web-map plugins are Pl3xMap, squaremap, and dynmap**.
+**Supported web-map plugins are Pl3xMap, squaremap, dynmap, and BlueMap**.
 
 ## Dependencies
 This plugin requires Towny to be installed on your server.
@@ -11,6 +11,7 @@ The plugin also requires one of the following web-map plugins to be installed on
 - [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap) (use this [fork](https://github.com/NeumimTo/Pl3xMap) for 1.18+)
 - [squaremap](https://github.com/jpenilla/squaremap)
 - [dynmap](https://www.spigotmc.org/resources/dynmap%C2%AE.274/)
+- [BlueMap](https://www.spigotmc.org/resources/bluemap.83557/) (limited support)
 
 ## Features
 Honestly, nothing uber special about this plugin other than it works, but if you really want to know:
@@ -29,7 +30,11 @@ The plugin should be ready for use out of the box. The one thing that may need t
 See [this wiki page](https://github.com/TownyAdvanced/MapTowny/wiki/MapTowny-API) for more info.
 
 ## Building
-This plugin is a standard maven project and can be built via `mvn clean install` (or `mvn clean package`).
+This plugin is a standard maven project that utilizes the [maven toolchains plugin](https://maven.apache.org/plugins/maven-toolchains-plugin/) in order to build against multiple JDK versions. In order to use the maven toolchains plugin, you must have a `toolchains.xml` file in your `.m2` folder properly configured with at least JDK versions 1.8 and 16. See [this guide](https://maven.apache.org/guides/mini/guide-using-toolchains.html#using-toolchains-in-your-project) for more info on setting up a `toolchains.xml` file. 
+
+Once that is setup, the project can be compiled with the command `mvn clean package` or `mvn clean install` ran in the project directory.
 
 ## Licensing
 This plugin is licensed under the MIT license. While highly permissible, I do kindly hope that you create pull-requests for any bug fixes or useful features so they can help the entire community.
+
+\*All pull-requests made to the repository agree to license the code contributed under the MIT license.
