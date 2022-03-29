@@ -27,6 +27,14 @@
         <jdk.version>${java.version}</jdk.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>glare-nexus</id>
+            <name>Towny</name>
+            <url>https://repo.glaremasters.me/repository/towny/</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
@@ -48,6 +56,36 @@
                         </jdk>
                     </toolchains>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <source>16</source>
+                    <doclint>all,-missing</doclint>
+                </configuration>
+            </plugin>
+            <plugin>  <!-- Create sources.jar -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
