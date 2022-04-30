@@ -32,14 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlueMapPlatform implements MapPlatform {
 
     private final JavaPlugin plugin;
     private final BlueMapMarkerProcessor markerProcessor;
     private final BlueMapIconMapper iconMapper;
-
-    private boolean firstLayerCreated = false;
+    private final Collection<String> registeredGlobalLayers = ConcurrentHashMap.newKeySet();
 
     public BlueMapPlatform(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -79,12 +80,7 @@ public class BlueMapPlatform implements MapPlatform {
     @Override
     public @Nullable MapWorld getWorld(@NotNull World world) {
         WorldIdentifier worldId = WorldIdentifier.from(world);
-
-        boolean registerLayer = !firstLayerCreated;
-        if (registerLayer)
-            firstLayerCreated = true;
-
-        return new BlueMapWorldWrapper(worldId, plugin.getLogger(), registerLayer, markerProcessor);
+        return new BlueMapWorldWrapper(worldId, plugin.getLogger(), registeredGlobalLayers, markerProcessor);
     }
 
     @Override

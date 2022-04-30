@@ -26,8 +26,10 @@ import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 /**
@@ -40,6 +42,7 @@ public interface MapLayer {
 
     /**
      * Add a multi-polygon marker to the layer.
+     * If a marker with the marker key already exists, it will be overwritten.
      *
      * The platform is tasked with rendering the marker.
      *
@@ -51,6 +54,7 @@ public interface MapLayer {
 
     /**
      * Add an icon marker to the layer.
+     * If a marker with the marker key already exists, it will be overwritten.
      *
      * NOTE: Not all platforms will obey the icon size arguments.
      *
@@ -66,6 +70,17 @@ public interface MapLayer {
                        @NotNull MarkerOptions markerOptions);
 
     /**
+     * Check if the layer has a marker matching the key.
+     * <br>
+     * On some platforms, this will only be accurate for markers registered through this API.
+     *
+     * @param markerKey Unique marker key.
+     *
+     * @return whether the layer has a marker matching the key.
+     */
+    boolean hasMarker(@NotNull String markerKey);
+
+    /**
      * Remove a marker associated with the specific marker key.
      *
      * @param markerKey Unique marker key.
@@ -79,4 +94,24 @@ public interface MapLayer {
      * @param markerKeyFilter Filter acting upon the marker's unique key.
      */
     void removeMarkers(@NotNull Predicate<String> markerKeyFilter);
+
+    /**
+     * Get the marker options for a specific existing marker.
+     *
+     * The future may complete with a null value if no marker matching marker key is found.
+     * The future has no guarantees about what kind of thread it completes in.
+     *
+     * @param markerKey Unique marker key.
+     * @return completable future with the marker options or null for that marker.
+     */
+    @NotNull
+    CompletableFuture<@Nullable MarkerOptions> getMarkerOptions(@NotNull String markerKey);
+
+    /**
+     * Set marker options for a specific existing marker.
+     *
+     * @param markerKey Unique marker key.
+     * @param markerOptions Options influencing the style of the marker.
+     */
+    void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions);
 }

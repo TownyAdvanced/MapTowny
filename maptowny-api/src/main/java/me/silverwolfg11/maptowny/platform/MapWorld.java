@@ -34,6 +34,11 @@ public interface MapWorld {
 
     /**
      * Register a specific layer on top of the world.
+     * <br>
+     * {@link MapLayer}s should be cached by the calling plugin
+     * as there is no way to retrieve them once registered.
+     * <br>
+     * Some platforms may perform storage I/O operations to register a layer.
      *
      * @param layerKey Unique layer key to associate with the layer.
      * @param options Options on how the layer should be set up.
@@ -43,7 +48,17 @@ public interface MapWorld {
     MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options);
 
     /**
+     * Check if a world has a specific layer.
+     *
+     * @param layerKey Unique layer key.
+     * @return if the world has a layer with that key registered.
+     */
+    boolean hasLayer(@NotNull String layerKey);
+
+    /**
      * Unregister a layer associated with the layer key.
+     * <br>
+     * Some platforms may perform storage I/O operations to unregister a layer.
      *
      * @param layerKey Unique layer key.
      */

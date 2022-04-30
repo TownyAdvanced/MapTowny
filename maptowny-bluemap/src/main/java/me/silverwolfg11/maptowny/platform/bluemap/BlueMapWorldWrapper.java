@@ -32,6 +32,7 @@ import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,21 +40,21 @@ public class BlueMapWorldWrapper implements MapWorld {
 
     private final WorldIdentifier worldIdentifier;
     private final Logger errorLogger;
-    private final boolean registerMarkerSet;
+    private final Collection<String> registeredLayers;
     private final BlueMapMarkerProcessor markerProcessor;
 
-    public BlueMapWorldWrapper(WorldIdentifier worldIdentifier, Logger errorLogger, boolean registerMarkerSet, BlueMapMarkerProcessor markerProcessor) {
+    public BlueMapWorldWrapper(WorldIdentifier worldIdentifier, Logger errorLogger, Collection<String> registeredLayers, BlueMapMarkerProcessor markerProcessor) {
         this.worldIdentifier = worldIdentifier;
         this.errorLogger = errorLogger;
-        this.registerMarkerSet = registerMarkerSet;
+        this.registeredLayers = registeredLayers;
         this.markerProcessor = markerProcessor;
     }
 
     @Override
     public @NotNull MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options) {
         // Layers in BlueMap are global (independent of world)
-        // BlueMap Marker Ops require I/O, so to avoid this, keep track if the Towny layer has already been registered.
-        if (registerMarkerSet) {
+        // BlueMap Marker Ops require I/O, so to avoid this, keep track if the specified layer has already been registered.
+        if (!registeredLayers.contains(layerKey)) {
             BlueMapAPI api = BlueMapAPI.getInstance().get();
             try {
                 MarkerAPI markerAPI = api.getMarkerAPI();
@@ -75,9 +76,14 @@ public class BlueMapWorldWrapper implements MapWorld {
     }
 
     @Override
+    public boolean hasLayer(@NotNull String layerKey) {
+        return registeredLayers.contains(layerKey);
+    }
+
+    @Override
     public void unregisterLayer(@NotNull String layerKey) {
         // Only unregister the marker set once.
-        if (registerMarkerSet) {
+        if (registeredLayers.contains(layerKey)) {
             BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
             if (api == null)
                 return;

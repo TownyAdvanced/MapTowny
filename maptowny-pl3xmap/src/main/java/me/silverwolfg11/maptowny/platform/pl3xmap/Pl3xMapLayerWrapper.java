@@ -33,9 +33,11 @@ import net.pl3x.map.api.marker.Icon;
 import net.pl3x.map.api.marker.Marker;
 import net.pl3x.map.api.marker.MultiPolygon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -113,6 +115,11 @@ public class Pl3xMapLayerWrapper implements MapLayer {
     }
 
     @Override
+    public boolean hasMarker(@NotNull String markerKey) {
+        return layerProvider.hasMarker(Key.of(markerKey));
+    }
+
+    @Override
     public boolean removeMarker(@NotNull String markerKey) {
         return layerProvider.removeMarker(Key.of(markerKey)) != null;
     }
@@ -126,5 +133,40 @@ public class Pl3xMapLayerWrapper implements MapLayer {
         for (Key key : markersToRemove) {
             layerProvider.removeMarker(key);
         }
+    }
+
+    @Override
+    public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
+        Marker marker = layerProvider.registeredMarkers().get(Key.of(markerKey));
+
+        if (marker == null)
+            return CompletableFuture.completedFuture(null);
+
+        net.pl3x.map.api.marker.MarkerOptions pl3xOptions = marker.markerOptions();
+
+        MarkerOptions.Builder markerOptionsBuilder = MarkerOptions.builder()
+                .clickTooltip(pl3xOptions.clickTooltip())
+                .hoverTooltip(pl3xOptions.hoverTooltip())
+                .fill(pl3xOptions.fill())
+                .fillOpacity(pl3xOptions.fillOpacity())
+                .stroke(pl3xOptions.stroke())
+                .strokeColor(pl3xOptions.strokeColor())
+                .strokeWeight(pl3xOptions.strokeWeight());
+
+        if (pl3xOptions.fillColor() != null)
+            markerOptionsBuilder.fillColor(pl3xOptions.fillColor());
+
+        return CompletableFuture.completedFuture(markerOptionsBuilder.build());
+    }
+
+    @Override
+    public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
+        Marker marker = layerProvider.registeredMarkers().get(Key.of(markerKey));
+
+        if (marker == null)
+            return;
+
+        net.pl3x.map.api.marker.MarkerOptions pl3xOptions = buildOptions(markerOptions);
+        marker.markerOptions(pl3xOptions);
     }
 }

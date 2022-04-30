@@ -54,6 +54,11 @@ public class DynmapWorldWrapper implements MapWorld {
     }
 
     @Override
+    public boolean hasLayer(@NotNull String layerKey) {
+        return dynmapAPI.getMarkerAPI().getMarkerSet(layerKey) != null;
+    }
+
+    @Override
     public void unregisterLayer(@NotNull String layerKey) {
         MarkerSet markerSet = dynmapAPI.getMarkerAPI().getMarkerSet(layerKey);
         if (markerSet != null) {

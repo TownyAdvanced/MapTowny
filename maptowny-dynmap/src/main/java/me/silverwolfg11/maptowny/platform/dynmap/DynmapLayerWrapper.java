@@ -32,11 +32,14 @@ import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
@@ -66,6 +69,15 @@ public class DynmapLayerWrapper implements MapLayer {
     private int toDynmapRGB(Color color) {
         // 0xRRGGBBFF
         return (color.getRGB() << 8) | 0x0FF;
+    }
+
+    private Color fromDynmapRGB(int rgb) {
+        // Dynmap Format: 0xRRGGBBFF
+        // Color Format: 0xFFRRGGBB
+
+        // Unsigned right shift by 8 (although it doesn't matter since Color OR masks it)
+        int shiftedRGB = rgb >>> 8;
+        return new Color(shiftedRGB);
     }
 
     @Override
@@ -116,8 +128,15 @@ public class DynmapLayerWrapper implements MapLayer {
     public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
         MarkerIcon markerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
 
-        markerSet.createMarker(toWorldKey(markerKey), markerOptions.name(), worldName,
-                iconLoc.x(), zIndex, iconLoc.z(), markerIcon, false);
+        Marker marker = markerSet.createMarker(toWorldKey(markerKey), markerOptions.name(), worldName,
+                        iconLoc.x(), zIndex, iconLoc.z(), markerIcon, false);
+
+        marker.setDescription(markerOptions.clickTooltip());
+    }
+
+    @Override
+    public boolean hasMarker(@NotNull String markerKey) {
+        return markerSet.findMarker(toWorldKey(markerKey)) != null;
     }
 
     @Override
@@ -156,6 +175,80 @@ public class DynmapLayerWrapper implements MapLayer {
 
         for (Marker marker : markersToRemove) {
             marker.deleteMarker();
+        }
+    }
+
+    @Override
+    public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
+        final String worldKey = toWorldKey(markerKey);
+
+        Marker marker;
+        if (multiPolys.containsKey(markerKey)) {
+            // Use first marker of the polygon to get the marker options for all polygons
+            marker = markerSet.findMarker(worldKey + 0);
+        }
+        else {
+            marker = markerSet.findMarker(worldKey);
+        }
+
+        if (marker == null)
+            return CompletableFuture.completedFuture(null);
+
+        MarkerOptions.Builder markerBuilder = MarkerOptions.builder()
+                .name(marker.getLabel())
+                .clickTooltip(marker.getDescription());
+
+        if (marker instanceof AreaMarker) {
+            AreaMarker areaMarker = (AreaMarker) marker;
+
+            markerBuilder
+                    .fillColor(fromDynmapRGB(areaMarker.getFillColor()))
+                    .fillOpacity(areaMarker.getFillOpacity())
+                    .strokeOpacity(areaMarker.getLineOpacity())
+                    .strokeWeight(areaMarker.getLineWeight());
+        }
+        else {
+            markerBuilder.fill(false)
+                    .stroke(false);
+        }
+
+        return CompletableFuture.completedFuture(markerBuilder.build());
+    }
+
+    @Override
+    public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
+        final String worldKey = toWorldKey(markerKey);
+
+        List<Marker> markers = Collections.emptyList();
+
+        if (multiPolys.containsKey(markerKey)) {
+            int polySize = multiPolys.get(markerKey);
+            markers = new ArrayList<>(polySize);
+
+            for (int polyIdx = 0; polyIdx < polySize; ++polyIdx) {
+                Marker marker = markerSet.findMarker(worldKey + polyIdx);
+                if (marker != null)
+                    markers.add(marker);
+            }
+        }
+        else {
+            Marker marker = markerSet.findMarker(worldKey);
+            if (marker != null)
+                markers = Collections.singletonList(marker);
+        }
+
+        for (Marker marker : markers) {
+            marker.setLabel(markerOptions.name());
+            marker.setDescription(markerOptions.clickTooltip());
+
+            if (marker instanceof AreaMarker) {
+                AreaMarker areaMarker = (AreaMarker) marker;
+                if (markerOptions.fillColor() != null) {
+                    areaMarker.setFillStyle(markerOptions.fillOpacity(), toDynmapRGB(markerOptions.fillColor()));
+                }
+
+                areaMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import xyz.jpenilla.squaremap.api.Key;
 import xyz.jpenilla.squaremap.api.Point;
 import xyz.jpenilla.squaremap.api.SimpleLayerProvider;
@@ -36,6 +37,7 @@ import xyz.jpenilla.squaremap.api.marker.MultiPolygon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -113,6 +115,11 @@ public class SquareMapLayerWrapper implements MapLayer {
     }
 
     @Override
+    public boolean hasMarker(@NotNull String markerKey) {
+        return layerProvider.hasMarker(Key.of(markerKey));
+    }
+
+    @Override
     public boolean removeMarker(@NotNull String markerKey) {
         return layerProvider.removeMarker(Key.of(markerKey)) != null;
     }
@@ -126,5 +133,40 @@ public class SquareMapLayerWrapper implements MapLayer {
         for (Key key : markersToRemove) {
             layerProvider.removeMarker(key);
         }
+    }
+
+    @Override
+    public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
+        Marker marker = layerProvider.registeredMarkers().get(Key.of(markerKey));
+
+        if (marker == null)
+            return CompletableFuture.completedFuture(null);
+
+        xyz.jpenilla.squaremap.api.marker.MarkerOptions squareOptions = marker.markerOptions();
+
+        MarkerOptions.Builder markerOptionsBuilder = MarkerOptions.builder()
+                .clickTooltip(squareOptions.clickTooltip())
+                .hoverTooltip(squareOptions.hoverTooltip())
+                .fill(squareOptions.fill())
+                .fillOpacity(squareOptions.fillOpacity())
+                .stroke(squareOptions.stroke())
+                .strokeColor(squareOptions.strokeColor())
+                .strokeWeight(squareOptions.strokeWeight());
+
+        if (squareOptions.fillColor() != null)
+            markerOptionsBuilder.fillColor(squareOptions.fillColor());
+
+        return CompletableFuture.completedFuture(markerOptionsBuilder.build());
+    }
+
+    @Override
+    public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
+        Marker marker = layerProvider.registeredMarkers().get(Key.of(markerKey));
+
+        if (marker == null)
+            return;
+
+        xyz.jpenilla.squaremap.api.marker.MarkerOptions squareOptions = buildOptions(markerOptions);
+        marker.markerOptions(squareOptions);
     }
 }

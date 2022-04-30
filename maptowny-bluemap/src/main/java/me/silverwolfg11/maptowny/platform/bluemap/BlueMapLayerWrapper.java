@@ -28,21 +28,26 @@ import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
+import me.silverwolfg11.maptowny.platform.bluemap.markerops.FetchMarkerOptionsOp;
 import me.silverwolfg11.maptowny.platform.bluemap.markerops.IconMarkerOp;
 import me.silverwolfg11.maptowny.platform.bluemap.markerops.MarkerOp;
 import me.silverwolfg11.maptowny.platform.bluemap.markerops.PolyMarkerOp;
 import me.silverwolfg11.maptowny.platform.bluemap.markerops.RemoveMarkerOp;
 import me.silverwolfg11.maptowny.platform.bluemap.markerops.RemoveMarkersOp;
+import me.silverwolfg11.maptowny.platform.bluemap.markerops.SetMarkerOptionsOp;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class BlueMapLayerWrapper implements MapLayer {
@@ -137,6 +142,12 @@ public class BlueMapLayerWrapper implements MapLayer {
     }
 
     @Override
+    public boolean hasMarker(@NotNull String markerKey) {
+        // May not be the most accurate, but it's the best option w/o having to delay the result.
+        return markerIds.contains(markerKey);
+    }
+
+    @Override
     public boolean removeMarker(@NotNull String markerKey) {
         final String worldKey = toWorldKey(markerKey);
         // Remove all multipolygon representations
@@ -161,5 +172,28 @@ public class BlueMapLayerWrapper implements MapLayer {
     @Override
     public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
         markerProcessor.queueMarkerOp(new RemoveMarkersOp(layerKey, markerKeyFilter));
+    }
+
+    @Override
+    public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
+        if (!markerIds.contains(markerKey)) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        final String worldKey = toWorldKey(markerKey);
+        final CompletableFuture<MarkerOptions> future = new CompletableFuture<>();
+
+        markerProcessor.queueMarkerOp(new FetchMarkerOptionsOp(layerKey, worldKey, future::complete));
+
+        return future;
+    }
+
+    @Override
+    public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
+        if (!markerIds.contains(markerKey))
+            return;
+        final String worldKey = toWorldKey(markerKey);
+
+        markerProcessor.queueMarkerOp(new SetMarkerOptionsOp(layerKey, worldKey, markerOptions));
     }
 }

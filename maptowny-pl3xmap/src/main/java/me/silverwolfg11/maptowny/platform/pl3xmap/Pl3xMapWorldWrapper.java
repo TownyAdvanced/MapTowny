@@ -54,6 +54,11 @@ public class Pl3xMapWorldWrapper implements MapWorld {
     }
 
     @Override
+    public boolean hasLayer(@NotNull String layerKey) {
+        return mapWorld.layerRegistry().hasEntry(Key.of(layerKey));
+    }
+
+    @Override
     public void unregisterLayer(@NotNull String layerKey) {
         mapWorld.layerRegistry().unregister(Key.of(layerKey));
     }
