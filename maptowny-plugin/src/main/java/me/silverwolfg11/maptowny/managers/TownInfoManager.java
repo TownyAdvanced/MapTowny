@@ -147,7 +147,7 @@ public class TownInfoManager {
         if (TownyEconomyHandler.isActive() && TownySettings.isUsingEconomy()) {
             register("tax", t -> {
                 if (t.isTaxPercentage()) {
-                    return "%" + t.getTaxes();
+                    return t.getTaxes() + "%";
                 }
 
                 return TownyEconomyHandler.getFormattedBalance(t.getTaxes());
