@@ -46,6 +46,9 @@ public class BlueMapPlatform implements MapPlatform {
         this.plugin = plugin;
         this.iconMapper = new BlueMapIconMapper(plugin.getLogger());
         this.markerProcessor = new BlueMapMarkerProcessor(plugin, iconMapper);
+
+        // Allow scheduling marker processing operations when the API has loaded.
+        BlueMapAPI.onEnable(api -> markerProcessor.enableScheduling());
     }
 
     @Override
@@ -58,8 +61,6 @@ public class BlueMapPlatform implements MapPlatform {
         // BlueMap API asynchronously initializes after the server starts ticking.
         BlueMapAPI.onEnable(api -> {
             callback.run();
-            // Allow scheduling marker processing operations
-            markerProcessor.enableScheduling();
         });
     }
 

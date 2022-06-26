@@ -45,6 +45,7 @@ public interface MapPlatform {
      * Execute a callback when the platform's API has initialized.
      *
      * Platforms that are already initialized will execute the callback immediately on the calling thread.
+     * Platforms may execute the callbacks asynchronously.
      *
      * @param callback Callback to execute.
      */
