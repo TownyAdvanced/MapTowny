@@ -32,7 +32,6 @@ import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -119,6 +118,7 @@ public class DynmapLayerWrapper implements MapLayer {
             }
 
             areaMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
+            areaMarker.setRangeY(zIndex, zIndex);
         }
 
         multiPolys.put(markerKey, polygons.size());
