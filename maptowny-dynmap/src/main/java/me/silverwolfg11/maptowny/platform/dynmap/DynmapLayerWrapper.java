@@ -22,6 +22,7 @@
 
 package me.silverwolfg11.maptowny.platform.dynmap;
 
+import me.silverwolfg11.maptowny.MapTownyPlugin;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
@@ -128,7 +129,23 @@ public class DynmapLayerWrapper implements MapLayer {
     public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
         MarkerIcon markerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
 
-        Marker marker = markerSet.createMarker(toWorldKey(markerKey), markerOptions.name(), worldName,
+        if (markerIcon == null) {
+            return;
+        }
+
+        final String worldKey = toWorldKey(markerKey);
+
+        Marker marker = markerSet.findMarker(worldKey);
+
+        // If marker exists, overwrite marker.
+        if (marker != null) {
+            marker.setLabel(markerOptions.name());
+            marker.setLocation(worldName, iconLoc.x(), zIndex, iconLoc.z());
+            marker.setDescription(markerOptions.clickTooltip());
+            return;
+        }
+
+        marker = markerSet.createMarker(worldKey, markerOptions.name(), worldName,
                         iconLoc.x(), zIndex, iconLoc.z(), markerIcon, false);
 
         marker.setDescription(markerOptions.clickTooltip());
