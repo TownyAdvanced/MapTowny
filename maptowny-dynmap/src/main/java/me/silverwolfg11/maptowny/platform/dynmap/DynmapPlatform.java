@@ -26,6 +26,8 @@ import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +83,7 @@ public class DynmapPlatform implements MapPlatform {
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
         MarkerIcon markerIcon = dynmapAPI.getMarkerAPI().createMarkerIcon(iconKey, iconKey, bais);
         if (markerIcon == null) {
-            Bukkit.getLogger().severe(String.format("[MapTowny-DP] Error registering icon '%s'", iconKey));
+            logError(String.format("Error registering icon '%s' on dynmap!", iconKey));
         }
     }
 
@@ -99,5 +101,14 @@ public class DynmapPlatform implements MapPlatform {
         }
 
         return false;
+    }
+
+    // Logger Accessibility
+    static void logError(String errorMsg) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("MapTowny");
+        if (plugin == null)
+            return;
+
+        plugin.getLogger().severe(errorMsg);
     }
 }

@@ -130,6 +130,10 @@ public class DynmapLayerWrapper implements MapLayer {
         MarkerIcon markerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
 
         if (markerIcon == null) {
+            DynmapPlatform.logError(String.format(
+                    "Error adding icon marker with key '%s' to Dynmap because no icon with key '%s' could be found!",
+                    markerKey, iconKey
+            ));
             return;
         }
 
