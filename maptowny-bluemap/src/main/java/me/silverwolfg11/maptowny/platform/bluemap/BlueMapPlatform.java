@@ -26,6 +26,7 @@ import de.bluecolored.bluemap.api.BlueMapAPI;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class BlueMapPlatform implements MapPlatform {
 
@@ -57,11 +60,24 @@ public class BlueMapPlatform implements MapPlatform {
     }
 
     @Override
+    public void onFirstInitialize(Runnable callback) {
+        // Use the future to unregister the listener
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        Consumer<BlueMapAPI> apiConsumer = (api) -> {
+            callback.run();
+            // Have to delay it, otherwise it will end up concurrently modifying
+            // the onEnablers list.
+            Bukkit.getScheduler().runTask(plugin, () -> future.complete(null));
+        };
+        future.thenRun(() -> BlueMapAPI.unregisterListener(apiConsumer));
+
+        BlueMapAPI.onEnable(apiConsumer);
+    }
+
+    @Override
     public void onInitialize(final Runnable callback) {
         // BlueMap API asynchronously initializes after the server starts ticking.
-        BlueMapAPI.onEnable(api -> {
-            callback.run();
-        });
+        BlueMapAPI.onEnable(api -> callback.run());
     }
 
     @Override

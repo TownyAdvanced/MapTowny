@@ -90,8 +90,10 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
         // If towny is in safe-mode, do not attempt to render towns.
         if (!Towny.getPlugin().isError()) {
-            // Schedule render task
-            new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
+            // Schedule render task when the layer manager is initialized.
+            layerManager.onInitialize(() ->
+                    new RenderTownsTask(this).runTaskTimer(this, 20, config.getUpdatePeriod() * 20L * 60)
+            );
         }
     }
 

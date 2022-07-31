@@ -69,6 +69,8 @@ public class TownyLayerManager implements LayerManager {
     private final Map<String, MapLayer> worldProviders = new ConcurrentHashMap<>();
     private final Collection<UUID> renderedTowns = ConcurrentHashMap.newKeySet();
 
+    private Collection<Runnable> initializerCallbacks = new ArrayList<>();
+
     private final String LAYER_KEY = "towny";
 
     // Icon Registry Keys
@@ -82,13 +84,25 @@ public class TownyLayerManager implements LayerManager {
 
     // Quick Indicators
     private boolean usingOutposts;
+    private boolean isInitialized = false;
 
     public TownyLayerManager(MapTowny plugin, MapPlatform platform) {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
         this.mapPlatform = platform;
         // Schedule initialization
-        mapPlatform.onInitialize(this::initialize);
+        mapPlatform.onFirstInitialize(this::initialize);
+    }
+
+    // Callbacks execute when the LayerManager completes initialization.
+    // If the LayerManager is already initialized, callback runs in the calling thread.
+    // Callbacks do not persist through MapTowny reloads.
+    public void onInitialize(Runnable runnable) {
+        if (isInitialized)
+            runnable.run();
+        else {
+            this.initializerCallbacks.add(runnable);
+        }
     }
 
     private void initialize() {
@@ -133,6 +147,16 @@ public class TownyLayerManager implements LayerManager {
         else {
             usingOutposts = false;
         }
+
+        // Run initialization callbacks
+        isInitialized = true;
+        for (Runnable callback : initializerCallbacks) {
+            callback.run();
+        }
+
+        // Allow GC
+        initializerCallbacks.clear();
+        initializerCallbacks = null;
     }
 
     // Only ran synchronous

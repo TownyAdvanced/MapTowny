@@ -42,10 +42,29 @@ public interface MapPlatform {
     @NotNull String getPlatformName();
 
     /**
-     * Execute a callback when the platform's API has initialized.
+     * Execute a callback the first time the platform's API is initialized.
+     * <br><br>
+     * Callback Behavior:
+     * <ul>
+     *  <li> Platforms already initialized will execute the callback immediately on the calling thread.
+     *  <li> Platforms may execute the callback asynchronously.
+     * </ul>
      *
-     * Platforms that are already initialized will execute the callback immediately on the calling thread.
-     * Platforms may execute the callbacks asynchronously.
+     * @param callback Callback to execute
+     */
+    default void onFirstInitialize(Runnable callback) {
+        callback.run();
+    }
+
+    /**
+     * Execute a callback when the platform's API has initialized.
+     * <br><br>
+     * Callback Behavior:
+     * <ul>
+     *  <li> Platforms that are already initialized will execute the callback immediately on the calling thread.
+     *  <li> Platforms may execute the callbacks asynchronously.
+     *  <li> Platforms may execute the callback again if the platform is reloaded.
+     * </ul>
      *
      * @param callback Callback to execute.
      */

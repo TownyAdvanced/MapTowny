@@ -115,19 +115,21 @@ public class BlueMapMarkerProcessor {
 
         Collection<MarkerOp> markerOps = segregateQueue();
 
-        BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
+        if (!markerOps.isEmpty()) {
+            BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
 
-        if (api == null)
-            return;
+            if (api == null)
+                return;
 
-        try {
-            MarkerAPI markerAPI = api.getMarkerAPI();
-            for (MarkerOp markerOp : markerOps) {
-                markerOp.run(api, markerAPI, iconMapper);
+            try {
+                MarkerAPI markerAPI = api.getMarkerAPI();
+                for (MarkerOp markerOp : markerOps) {
+                    markerOp.run(api, markerAPI, iconMapper);
+                }
+                markerAPI.save();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            markerAPI.save();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         // Schedule a new processing task if there are new operations
