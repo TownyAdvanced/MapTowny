@@ -1,3 +1,7 @@
 # Keep it simple and only build the API on Jitpack.
+before_install:
+  - sdk install java 8.0.181-oracle
+  - sdk use java 8.0.181-oracle
 install:
+  - sh ./jitpack/jitpack_build.sh
   - mvn clean install -pl maptowny-api
