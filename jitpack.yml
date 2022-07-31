@@ -2,5 +2,6 @@
 before_install:
   - sdk install java 8.0.302-open
   - sdk use java 8.0.302-open
+  - sh ./jitpack/jitpack_build.sh
 install:
-  - sh ./jitpack/jitpack_build.sh && mvn clean install -pl maptowny-api
+  - mvn clean install -pl maptowny-api
