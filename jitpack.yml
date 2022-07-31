@@ -2,6 +2,11 @@
 before_install:
   - sdk install java 8.0.302-open
   - sdk use java 8.0.302-open
+  # Create .m2 folder to use to store jdk 8 path
+  - mkdir -p ~/.m2
+  # We have to store the path because the sdk environment
+  # cannot be accessed in subshells.
+  - sdk home java 8.0.302-open > ~/.m2/jdk_8_path
   - sh ./jitpack/jitpack_build.sh
 install:
   - mvn clean install -pl maptowny-api
