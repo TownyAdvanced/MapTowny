@@ -25,7 +25,7 @@ HOME_PATH="$(readlink -f ~)"
 # Create M2 home path
 M2_HOME="$HOME_PATH/.m2"
 # Get path of JDK 8
-JDK_8_HOME="$(sdk home java 8.0.181-oracle)"
+JDK_8_HOME="$(sdk home java 8.0.302-open)"
 # Copy toolchain file to m2 directory
 cp ./jitpack/jitpack_toolchain.xml "$M2_HOME/toolchains.xml"
 # Replace JDK 8 prefix with actual jdk8 home
