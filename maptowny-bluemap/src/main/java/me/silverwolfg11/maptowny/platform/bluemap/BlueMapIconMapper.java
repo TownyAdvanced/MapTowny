@@ -62,7 +62,7 @@ public class BlueMapIconMapper {
 
         try {
             BufferedImage resizedImg = resizeImg(img, height, width);
-            String imgPath = api.createImage(resizedImg, iconKey);
+            String imgPath = api.getWebApp().createImage(resizedImg, iconKey);
             keyPaths.put(iconKey, imgPath);
         } catch (IOException e) {
             errorLogger.log(Level.SEVERE, String.format("Error creating image for icon keyed '%s'!", iconKey), e);

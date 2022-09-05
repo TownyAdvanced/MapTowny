@@ -23,78 +23,52 @@
 package me.silverwolfg11.maptowny.platform.bluemap;
 
 import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.marker.MarkerAPI;
-import de.bluecolored.bluemap.api.marker.MarkerSet;
+import de.bluecolored.bluemap.api.BlueMapMap;
+import de.bluecolored.bluemap.api.BlueMapWorld;
+import de.bluecolored.bluemap.api.markers.MarkerSet;
 import me.silverwolfg11.maptowny.objects.LayerOptions;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class BlueMapWorldWrapper implements MapWorld {
 
-    private final WorldIdentifier worldIdentifier;
-    private final Logger errorLogger;
-    private final Collection<String> registeredLayers;
-    private final BlueMapMarkerProcessor markerProcessor;
+    private final BlueMapIconMapper iconMapper;
+    private final BlueMapWorld bmWorld;
 
-    public BlueMapWorldWrapper(WorldIdentifier worldIdentifier, Logger errorLogger, Collection<String> registeredLayers, BlueMapMarkerProcessor markerProcessor) {
-        this.worldIdentifier = worldIdentifier;
-        this.errorLogger = errorLogger;
-        this.registeredLayers = registeredLayers;
-        this.markerProcessor = markerProcessor;
+    public BlueMapWorldWrapper(WorldIdentifier worldIdentifier, BlueMapIconMapper iconMapper) {
+        this.iconMapper = iconMapper;
+        this.bmWorld = worldIdentifier.getBlueMapWorld(BlueMapAPI.getInstance().get());
     }
 
     @Override
     public @NotNull MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options) {
-        // Layers in BlueMap are global (independent of world)
-        // BlueMap Marker Ops require I/O, so to avoid this, keep track if the specified layer has already been registered.
-        if (!registeredLayers.contains(layerKey)) {
-            BlueMapAPI api = BlueMapAPI.getInstance().get();
-            try {
-                MarkerAPI markerAPI = api.getMarkerAPI();
+        MarkerSet markerSet = new MarkerSet(options.getName());
+        markerSet.setDefaultHidden(options.isDefaultHidden());
+        markerSet.setToggleable(options.showControls());
 
-                MarkerSet markerSet = markerAPI.createMarkerSet(layerKey);
-                if (markerSet != null) {
-                    markerSet.setLabel(options.getName());
-                    markerSet.setDefaultHidden(options.isDefaultHidden());
-                    markerSet.setToggleable(options.showControls());
-                    markerAPI.save();
-                }
-
-            } catch (IOException e) {
-                errorLogger.log(Level.SEVERE, String.format("Error creating layer '%s' for BlueMap!", layerKey), e);
-            }
+        for (BlueMapMap map : bmWorld.getMaps()) {
+            map.getMarkerSets().put(layerKey, markerSet);
         }
 
-        return new BlueMapLayerWrapper(markerProcessor, layerKey, worldIdentifier, options.getZIndex());
+        return new BlueMapLayerWrapper(iconMapper, markerSet, options.getZIndex());
     }
 
     @Override
     public boolean hasLayer(@NotNull String layerKey) {
-        return registeredLayers.contains(layerKey);
+        for (BlueMapMap map : bmWorld.getMaps()) {
+            if (map.getMarkerSets().containsKey(layerKey))
+                return true;
+        }
+
+        return false;
     }
 
     @Override
     public void unregisterLayer(@NotNull String layerKey) {
-        // Only unregister the marker set once.
-        if (registeredLayers.contains(layerKey)) {
-            BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
-            if (api == null)
-                return;
-
-            try {
-                MarkerAPI markerAPI = api.getMarkerAPI();
-                markerAPI.removeMarkerSet(layerKey);
-                markerAPI.save();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        for (BlueMapMap map : bmWorld.getMaps()) {
+            map.getMarkerSets().remove(layerKey);
         }
     }
 }

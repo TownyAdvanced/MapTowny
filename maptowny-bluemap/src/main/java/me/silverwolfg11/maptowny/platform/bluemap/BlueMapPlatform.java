@@ -33,25 +33,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class BlueMapPlatform implements MapPlatform {
 
     private final JavaPlugin plugin;
-    private final BlueMapMarkerProcessor markerProcessor;
     private final BlueMapIconMapper iconMapper;
-    private final Collection<String> registeredGlobalLayers = ConcurrentHashMap.newKeySet();
 
     public BlueMapPlatform(JavaPlugin plugin) {
         this.plugin = plugin;
         this.iconMapper = new BlueMapIconMapper(plugin.getLogger());
-        this.markerProcessor = new BlueMapMarkerProcessor(plugin, iconMapper);
-
-        // Allow scheduling marker processing operations when the API has loaded.
-        BlueMapAPI.onEnable(api -> markerProcessor.enableScheduling());
     }
 
     @Override
@@ -81,11 +73,6 @@ public class BlueMapPlatform implements MapPlatform {
     }
 
     @Override
-    public void startShutdown() {
-        markerProcessor.disableScheduling();
-    }
-
-    @Override
     public boolean isWorldEnabled(@NotNull World world) {
         BlueMapAPI api = BlueMapAPI.getInstance().orElse(null);
         if (api == null)
@@ -97,7 +84,7 @@ public class BlueMapPlatform implements MapPlatform {
     @Override
     public @Nullable MapWorld getWorld(@NotNull World world) {
         WorldIdentifier worldId = WorldIdentifier.from(world);
-        return new BlueMapWorldWrapper(worldId, plugin.getLogger(), registeredGlobalLayers, markerProcessor);
+        return new BlueMapWorldWrapper(worldId, iconMapper);
     }
 
     @Override

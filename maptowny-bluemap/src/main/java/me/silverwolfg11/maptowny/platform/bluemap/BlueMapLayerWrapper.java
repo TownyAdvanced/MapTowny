@@ -23,69 +23,52 @@
 package me.silverwolfg11.maptowny.platform.bluemap;
 
 import com.flowpowered.math.vector.Vector2d;
-import de.bluecolored.bluemap.api.marker.Shape;
+import de.bluecolored.bluemap.api.markers.Marker;
+import de.bluecolored.bluemap.api.markers.MarkerSet;
+import de.bluecolored.bluemap.api.markers.POIMarker;
+import de.bluecolored.bluemap.api.markers.ShapeMarker;
+import de.bluecolored.bluemap.api.math.Color;
+import de.bluecolored.bluemap.api.math.Shape;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.FetchMarkerOptionsOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.IconMarkerOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.MarkerOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.PolyMarkerOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.RemoveMarkerOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.RemoveMarkersOp;
-import me.silverwolfg11.maptowny.platform.bluemap.markerops.SetMarkerOptionsOp;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class BlueMapLayerWrapper implements MapLayer {
 
-    private final BlueMapMarkerProcessor markerProcessor;
+    private final MarkerSet markerSet;
 
-    private final String layerKey;
-    private final WorldIdentifier worldIdentifier;
     private final int zIndex;
 
-    // Keep track of markers on the layer
-    // Raw marker keys, not world keys.
-    private final Set<String> markerIds = ConcurrentHashMap.newKeySet();
+    private final BlueMapIconMapper iconMapper;
 
     // Simulate BlueMap having a MultiPolygon Marker
     // Marker Key -> Number of Polygons
     // Raw Marker Keys, not world keys
     private final Map<String, Integer> multiPolys = new ConcurrentHashMap<>();
 
-    public BlueMapLayerWrapper(BlueMapMarkerProcessor markerProcessor, String layerKey, WorldIdentifier worldIdentifier, int zIndex) {
-        this.markerProcessor = markerProcessor;
-        this.layerKey = layerKey;
-        this.worldIdentifier = worldIdentifier;
+    public BlueMapLayerWrapper(BlueMapIconMapper iconMapper, MarkerSet markerSet, int zIndex) {
+        this.iconMapper = iconMapper;
+        this.markerSet = markerSet;
         this.zIndex = zIndex;
     }
 
-    // Transform marker keys into per-world marker keys
-    private String toWorldKey(String markerKey) {
-        return markerKey + "_" + worldIdentifier.getWorldName();
-    }
+    private String toMarkerSetKey(String markerKey) {
+        if (multiPolys.containsKey(markerKey)) {
+            return markerKey + 0;
+        }
 
-    // Create a new remove op with layer info given
-    private MarkerOp newRemoveOp(String markerId) {
-        return new RemoveMarkerOp(layerKey, markerId);
-    }
-
-    private MarkerOp newPolyOp(String markerId, Shape shape, MarkerOptions markerOptions) {
-        return new PolyMarkerOp(layerKey, markerId, shape, worldIdentifier, zIndex, markerOptions);
+        return markerKey;
     }
 
     private Vector2d pointToVec(Point2D point) {
@@ -98,102 +81,175 @@ public class BlueMapLayerWrapper implements MapLayer {
                 .toArray(Vector2d[]::new);
     }
 
+    private Color toBMColor(java.awt.Color awtColor, double alphaPercent) {
+        // Use explicit constructor to avoid worrying about how the ints are packed.
+        return new Color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue(), (int) alphaPercent * 255);
+    }
+
+    private java.awt.Color fromBMColor(Color bmColor) {
+        return new java.awt.Color(bmColor.getRed(), bmColor.getGreen(), bmColor.getBlue(), bmColor.getAlpha());
+    }
+
+    private double getOpacityFromColor(java.awt.Color color) {
+        int alpha = color.getAlpha();
+        // Opacity is a percentage
+        return alpha / 255d;
+    }
+
     @Override
     public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
-        // Try a ShapeMarker otherwise use an Extrude Marker
-        // Label = Name
-        // SetDetail = SetHTML
-        final String worldKey = toWorldKey(markerKey);
-
-        List<MarkerOp> markerOps = new ArrayList<>();
-
         // Delete markers if current multipoly size is less than old multipoly size
         if (multiPolys.containsKey(markerKey)) {
-            int oldPolySize = multiPolys.get(markerKey);
+            int oldPolySize = multiPolys.remove(markerKey);
             int currPolySize = polygons.size();
+
             // Delete all old markers
             for (int i = currPolySize; i < oldPolySize; ++i) {
-                markerOps.add(newRemoveOp(worldKey + i));
+                markerSet.getMarkers().remove(markerKey + i);
             }
         }
+
         for (int i = 0; i < polygons.size(); i++) {
-            final String polyId = worldKey + i;
+            final String polyId = markerKey + i;
             final Polygon polygon = polygons.get(i);
 
             final Shape shape = new Shape(pointsToVecs(polygon.getPoints()));
-            markerOps.add(newPolyOp(polyId, shape, markerOptions));
+
+            final ShapeMarker shapeMarker = ShapeMarker.builder()
+                    .label(markerOptions.name())
+                    .shape(shape, zIndex)
+                    .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
+                    .lineWidth(markerOptions.strokeWeight())
+                    .fillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()))
+                    .detail(markerOptions.clickTooltip())
+                    .build();
+
+            markerSet.getMarkers().put(polyId, shapeMarker);
         }
 
-        if (!markerOps.isEmpty())
-            markerProcessor.queueMarkerOps(markerOps);
-
         multiPolys.put(markerKey, polygons.size());
-        markerIds.add(markerKey);
     }
 
     @Override
     public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
         // Use a POI Marker
         // POI Markers have no descriptions
-        final String worldKey = toWorldKey(markerKey);
-        markerProcessor.queueMarkerOp(new IconMarkerOp(layerKey, worldKey, iconKey, worldIdentifier, zIndex,
-                iconLoc, markerOptions, sizeX, sizeY));
-        markerIds.add(markerKey);
+
+        String bmIconAdress = iconMapper.getBlueMapAddress(iconKey);
+
+        if (bmIconAdress == null)
+            return;
+
+        POIMarker poiMarker = POIMarker.toBuilder()
+                .label(markerOptions.name())
+                .icon(bmIconAdress, sizeX / 2, sizeY / 2)
+                .position((int) iconLoc.x(), zIndex, (int) iconLoc.z())
+                .build();
+
+        markerSet.getMarkers().put(markerKey, poiMarker);
     }
 
     @Override
     public boolean hasMarker(@NotNull String markerKey) {
-        // May not be the most accurate, but it's the best option w/o having to delay the result.
-        return markerIds.contains(markerKey);
+        final String targetKey = toMarkerSetKey(markerKey);
+
+        return markerSet.getMarkers().containsKey(targetKey);
     }
 
     @Override
     public boolean removeMarker(@NotNull String markerKey) {
-        final String worldKey = toWorldKey(markerKey);
         // Remove all multipolygon representations
         if (multiPolys.containsKey(markerKey)) {
-            List<MarkerOp> removeOps = new ArrayList<>();
             int polySize = multiPolys.get(markerKey);
+            boolean markerExists = false;
+
             for (int i = 0; i < polySize; ++i) {
-                removeOps.add(newRemoveOp(worldKey + i));
+                final String finalKey = markerKey + i;
+                markerExists |= markerSet.getMarkers().remove(finalKey) != null;
             }
 
-            markerProcessor.queueMarkerOps(removeOps);
-
             multiPolys.remove(markerKey);
-            markerIds.remove(markerKey);
-            return true;
+            return markerExists;
         }
 
-        markerProcessor.queueMarkerOp(newRemoveOp(worldKey));
-        return markerIds.remove(markerKey);
+        return markerSet.getMarkers().remove(markerKey) != null;
     }
 
     @Override
     public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
-        markerProcessor.queueMarkerOp(new RemoveMarkersOp(layerKey, markerKeyFilter));
+        new ArrayList<>(markerSet.getMarkers().keySet()).stream()
+                        .filter(markerKeyFilter)
+                        .forEach(removeKey -> markerSet.getMarkers().remove(removeKey));
+    }
+
+    private MarkerOptions optionsFromMarker(Marker marker) {
+
+        MarkerOptions.Builder options = MarkerOptions.builder()
+                .name(marker.getLabel());
+
+        if (marker instanceof ShapeMarker) {
+            ShapeMarker shapeMarker = (ShapeMarker) marker;
+
+            if (shapeMarker.getFillColor() != null) {
+                var fillColor = fromBMColor(shapeMarker.getFillColor());
+
+                options.fillColor(fillColor);
+                options.fillOpacity(getOpacityFromColor(fillColor));
+            }
+
+            if (shapeMarker.getLineColor() != null) {
+                var strokeColor = fromBMColor(shapeMarker.getLineColor());
+
+                options.strokeColor(strokeColor);
+                options.strokeOpacity(getOpacityFromColor(strokeColor));
+            }
+
+            options.strokeWeight(shapeMarker.getLineWidth());
+            options.clickTooltip(shapeMarker.getDetail());
+        }
+
+        return options.build();
     }
 
     @Override
     public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
-        if (!markerIds.contains(markerKey)) {
+        String targetKey = toMarkerSetKey(markerKey);
+
+        Marker marker = markerSet.getMarkers().get(targetKey);
+
+        if (marker == null) {
             return CompletableFuture.completedFuture(null);
         }
 
-        final String worldKey = toWorldKey(markerKey);
-        final CompletableFuture<MarkerOptions> future = new CompletableFuture<>();
+        MarkerOptions markerOptions = optionsFromMarker(marker);
 
-        markerProcessor.queueMarkerOp(new FetchMarkerOptionsOp(layerKey, worldKey, future::complete));
+        return CompletableFuture.completedFuture(markerOptions);
+    }
 
-        return future;
+    private void updateMarkerOptions(Marker marker, MarkerOptions markerOptions) {
+        marker.setLabel(markerOptions.name());
+
+        if (marker instanceof ShapeMarker) {
+            ShapeMarker shapeMarker = (ShapeMarker) marker;
+            shapeMarker.setFillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()));
+            shapeMarker.setLineColor(toBMColor(markerOptions.strokeColor(), markerOptions.fillOpacity()));
+            shapeMarker.setLineWidth(markerOptions.strokeWeight());
+            shapeMarker.setDetail(markerOptions.clickTooltip());
+        }
     }
 
     @Override
     public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
-        if (!markerIds.contains(markerKey))
-            return;
-        final String worldKey = toWorldKey(markerKey);
-
-        markerProcessor.queueMarkerOp(new SetMarkerOptionsOp(layerKey, worldKey, markerOptions));
+        if (multiPolys.containsKey(markerKey)) {
+            int polySize = multiPolys.get(markerKey);
+            for (int i = 0; i < polySize; ++i) {
+                Marker marker = markerSet.getMarkers().get(markerKey + i);
+                updateMarkerOptions(marker, markerOptions);
+            }
+        }
+        else {
+            Marker marker = markerSet.getMarkers().get(markerKey);
+            updateMarkerOptions(marker, markerOptions);
+        }
     }
 }
