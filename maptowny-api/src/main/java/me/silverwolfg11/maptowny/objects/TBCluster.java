@@ -201,6 +201,22 @@ public class TBCluster {
      */
     @NotNull
     public static List<TBCluster> findClusters(@NotNull Collection<StaticTB> townBlocks) {
+
+    }
+
+    /**
+     * Create clusters from groups of connected {@link StaticTB}s.
+     * <br>
+     * A {@link StaticTB} is connected if it is directly above, below,
+     * to the left of, or to the right of another {@link StaticTB}.
+     *
+     * @param townBlocks Collection of townblocks to cluster.
+     *
+     * @return a list of clusters.
+     */
+    @NotNull
+    public static List<TBCluster> findClusters(@NotNull Collection<StaticTB> townBlocks,
+                                               @NotNull List<ClusterConstraint> constraints) {
         Objects.requireNonNull(townBlocks);
 
         if (townBlocks.isEmpty())
@@ -223,6 +239,8 @@ public class TBCluster {
                 // Townblock may have already been visited
                 if (townBlock == null)
                     continue;
+
+                // Make sure that it is a part of cluster constraints
 
                 cluster.add(hash, townBlock);
 
@@ -252,5 +270,27 @@ public class TBCluster {
             tbMap.put(tb.toLong(), tb);
         }
         return tbMap;
+    }
+
+    public static class ConstraintResults {
+        private final boolean inCluster;
+        private final boolean evalSurrounding;
+
+        public ConstraintResults(boolean inCluster, boolean evalSurrounding) {
+            this.inCluster = inCluster;
+            this.evalSurrounding = evalSurrounding;
+        }
+
+        public boolean addToCluster() {
+            return inCluster;
+        }
+
+        public boolean evaluateSurroundingTownBlocks() {
+            return evalSurrounding;
+        }
+    }
+
+    public interface ClusterConstraint {
+        ConstraintResults applyConstraint(@NotNull StaticTB testingTB, @Nullable StaticTB clusterTB);;
     }
 }

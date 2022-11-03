@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.github.silverwolfg11</groupId>
             <artifactId>CommentConfig</artifactId>
-            <version>v1.0.0</version>
+            <version>v1.1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

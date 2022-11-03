@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -258,6 +259,8 @@ public class TownyLayerManager implements LayerManager {
                     if (config.useNationStrokeColor())
                         optionsBuilder.strokeColor(nationColor.get());
                 }
+
+
 
                 // Use town color if present.
                 // Town color options will override nation colors

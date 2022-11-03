@@ -22,6 +22,7 @@
 
 package me.silverwolfg11.maptowny.objects;
 
+import com.palmergames.bukkit.towny.object.TownBlockType;
 import me.Silverwolfg11.CommentConfig.annotations.Comment;
 import me.Silverwolfg11.CommentConfig.annotations.ConfigVersion;
 import me.Silverwolfg11.CommentConfig.annotations.Node;
@@ -30,6 +31,8 @@ import me.Silverwolfg11.CommentConfig.node.ParentConfigNode;
 import me.Silverwolfg11.CommentConfig.serialization.ClassDeserializer;
 import me.Silverwolfg11.CommentConfig.serialization.ClassSerializer;
 import me.Silverwolfg11.CommentConfig.serialization.NodeSerializer;
+import me.silverwolfg11.maptowny.MapTowny;
+import me.silverwolfg11.maptowny.MapTownyPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,20 +43,24 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SerializableConfig
-@ConfigVersion(1.0)
+@ConfigVersion(1.1)
 public class MapConfig {
 
     @Comment("Worlds that should display town claims.")
     @Node("enabled-worlds")
     private List<String> enabledWorlds = Collections.singletonList("world");
 
-    @Comment({"", "How often should the plugin render all towns? (In minutes)"})
+    @Comment({"", "How often should the plugin render all towns? (in minutes)"})
     @Node("update-period")
     private int updatePeriod = 5;
 
@@ -61,13 +68,24 @@ public class MapConfig {
     @Node("layer")
     private LayerInfo layerInfo = new LayerInfo();
 
-    @Comment({"", "Fill Style.", "Properties about how claims should look on the map"})
+    @Comment({"", "Fill Style.", "Properties about how claims should look on the map."})
     @Node("fill-style")
     private FillStyle fillStyle = new FillStyle();
 
     @Comment({"", "Icon Properties:", "Icons are placed at the center of a town's homeblock."})
     @Node("icon-info")
     private IconInfo iconInfo = new IconInfo();
+
+    @Comment("")
+    @Node("townblock-types")
+    private TownBlockTypes townBlockTypes = new TownBlockTypes();
+
+    @Comment({"", "Priorities for how color for claims should be applied.",
+              "The valid list options are \"NATION\", \"TOWN\", and \"TOWNBLOCK_TYPE\".",
+              "If one option doesn't have a color for the respective area, then it will move onto the next option.",
+              "Default stroke and fill colors are always the last priority."})
+    @Node("color-priorities")
+    private ColorPriorities colorPriorities = new ColorPriorities();
 
     @SerializableConfig
     private class LayerInfo {
@@ -82,7 +100,7 @@ public class MapConfig {
         @Node("default-hidden")
         private boolean defaultHidden = false;
 
-        @Comment({"Layer Priority.", "Don't need to touch this unless other Pl3xMap add-ons are interfering with the layer."})
+        @Comment({"Layer Priority.", "Don't need to touch this unless other web-map add-ons are interfering with the layer."})
         @Node("layer-priority")
         private int layerPriority = 5;
 
@@ -164,6 +182,63 @@ public class MapConfig {
         private int iconSizeY = 35;
     }
 
+    @SerializableConfig
+    private class TownBlockColor {
+        @Node("fill-color")
+        private String fillColorStr = "none";
+
+        @Node("stroke-color")
+        private String strokeColorStr = "#3388ff";
+
+        private transient Color fillColor = null, strokeColor = null;
+
+        // Call to validate that the colors are cached
+        void cache() {
+            if (fillColorStr != null) {
+                fillColor = parseColorHex(fillColorStr);
+                strokeColor = parseColorHex(strokeColorStr);
+
+                fillColorStr = null;
+                strokeColorStr = null;
+            }
+        }
+    }
+
+    @SerializableConfig
+    private class TownBlockTypes {
+        @Comment("Separate claim representations by town block type.")
+        private boolean enabled = false;
+        @Comment({"",
+                  "Valid townblock types can be found on .",
+                  "Each type requires a \"fill-color\" and \"stroke-color\".",
+                  "If the color is not being used, set its value to \"none\"."})
+        @Node("types")
+        private Map<TownBlockType, TownBlockColor> typeColors = new HashMap<>();
+
+        public TownBlockTypes() {
+            typeColors.put(TownBlockType.COMMERCIAL, new TownBlockColor());
+        }
+    }
+
+    @SerializableConfig
+    private class ColorPriorities {
+        @Node("stroke")
+        private List<ColorSource> strokePriorities = new ArrayList<>();
+
+        @Node("fill")
+        private List<ColorSource> fillPriorities = new ArrayList<>();
+
+        public ColorPriorities() {
+            List<ColorSource> defaultPriorities = Arrays.asList(
+                    ColorSource.TOWNBLOCK_TYPE, ColorSource.TOWN, ColorSource.NATION
+            );
+
+            strokePriorities.addAll(defaultPriorities);
+            fillPriorities.addAll(defaultPriorities);
+        }
+    }
+
+
     public List<String> getEnabledWorlds() {
         return Collections.unmodifiableList(enabledWorlds);
     }
@@ -181,6 +256,19 @@ public class MapConfig {
                 layerInfo.layerPriority,
                 layerInfo.zIndex
         );
+    }
+
+    @Nullable
+    private static Color parseColorHex(String colorStr) {
+        if (colorStr == null || colorStr.isEmpty() || colorStr.equalsIgnoreCase("none"))
+            return null;
+
+        try {
+            return Color.decode(colorStr);
+        } catch (NumberFormatException ex) {
+            ex.printStackTrace();
+            return null;
+        }
     }
 
     @NotNull
@@ -267,6 +355,44 @@ public class MapConfig {
 
     public int getIconSizeY() {
         return iconInfo.iconSizeY;
+    }
+
+    public boolean clusterByTownBlockType() {
+        return townBlockTypes.enabled;
+    }
+
+    private TownBlockColor getTownBlockTypeColors(TownBlockType type) {
+        if (townBlockTypes.typeColors == null)
+            return null;
+
+        TownBlockColor tbColor = townBlockTypes.typeColors.getOrDefault(type, null);
+
+        if (tbColor == null) {
+            return null;
+        }
+
+        tbColor.cache();
+
+        return tbColor;
+    }
+    @Nullable
+    public Color getFillColor(TownBlockType type) {
+        TownBlockColor tbColor = getTownBlockTypeColors(type);
+        return tbColor != null ? tbColor.fillColor : null;
+    }
+
+    @Nullable
+    public Color getStrokeColor(TownBlockType type) {
+        TownBlockColor tbColor = getTownBlockTypeColors(type);
+        return tbColor != null ? tbColor.strokeColor : null;
+    }
+
+    public List<ColorSource> getStrokeColorPriorities() {
+        return Collections.unmodifiableList(colorPriorities.strokePriorities);
+    }
+
+    public List<ColorSource> getFillColorPriorities() {
+        return Collections.unmodifiableList(colorPriorities.fillPriorities);
     }
 
 
