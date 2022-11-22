@@ -119,7 +119,11 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         Predicate<String> pluginEnabled = (pluginName) -> Bukkit.getPluginManager().isPluginEnabled(pluginName);
 
         if (pluginEnabled.test("Pl3xMap")) {
-            return loadPlatformClass("pl3xmap.Pl3xMapPlatform");
+            // If class loaded: "net.pl3x.map.api.Pl3xMapProvider"
+            // then load v1, else load v2.
+            // No other good differentiating techniques for this exist.
+            String version = classExists("net.pl3x.map.api.Pl3xMapProvider") ? "v1" : "v2";
+            return loadPlatformClass("pl3xmap." + version + ".Pl3xMapPlatform");
         }
         else if (pluginEnabled.test("squaremap")) {
             return loadPlatformClass("squaremap.SquareMapPlatform");
@@ -155,6 +159,17 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             String msg = String.format("Error trying to load class '%s'", platformClassPath);
             getLogger().log(Level.SEVERE, msg, ex);
             return null;
+        }
+    }
+
+    // Check if a class is loaded.
+    private boolean classExists(@NotNull String classPath) {
+        try {
+            // If a class exists, but is not loaded, the static initializer will be called.
+            Class.forName(classPath);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

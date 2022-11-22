@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package me.silverwolfg11.maptowny.platform.pl3xmap;
+package me.silverwolfg11.maptowny.platform.pl3xmap.v1;
 
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
@@ -33,7 +33,6 @@ import net.pl3x.map.api.marker.Icon;
 import net.pl3x.map.api.marker.Marker;
 import net.pl3x.map.api.marker.MultiPolygon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
