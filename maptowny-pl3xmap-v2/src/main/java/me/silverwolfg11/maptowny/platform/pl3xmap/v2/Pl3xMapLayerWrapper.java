@@ -70,11 +70,11 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     private Color toAlphaColor(java.awt.Color awtColor, double alphaPercent) {
         // Use explicit constructor to avoid worrying about how the ints are packed.
-        return new Color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue(), (int) alphaPercent * 255);
+        return new Color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue(), (int) (alphaPercent * 255));
     }
 
     private java.awt.Color fromAlpha(Color alphaColor) {
-        return new java.awt.Color(alphaColor.getRed(), alphaColor.getGreen(), alphaColor.getBlue(), alphaColor.getAlpha());
+        return new java.awt.Color(alphaColor.getRed(), alphaColor.getGreen(), alphaColor.getBlue(), 255);
     }
 
     private double getOpacityFromColor(java.awt.Color color) {
@@ -84,9 +84,6 @@ public class Pl3xMapLayerWrapper implements MapLayer {
     }
 
     private Options buildOptions(MarkerOptions markerOptions) {
-        // FIXME Builder doesn't work currently
-        // Must wait until Option#isDefault is fixed.
-
         var builder = Options.builder()
                 .popupContent(markerOptions.clickTooltip())
                 .tooltipContent(markerOptions.hoverTooltip());

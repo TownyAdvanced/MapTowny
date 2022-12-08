@@ -8,7 +8,7 @@ This plugin requires Towny to be installed on your server.
 - [Towny](https://github.com/TownyAdvanced/Towny) 0.97.1 (or later)
 
 The plugin also requires one of the following web-map plugins to be installed on your server:
-- [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap) (use this [fork](https://github.com/NeumimTo/Pl3xMap) for 1.18+)
+- [Pl3xMap](https://github.com/pl3xgaming/Pl3xMap) v1 (use this [fork](https://github.com/NeumimTo/Pl3xMap) for 1.18+) or v2 (alpha 1.19.2-319 or later)
 - [squaremap](https://github.com/jpenilla/squaremap)
 - [dynmap](https://www.spigotmc.org/resources/dynmap%C2%AE.274/)
 - [BlueMap](https://www.spigotmc.org/resources/bluemap.83557/) v3.3 (or later) (limited support)

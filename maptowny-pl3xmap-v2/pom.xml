@@ -59,7 +59,7 @@
             <groupId>maven.modrinth</groupId>
             <!-- Project ID for Pl3xMap on Modrinth: https://modrinth.com/plugin/pl3xmap -->
             <artifactId>YMXhf1UJ</artifactId>
-            <version>1.19.2-314</version>
+            <version>1.19.2-319</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
