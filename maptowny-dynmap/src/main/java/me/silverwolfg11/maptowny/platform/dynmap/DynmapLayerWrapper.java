@@ -22,7 +22,6 @@
 
 package me.silverwolfg11.maptowny.platform.dynmap;
 
-import me.silverwolfg11.maptowny.MapTownyPlugin;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
@@ -67,17 +66,16 @@ public class DynmapLayerWrapper implements MapLayer {
 
     // Convert color to dynmap's weird RGB format.
     private int toDynmapRGB(Color color) {
-        // 0xRRGGBBFF
-        return (color.getRGB() << 8) | 0x0FF;
+        // Color Format: 0xAARRGGBB
+        // Dynmap Format: 0x00RRGGBB
+        // Just force the alpha value to 0
+        return color.getRGB() & 0x00FFFFFF;
     }
 
     private Color fromDynmapRGB(int rgb) {
-        // Dynmap Format: 0xRRGGBBFF
-        // Color Format: 0xFFRRGGBB
-
-        // Unsigned right shift by 8 (although it doesn't matter since Color OR masks it)
-        int shiftedRGB = rgb >>> 8;
-        return new Color(shiftedRGB);
+        // Dynmap Format: 0x00RRGGBB
+        // Color Format: 0xAARRGGBB
+        return new Color(rgb, false);
     }
 
     @Override
