@@ -26,6 +26,7 @@ import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.maptowny.MapTowny;
 import me.silverwolfg11.maptowny.events.WorldRenderTownEvent;
+import me.silverwolfg11.maptowny.events.WorldRenderTownIconEvent;
 import me.silverwolfg11.maptowny.objects.LayerOptions;
 import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
@@ -281,6 +282,10 @@ public class TownyLayerManager implements LayerManager {
 
                 worldProvider.addMultiPolyMarker(townKey, parts, optionsBuilder.build());
 
+                // Replace the tooltips to what our optionsBuilder has, as it might be altered via the event.
+                clickTooltip = optionsBuild.clickToolTip();
+                hoverTooltip = optionsBuild.hoverToolTip();
+
                 // Add outpost markers for the current world
                 renderOutpostMarker(tre, worldName, worldProvider, config.getIconSizeX(), config.getIconSizeY());
 
@@ -291,15 +296,22 @@ public class TownyLayerManager implements LayerManager {
                     final String iconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
                     // Check if icon exists
                     if (homeblockPoint.isPresent() && mapPlatform.hasIcon(iconKey)) {
-                        MarkerOptions iconOptions = MarkerOptions.builder()
+                        MarkerOptions.Builder iconOptionsBuilder = MarkerOptions.builder()
                                                                  .name(tre.getTownName())
                                                                  .clickTooltip(clickTooltip)
-                                                                 .hoverTooltip(hoverTooltip)
-                                                                 .build();
+                                                                 .hoverTooltip(hoverTooltip);
 
-                        worldProvider.addIconMarker(townIconKey, iconKey, homeblockPoint.get(),
+                        // Call icon event.
+                        WorldRenderTownIconEvent event = new WorldRenderTownIconEvent(worldName, tre.getTownName(), tre.getTownUUID(), iconKey, iconOptionsBuilder)
+                        Bukkit.getPluginManager().callEvent(event);
+
+                        // Skip rendering the town icon for the world if it is cancelled or the iconKey doesn't exist.
+                        if (event.isCancelled() || !mapPlatform.hasIcon(event.getIconKey()))
+                            continue;
+
+                        worldProvider.addIconMarker(townIconKey, event.getIconKey(), homeblockPoint.get(),
                                                     config.getIconSizeX(), config.getIconSizeY(),
-                                                    iconOptions);
+                                                    iconOptionsBuilder.build());
                     }
                 }
             }

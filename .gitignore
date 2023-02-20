@@ -8,6 +8,10 @@
 # IntelliJ
 out/
 
+# Ecplise
+/.classpath
+/.project
+
 # Compiled class file
 *.class
 
