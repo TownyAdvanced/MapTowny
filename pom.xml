@@ -10,12 +10,13 @@
 
     <modules>
         <module>maptowny-api</module>
-        <module>maptowny-plugin</module>
-        <module>maptowny-dynmap</module>
-        <module>maptowny-pl3xmap-v1</module>
-        <module>maptowny-squaremap</module>
         <module>maptowny-bluemap</module>
+        <module>maptowny-dynmap</module>
+        <module>maptowny-plugin</module>
+        <module>maptowny-squaremap</module>
+        <module>maptowny-pl3xmap-v1</module>
         <module>maptowny-pl3xmap-v2</module>
+        <module>maptowny-pl3xmap-v3</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -53,7 +54,7 @@
                 <configuration>
                     <toolchains>
                         <jdk>
-                            <version>${jdk.version}</version>
+                            <version>17</version>
                         </jdk>
                     </toolchains>
                 </configuration>
