@@ -20,14 +20,14 @@
   ~ SOFTWARE.
   -->
 
-<toolchains>
     <toolchain>
         <type>jdk</type>
         <provides>
-            <version>17</version>
+            <version>1.8</version>
+            <vendor>openjdk</vendor>
         </provides>
         <configuration>
-            <jdkHome>C:\jdk-17.0.7</jdkHome>
+            <jdkHome>{JAVA_8_SDK}</jdkHome>
         </configuration>
     </toolchain>
 </toolchains>
