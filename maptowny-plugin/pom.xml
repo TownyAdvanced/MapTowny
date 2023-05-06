@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.github.silverwolfg11</groupId>
             <artifactId>CommentConfig</artifactId>
-            <version>v1.0.0</version>
+            <version>v1.1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -127,6 +127,12 @@
         <dependency>
             <groupId>me.silverwolfg11</groupId>
             <artifactId>maptowny-pl3xmap-v2</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.silverwolfg11</groupId>
+            <artifactId>maptowny-pl3xmap-v3</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>

@@ -122,7 +122,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             // If class loaded: "net.pl3x.map.api.Pl3xMapProvider"
             // then load v1, else load v2.
             // No other good differentiating techniques for this exist.
-            String version = classExists("net.pl3x.map.api.Pl3xMapProvider") ? "v1" : "v2";
+            String version = classExists("net.pl3x.map.core.pl3xmap.api()") ? "v2" : "v3";
             return loadPlatformClass("pl3xmap." + version + ".Pl3xMapPlatform");
         }
         else if (pluginEnabled.test("squaremap")) {

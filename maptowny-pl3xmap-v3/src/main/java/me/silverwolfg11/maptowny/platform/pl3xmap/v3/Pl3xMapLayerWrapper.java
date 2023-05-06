@@ -115,25 +115,24 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
             List<Polyline> polyLines = new ArrayList<>(1 + negSpace.size());
             polyLines.add(
-                    new Polyline(String.valueOf(markerKey + "_" + polyIdx + "_0"),
+                    new Polyline((markerKey + "_" + polyIdx + "_0"),
                                     toPoints(polygon.getPoints()))
             );
 
             for (int i = 0; i < negSpace.size(); i++) {
                 String lineKey = markerKey + "_" + polyIdx + "_" + (i + 1);
-                polyLines.add(new Polyline(String.valueOf(lineKey), toPoints(negSpace.get(i))));
+                polyLines.add(new Polyline((lineKey), toPoints(negSpace.get(i))));
             }
 
-            parts.add(new net.pl3x.map.core.markers.marker.Polygon((markerKey + "_" + polyIdx)));
+            parts.add(new net.pl3x.map.core.markers.marker.Polygon((markerKey + "_" + polyIdx), polyLines));
         }
 
-
-        MultiPolygon multiPolygon = MultiPolygon.multiPolygon(String.valueOf((markerKey)), parts);
+        MultiPolygon multiPolygon = MultiPolygon.multiPolygon(markerKey, parts);
 
         var options = buildOptions(markerOptions);
         multiPolygon.setOptions(options);
 
-        layer.addMarker(Marker.multiPolygon(((markerKey))));
+        layer.addMarker(multiPolygon);
     }
 
     @Override
@@ -193,7 +192,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
              markerOptionsBuilder.hoverTooltip(pl3xOptions.getTooltip().getContent());
         }
 
-        if (pl3xOptions.getFill() != null && pl3xOptions.getFill().isEnabled()) {
+        if (pl3xOptions.getFill() != null && Boolean.TRUE.equals(pl3xOptions.getFill().isEnabled())) {
             var fill = pl3xOptions.getFill();
             var fillColor = new Color(fill.getColor());
 
@@ -202,7 +201,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
             markerOptionsBuilder.fillOpacity(getOpacityFromColor(fillColor));
         }
 
-        if (pl3xOptions.getStroke() != null && pl3xOptions.getStroke().isEnabled()) {
+        if (pl3xOptions.getStroke() != null && Boolean.TRUE.equals(pl3xOptions.getStroke().isEnabled())) {
             var strokeColor = new Color(pl3xOptions.getStroke().getColor());
 
             markerOptionsBuilder.stroke(true);

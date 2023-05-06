@@ -24,11 +24,10 @@
     <toolchain>
         <type>jdk</type>
         <provides>
-            <version>1.8</version>
-            <vendor>openjdk</vendor>
+            <version>17</version>
         </provides>
         <configuration>
-            <jdkHome>{JAVA_8_SDK}</jdkHome>
+            <jdkHome>C:\jdk-17.0.7</jdkHome>
         </configuration>
     </toolchain>
 </toolchains>

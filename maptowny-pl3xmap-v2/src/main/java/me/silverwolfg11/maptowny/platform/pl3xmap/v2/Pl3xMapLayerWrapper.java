@@ -167,7 +167,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
     public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
         List<Key> markersToRemove = layer.registeredMarkers().keySet().stream()
                 .filter(k -> markerKeyFilter.test(k.toString()))
-                .collect(Collectors.toList());
+                .toList();
 
         for (Key key : markersToRemove) {
             layer.removeMarker(key);
@@ -196,7 +196,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
              markerOptionsBuilder.hoverTooltip(pl3xOptions.getTooltip().getContent());
         }
 
-        if (pl3xOptions.getFill() != null && pl3xOptions.getFill().isEnabled()) {
+        if (pl3xOptions.getFill() != null && Boolean.TRUE.equals(pl3xOptions.getFill().isEnabled())) {
             var fill = pl3xOptions.getFill();
             var fillColor = new Color(fill.getColor());
 
@@ -205,7 +205,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
             markerOptionsBuilder.fillOpacity(getOpacityFromColor(fillColor));
         }
 
-        if (pl3xOptions.getStroke() != null && pl3xOptions.getStroke().isEnabled()) {
+        if (pl3xOptions.getStroke() != null && Boolean.TRUE.equals(pl3xOptions.getStroke().isEnabled())) {
             var strokeColor = new Color(pl3xOptions.getStroke().getColor());
 
             markerOptionsBuilder.stroke(true);
