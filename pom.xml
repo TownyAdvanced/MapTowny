@@ -54,7 +54,7 @@
                 <configuration>
                     <toolchains>
                         <jdk>
-                            <version>17</version>
+                            <version>${jdk.version}</version>
                         </jdk>
                     </toolchains>
                 </configuration>
