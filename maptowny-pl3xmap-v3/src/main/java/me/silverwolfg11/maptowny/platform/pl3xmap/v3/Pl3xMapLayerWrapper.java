@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Silverwolfg11
+ * Copyright (c) 2023 Silverwolfg11
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -192,7 +192,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
              markerOptionsBuilder.hoverTooltip(pl3xOptions.getTooltip().getContent());
         }
 
-        if (pl3xOptions.getFill() != null && Boolean.TRUE.equals(pl3xOptions.getFill().isEnabled())) {
+        if (pl3xOptions.getFill() != null && pl3xOptions.getFill().isEnabled()) {
             var fill = pl3xOptions.getFill();
             var fillColor = new Color(fill.getColor());
 
@@ -201,7 +201,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
             markerOptionsBuilder.fillOpacity(getOpacityFromColor(fillColor));
         }
 
-        if (pl3xOptions.getStroke() != null && Boolean.TRUE.equals(pl3xOptions.getStroke().isEnabled())) {
+        if (pl3xOptions.getStroke() != null && pl3xOptions.getStroke().isEnabled()) {
             var strokeColor = new Color(pl3xOptions.getStroke().getColor());
 
             markerOptionsBuilder.stroke(true);
