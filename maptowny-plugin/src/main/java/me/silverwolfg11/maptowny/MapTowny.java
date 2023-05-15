@@ -119,10 +119,19 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         Predicate<String> pluginEnabled = (pluginName) -> Bukkit.getPluginManager().isPluginEnabled(pluginName);
 
         if (pluginEnabled.test("Pl3xMap")) {
-            // If class loaded: "net.pl3x.map.api.Pl3xMapProvider"
-            // then load v1, else load v2.
-            // No other good differentiating techniques for this exist.
-            String version = classExists("net.pl3x.map.core.markers.Point") ? "v3" : classExists("net.pl3x.map.api.Pl3xMapProvider") ? "v1" : "v2";
+            // Differentiate versions based on
+            // available classes.
+            String version;
+            if (classExists("net.pl3x.map.core.Pl3xMap")) {
+                version = "v3";
+            }
+            else if (classExists("net.pl3x.map.Pl3xMap")) {
+                version = "v2";
+            }
+            else {
+                version = "v1";
+            }
+
             return loadPlatformClass("pl3xmap." + version + ".Pl3xMapPlatform");
         }
         else if (pluginEnabled.test("squaremap")) {

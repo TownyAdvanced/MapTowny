@@ -115,7 +115,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
             List<Polyline> polyLines = new ArrayList<>(1 + negSpace.size());
             polyLines.add(
-                    new Polyline((markerKey + "_" + polyIdx + "_0"),
+                    new Polyline(markerKey + "_" + polyIdx + "_0",
                                     toPoints(polygon.getPoints()))
             );
 
@@ -124,7 +124,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
                 polyLines.add(new Polyline((lineKey), toPoints(negSpace.get(i))));
             }
 
-            parts.add(new net.pl3x.map.core.markers.marker.Polygon((markerKey + "_" + polyIdx), polyLines));
+            parts.add(new net.pl3x.map.core.markers.marker.Polygon(markerKey + "_" + polyIdx, polyLines));
         }
 
         MultiPolygon multiPolygon = MultiPolygon.multiPolygon(markerKey, parts);
@@ -137,7 +137,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     @Override
     public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
-        Icon icon = Marker.icon((markerKey), toPoint(iconLoc), (iconKey), sizeX, sizeY);
+        Icon icon = Marker.icon(markerKey, toPoint(iconLoc), (iconKey), sizeX, sizeY);
         // Convert marker options
         Options iconOptions = Options.builder()
                 .popupContent(markerOptions.clickTooltip())
@@ -151,12 +151,12 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     @Override
     public boolean hasMarker(@NotNull String markerKey) {
-        return layer.hasMarker((markerKey));
+        return layer.hasMarker(markerKey);
     }
 
     @Override
     public boolean removeMarker(@NotNull String markerKey) {
-        return layer.removeMarker(String.valueOf(markerKey)) != null;
+        return layer.removeMarker(markerKey) != null;
     }
 
     @Override
@@ -215,7 +215,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     @Override
     public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
-        Marker<?> marker = layer.registeredMarkers().get((markerKey));
+        Marker<?> marker = layer.registeredMarkers().get(markerKey);
 
         if (marker == null)
             return;

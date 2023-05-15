@@ -63,7 +63,7 @@ public class Pl3xMapPlatform implements MapPlatform {
 
     @Override
     public boolean hasIcon(@NotNull String iconKey) {
-        return Pl3xMap.api().getIconRegistry().has((iconKey));
+        return Pl3xMap.api().getIconRegistry().has(iconKey);
     }
 
     @Override
