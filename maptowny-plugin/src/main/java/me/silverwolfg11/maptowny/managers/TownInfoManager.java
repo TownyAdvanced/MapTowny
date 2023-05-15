@@ -130,6 +130,8 @@ public class TownInfoManager {
             final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
             return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
         });
+        register("public", t -> String.valueOf(t.isPublic()));
+        register("peaceful", t -> String.valueOf(t.isNeutral()));
 
         register("founded", t -> {
             long founded = t.getRegistered();

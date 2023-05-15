@@ -6,15 +6,17 @@
 
     <groupId>me.silverwolfg11</groupId>
     <artifactId>MapTowny</artifactId>
-    <version>2.0.1</version>
+    <version>2.1.1</version>
 
     <modules>
         <module>maptowny-api</module>
         <module>maptowny-plugin</module>
-        <module>maptowny-dynmap</module>
-        <module>maptowny-pl3xmap</module>
-        <module>maptowny-squaremap</module>
         <module>maptowny-bluemap</module>
+        <module>maptowny-dynmap</module>
+        <module>maptowny-squaremap</module>
+        <module>maptowny-pl3xmap-v1</module>
+        <module>maptowny-pl3xmap-v2</module>
+        <module>maptowny-pl3xmap-v3</module>
     </modules>
     <packaging>pom</packaging>
 

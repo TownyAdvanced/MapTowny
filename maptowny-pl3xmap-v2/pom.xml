@@ -31,18 +31,18 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>maptowny-squaremap</artifactId>
+    <artifactId>maptowny-pl3xmap-v2</artifactId>
 
     <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <jdk.version>16</jdk.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <jdk.version>17</jdk.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>squaremap-snapshots</id>
-            <url>https://repo.jpenilla.xyz/snapshots/</url>
+            <id>Modrinth</id>
+            <url>https://api.modrinth.com/maven</url>
         </repository>
     </repositories>
 
@@ -53,10 +53,13 @@
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Use Modrinth for Pl3xMap v2 while in alpha release -->
+        <!-- Maven API Documentation: https://docs.modrinth.com/docs/tutorials/maven/ -->
         <dependency>
-            <groupId>xyz.jpenilla</groupId>
-            <artifactId>squaremap-api</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <groupId>maven.modrinth</groupId>
+            <!-- Project ID for Pl3xMap on Modrinth: https://modrinth.com/plugin/pl3xmap -->
+            <artifactId>YMXhf1UJ</artifactId>
+            <version>1.19.2-319</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>

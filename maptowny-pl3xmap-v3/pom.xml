@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2022 Silverwolfg11
+  ~ Copyright (c) 2023 Silverwolfg11
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -27,22 +27,26 @@
     <parent>
         <artifactId>MapTowny</artifactId>
         <groupId>me.silverwolfg11</groupId>
-        <version>2.0.1</version>
+        <version>2.1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>maptowny-pl3xmap</artifactId>
+    <artifactId>maptowny-pl3xmap-v3</artifactId>
 
     <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <jdk.version>16</jdk.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <jdk.version>17</jdk.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
+            <id>modrinth-repo</id>
+            <url>https://api.modrinth.com/maven/</url>
+        </repository>
+        <repository>
+            <id>glaremasters repo</id>
+            <url>https://repo.glaremasters.me/repository/towny/</url>
         </repository>
     </repositories>
 
@@ -50,20 +54,13 @@
         <dependency>
             <groupId>me.silverwolfg11</groupId>
             <artifactId>maptowny-api</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>provided</scope>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.NeumimTo</groupId>
-            <artifactId>Pl3xMap</artifactId>
-            <version>1.18-2</version>
+            <groupId>maven.modrinth</groupId>
+            <artifactId>pl3xmap</artifactId>
+            <version>1.19.4-386</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
