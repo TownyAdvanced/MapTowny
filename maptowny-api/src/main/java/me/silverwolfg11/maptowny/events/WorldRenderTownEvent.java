@@ -38,6 +38,8 @@ import java.util.UUID;
  *
  * Cancelling this event will prevent this town from being rendered in the world on the Pl3xMap.
  * This includes not rendering any homeblock or outpost icons for the town in the world.
+ *
+ * This event is called from an asynchronous context!
  */
 public class WorldRenderTownEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
@@ -48,13 +50,20 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     private final List<Polygon> polygons;
     private final MarkerOptions.Builder markerOptionsBuilder;
 
+    private String homeBlockIconKey;
+
+    private String outpostIconKey;
+
     private boolean cancelled = false;
 
-    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, List<Polygon> polys, MarkerOptions.Builder markerOptionsBuilder) {
+    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, String homeBlockIconKey, String outpostIconKey,
+                                List<Polygon> polys, MarkerOptions.Builder markerOptionsBuilder) {
         super(!Bukkit.isPrimaryThread());
         this.worldName = worldName;
         this.townName = townName;
         this.townUUID = townUUID;
+        this.homeBlockIconKey = homeBlockIconKey;
+        this.outpostIconKey = outpostIconKey;
         this.polygons = polys;
         this.markerOptionsBuilder = markerOptionsBuilder;
     }
@@ -111,6 +120,55 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     @NotNull
     public MarkerOptions.Builder getMarkerOptions() {
         return markerOptionsBuilder;
+    }
+
+    /**
+     * Get the icon key for the homeblock.
+     * This may vary depending on if the homeblock belongs to a capital nation or not.
+     *
+     * @return the icon key for the town's homeblock.
+     *
+     * @since 2.2.0
+     */
+    @NotNull
+    public String getHomeBlockIconKey() {
+        return homeBlockIconKey;
+    }
+
+    /**
+     * Set the icon key for the homeblock icon.
+     * If the icon key is not valid, the respective icon will not be rendered.
+     *
+     * @param homeBlockIconKey Icon key for the town's homeblock.
+     *
+     * @since 2.2.0
+     */
+    public void setHomeBlockIconKey(@NotNull String homeBlockIconKey) {
+        this.homeBlockIconKey = homeBlockIconKey;
+    }
+
+    /**
+     * Get the icon key for the outpost icon.
+     *
+     * @return the icon key for the town's outposts.
+     *
+     * @since 2.2.0
+     */
+    @NotNull
+    public String getOutpostIconKey() {
+        return outpostIconKey;
+    }
+
+    /**
+     * Set the icon key for the outpost icon.
+     * If the icon key is not valid, the respective icon will not be rendered.
+     *
+     * @param outpostIconKey icon key for the town's outposts.
+     *
+     * @since 2.2.0
+     */
+    public void setOutpostIconKey(@NotNull String outpostIconKey) {
+        this.outpostIconKey = outpostIconKey;
     }
 
     @Override

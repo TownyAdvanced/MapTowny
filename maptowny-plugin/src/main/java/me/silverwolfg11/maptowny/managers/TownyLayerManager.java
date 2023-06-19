@@ -271,33 +271,41 @@ public class TownyLayerManager implements LayerManager {
                     }
                 }
 
+                final String homeBlockIconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
+
                 // Call event
-                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(), parts, optionsBuilder);
+                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(),
+                                                                      homeBlockIconKey, OUTPOST_ICON,
+                                                                      parts, optionsBuilder);
+
                 Bukkit.getPluginManager().callEvent(event);
 
                 // Skip rendering the town for the world if it is cancelled.
                 if (event.isCancelled())
                     continue;
 
-                worldProvider.addMultiPolyMarker(townKey, parts, optionsBuilder.build());
+                final MarkerOptions generalOptions = optionsBuilder.build();
+
+                worldProvider.addMultiPolyMarker(townKey, parts, generalOptions);
 
                 // Add outpost markers for the current world
-                renderOutpostMarker(tre, worldName, worldProvider, config.getIconSizeX(), config.getIconSizeY());
+                renderOutpostMarker(tre, worldName, worldProvider,
+                                    event.getOutpostIconKey(), generalOptions,
+                                    config.getIconSizeX(), config.getIconSizeY());
 
                 // Check if this is the proper world provider to add the town icon
                 if (homeBlockWorld.equals(worldName)) {
                     // Add icon markers
                     Optional<Point2D> homeblockPoint = tre.getHomeBlockPoint();
-                    final String iconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
                     // Check if icon exists
-                    if (homeblockPoint.isPresent() && mapPlatform.hasIcon(iconKey)) {
+                    if (homeblockPoint.isPresent() && mapPlatform.hasIcon(event.getHomeBlockIconKey())) {
                         MarkerOptions iconOptions = MarkerOptions.builder()
-                                                                 .name(tre.getTownName())
-                                                                 .clickTooltip(clickTooltip)
-                                                                 .hoverTooltip(hoverTooltip)
+                                                                 .name(generalOptions.name())
+                                                                 .clickTooltip(generalOptions.clickTooltip())
+                                                                 .hoverTooltip(generalOptions.hoverTooltip())
                                                                  .build();
 
-                        worldProvider.addIconMarker(townIconKey, iconKey, homeblockPoint.get(),
+                        worldProvider.addIconMarker(townIconKey, event.getHomeBlockIconKey(), homeblockPoint.get(),
                                                     config.getIconSizeX(), config.getIconSizeY(),
                                                     iconOptions);
                     }
@@ -308,9 +316,14 @@ public class TownyLayerManager implements LayerManager {
         renderedTowns.add(tre.getTownUUID());
     }
 
-    private void renderOutpostMarker(TownRenderEntry tre, String worldName, MapLayer worldProvider, int iconSizeX, int iconSizeZ) {
+    private void renderOutpostMarker(TownRenderEntry tre, String worldName, MapLayer worldProvider,
+                                     String outpostIconKey, MarkerOptions generalOptions, int iconSizeX, int iconSizeZ) {
         // Delete previous town outpost icons
         unrenderOutpostMarkers(worldProvider, worldName, tre.getTownUUID());
+
+        // Check that outpost icon exists.
+        if (!mapPlatform.hasIcon(outpostIconKey))
+            return;
 
         final String keyPrefix = TOWN_OUTPOST_ICON_KEY_PREFIX + worldName + "_" + tre.getTownUUID() + "_";
         // Add new town outpost icons
@@ -323,12 +336,12 @@ public class TownyLayerManager implements LayerManager {
             int outpostNum = 1;
             for (Point2D outpostPoint : outpostPoints) {
                 MarkerOptions iconOptions = MarkerOptions.builder()
-                                                         .name(tre.getTownName())
-                                                         .clickTooltip(tre.getClickText())
-                                                         .hoverTooltip(tre.getHoverText())
+                                                         .name(generalOptions.name())
+                                                         .clickTooltip(generalOptions.clickTooltip())
+                                                         .hoverTooltip(generalOptions.hoverTooltip())
                                                          .build();
 
-                worldProvider.addIconMarker(keyPrefix + outpostNum, OUTPOST_ICON, outpostPoint,
+                worldProvider.addIconMarker(keyPrefix + outpostNum, outpostIconKey, outpostPoint,
                                             iconSizeX, iconSizeZ, iconOptions);
             }
         }
