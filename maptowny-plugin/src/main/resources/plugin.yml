@@ -1,10 +1,11 @@
 name: MapTowny
 version: ${project.version}
 main: me.silverwolfg11.maptowny.MapTowny
+folia-supported: true
 api-version: 1.16
-depend: [ Towny ]
-softdepend: [ squaremap, Pl3xMap, dynmap, BlueMap ]
-authors: [ Silverwolfg11 ]
+depend: [Towny]
+softdepend: [squaremap, Pl3xMap, dynmap, BlueMap]
+authors: [Silverwolfg11]
 description: A web-map addon to support Towny.
 
 commands:

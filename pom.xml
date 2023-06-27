@@ -86,6 +86,10 @@
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
         <repository>
+            <id>papermc</id>  
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
@@ -104,6 +108,11 @@
             <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+		<dependency>
+			<groupId>dev.folia</groupId>
+			<artifactId>folia-api</artifactId>
+			<version>1.20.1-R0.1-SNAPSHOT</version>
+		</dependency>
         <dependency>
             <groupId>com.github.TownyAdvanced</groupId>
             <artifactId>Towny</artifactId>
