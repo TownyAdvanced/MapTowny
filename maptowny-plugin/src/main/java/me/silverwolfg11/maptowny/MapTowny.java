@@ -46,15 +46,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     private MapConfig config;
     private RenderTownsTask renderTownsTask;
 
-    private static boolean isFolia() { // yoinked from core protect
-        try {
-            Class.forName("io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler");
-        } catch (Exception e) {
-            return false;
-        }
-
-        return true;
-    }
+		private static final boolean IS_FOLIA = classExists("io.papermc.paper.threadedregions.RegionizedServer") || classExists("io.papermc.paper.threadedregions.RegionizedServerInitEvent");
 
     @Override
     public void onEnable() {
@@ -105,7 +97,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // If towny is in safe-mode, do not attempt to render towns.
         if (!Towny.getPlugin().isError()) {
             // Schedule render task when the layer manager is initialized.
-            if (isFolia()) {
+            if (IS_FOLIA) {
                 layerManager.onInitialize(
                         () -> Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(this,
                                 value -> renderTownsTask.run(), 20L, config.getUpdatePeriod() * 20L * 60L));
@@ -187,7 +179,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     }
 
     // Check if a class is loaded.
-    private boolean classExists(@NotNull String classPath) {
+    private static boolean classExists(@NotNull String classPath) {
         try {
             // If a class exists, but is not loaded, the static initializer will be called.
             Class.forName(classPath);
@@ -216,7 +208,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     public void reload() throws IOException {
         config = MapConfig.loadConfig(getDataFolder(), getLogger());
-        if (isFolia()) {
+        if (IS_FOLIA) {
             Bukkit.getServer().getGlobalRegionScheduler().cancelTasks(this);
         } else {
             Bukkit.getScheduler().cancelTasks(this);
@@ -230,7 +222,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     }
 
     public void async(Runnable run) {
-        if (isFolia()) {
+        if (IS_FOLIA) {
             Bukkit.getServer().getAsyncScheduler().runNow(this, value -> run.run());
         } else {
             Bukkit.getScheduler().runTaskAsynchronously(this, run);

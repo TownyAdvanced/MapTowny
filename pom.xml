@@ -24,7 +24,7 @@
 
     <description>A web-map addon plugin to support Towny.</description>
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>${java.version}</jdk.version>
     </properties>
