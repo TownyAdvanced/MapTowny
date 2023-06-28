@@ -44,6 +44,9 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     private TownyLayerManager layerManager;
     private MapPlatform mapPlatform;
     private MapConfig config;
+    private RenderTownsTask renderTownsTask;
+
+		private static final boolean IS_FOLIA = classExists("io.papermc.paper.threadedregions.RegionizedServer") || classExists("io.papermc.paper.threadedregions.RegionizedServerInitEvent");
 
     @Override
     public void onEnable() {
@@ -58,7 +61,8 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         try {
             config = MapConfig.loadConfig(getDataFolder(), getLogger());
         } catch (IOException e) {
-            // IOException caused by creating new file usually, so disabling is a valid option
+            // IOException caused by creating new file usually, so disabling is a valid
+            // option
             getLogger().log(Level.SEVERE, "Error loading config. Disabling plugin...", e);
             setEnabled(false);
             return;
@@ -88,12 +92,19 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new TownClaimListener(this), this);
 
+        renderTownsTask = new RenderTownsTask(this);
+
         // If towny is in safe-mode, do not attempt to render towns.
         if (!Towny.getPlugin().isError()) {
             // Schedule render task when the layer manager is initialized.
-            layerManager.onInitialize(() ->
-                    new RenderTownsTask(this).runTaskTimer(this, 20, config.getUpdatePeriod() * 20L * 60)
-            );
+            if (IS_FOLIA) {
+                layerManager.onInitialize(
+                        () -> Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(this,
+                                value -> renderTownsTask.run(), 20L, config.getUpdatePeriod() * 20L * 60L));
+            } else {
+                layerManager.onInitialize(
+                        () -> new RenderTownsTask(this).runTaskTimer(this, 20, config.getUpdatePeriod() * 20L * 60));
+            }
         }
     }
 
@@ -112,7 +123,8 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             mapPlatform.shutdown();
     }
 
-    // Load the appropriate map platform or the map plugin that Pl3xMapTowny should use.
+    // Load the appropriate map platform or the map plugin that Pl3xMapTowny should
+    // use.
     // For right now this only supports squaremap and Pl3xMap
     @Nullable
     private MapPlatform loadPlatform() {
@@ -124,23 +136,18 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             String version;
             if (classExists("net.pl3x.map.core.Pl3xMap")) {
                 version = "v3";
-            }
-            else if (classExists("net.pl3x.map.Pl3xMap")) {
+            } else if (classExists("net.pl3x.map.Pl3xMap")) {
                 version = "v2";
-            }
-            else {
+            } else {
                 version = "v1";
             }
 
             return loadPlatformClass("pl3xmap." + version + ".Pl3xMapPlatform");
-        }
-        else if (pluginEnabled.test("squaremap")) {
+        } else if (pluginEnabled.test("squaremap")) {
             return loadPlatformClass("squaremap.SquareMapPlatform");
-        }
-        else if (pluginEnabled.test("dynmap")) {
+        } else if (pluginEnabled.test("dynmap")) {
             return loadPlatformClass("dynmap.DynmapPlatform");
-        }
-        else if (pluginEnabled.test("BlueMap")) {
+        } else if (pluginEnabled.test("BlueMap")) {
             return loadPlatformClass("bluemap.BlueMapPlatform", this);
         }
 
@@ -151,7 +158,8 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         return loadPlatformClass(abridgedPath, null);
     }
 
-    // Load class using reflection because some classes are compiled on different Java versions
+    // Load class using reflection because some classes are compiled on different
+    // Java versions
     @Nullable
     private MapPlatform loadPlatformClass(@NotNull String abridgedPath, @Nullable JavaPlugin plugin) {
         String platformClassPrefix = "me.silverwolfg11.maptowny.platform.";
@@ -160,8 +168,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             Class<?> platformClass = Class.forName(platformClassPath);
             if (plugin != null) {
                 return (MapPlatform) platformClass.getConstructor(JavaPlugin.class).newInstance(plugin);
-            }
-            else {
+            } else {
                 return (MapPlatform) platformClass.getConstructor().newInstance();
             }
         } catch (ReflectiveOperationException ex) {
@@ -172,7 +179,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     }
 
     // Check if a class is loaded.
-    private boolean classExists(@NotNull String classPath) {
+    private static boolean classExists(@NotNull String classPath) {
         try {
             // If a class exists, but is not loaded, the static initializer will be called.
             Class.forName(classPath);
@@ -201,14 +208,24 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     public void reload() throws IOException {
         config = MapConfig.loadConfig(getDataFolder(), getLogger());
-        Bukkit.getScheduler().cancelTasks(this);
+        if (IS_FOLIA) {
+            Bukkit.getServer().getGlobalRegionScheduler().cancelTasks(this);
+        } else {
+            Bukkit.getScheduler().cancelTasks(this);
+        }
+
         layerManager.close();
         layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
-        new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
+        Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(this,
+                value -> renderTownsTask.run(), 1L, config.getUpdatePeriod() * 20L * 60L);
     }
 
     public void async(Runnable run) {
-        Bukkit.getScheduler().runTaskAsynchronously(this, run);
+        if (IS_FOLIA) {
+            Bukkit.getServer().getAsyncScheduler().runNow(this, value -> run.run());
+        } else {
+            Bukkit.getScheduler().runTaskAsynchronously(this, run);
+        }
     }
 }
