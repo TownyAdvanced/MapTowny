@@ -22,7 +22,6 @@
 
 package me.silverwolfg11.maptowny.objects;
 
-import com.palmergames.bukkit.towny.object.TownBlockType;
 import me.Silverwolfg11.CommentConfig.annotations.Comment;
 import me.Silverwolfg11.CommentConfig.annotations.ConfigVersion;
 import me.Silverwolfg11.CommentConfig.annotations.Node;
@@ -31,8 +30,6 @@ import me.Silverwolfg11.CommentConfig.node.ParentConfigNode;
 import me.Silverwolfg11.CommentConfig.serialization.ClassDeserializer;
 import me.Silverwolfg11.CommentConfig.serialization.ClassSerializer;
 import me.Silverwolfg11.CommentConfig.serialization.NodeSerializer;
-import me.silverwolfg11.maptowny.MapTowny;
-import me.silverwolfg11.maptowny.MapTownyPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +81,7 @@ public class MapConfig {
     @Comment({"", "Priorities for how color for claims should be applied.",
               "The valid list options are \"NATION\", \"TOWN\", and \"TOWNBLOCK_TYPE\".",
               "If one option doesn't have a color for the respective area, then it will move onto the next option.",
+              "Only if the stroke or fill for a town uses the \"TOWNBLOCK_TYPE\" source will the claims be separated by townblock types.",
               "Default stroke and fill colors are always the last priority."})
     @Node("color-priorities")
     private ColorPriorities colorPriorities = new ColorPriorities();
@@ -189,8 +187,8 @@ public class MapConfig {
 
     @SerializableConfig
     private static class TownBlockTypes {
-        @Comment({"",
-                  "Valid townblock types can be found on .",
+        @Comment({"Default townblock types can be found on " +
+                    "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java.",
                   "Each type requires a \"fill-color\" and \"stroke-color\".",
                   "If the color is not being used, set its value to \"none\"."})
         @Node("types")
