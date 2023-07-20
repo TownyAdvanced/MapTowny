@@ -201,27 +201,6 @@ public class TBCluster {
      */
     @NotNull
     public static List<TBCluster> findClusters(@NotNull Collection<StaticTB> townBlocks) {
-        return findClusters(townBlocks, Collections.emptyList());
-    }
-
-    /**
-     * Create clusters from groups of connected {@link StaticTB}s.
-     * <br>
-     * A {@link StaticTB} is connected if it is directly above, below,
-     * to the left of, or to the right of another {@link StaticTB}.
-     *
-     * @param townBlocks Collection of townblocks to cluster.
-     * @param constraints Collection of cluster constraints. Constraints are restrictions
-     *                    imposed to prevent specific townblocks from being part of the same
-     *                    cluster.
-     *
-     * @return a list of clusters.
-     *
-     * @since 3.0.0
-     */
-    @NotNull
-    public static List<TBCluster> findClusters(@NotNull Collection<StaticTB> townBlocks,
-                                               @NotNull List<ClusterConstraint> constraints) {
         Objects.requireNonNull(townBlocks);
 
         if (townBlocks.isEmpty())
@@ -232,7 +211,6 @@ public class TBCluster {
 
         while (!hashedMap.isEmpty()) {
             TBCluster cluster = new TBCluster();
-            StaticTB lastAdded = null;
             Deque<Long> visited = new ArrayDeque<>();
             // Push the first entry key of the map onto the stack
             visited.push(hashedMap.entrySet().stream().findFirst().get().getKey());
@@ -246,24 +224,8 @@ public class TBCluster {
                 if (townBlock == null)
                     continue;
 
-                if (!constraints.isEmpty()) {
-                    // Make sure that the townblock meets the constraints
-                    boolean passedConstraints = true;
-                    for (ClusterConstraint constraint : constraints) {
-                        if (!constraint.testConstraint(townBlock, lastAdded)) {
-                            passedConstraints = false;
-                            break;
-                        }
-                    }
-
-                    if (!passedConstraints) {
-                        continue;
-                    }
-                }
-
                 hashedMap.remove(hash);
                 cluster.add(hash, townBlock);
-                lastAdded = townBlock;
 
                 for (int i = 0; i < 2; ++i) {
                     for (int dir : DIRECTIONS) {

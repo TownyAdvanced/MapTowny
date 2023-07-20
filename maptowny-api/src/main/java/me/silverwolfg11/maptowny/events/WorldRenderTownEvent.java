@@ -24,12 +24,15 @@ package me.silverwolfg11.maptowny.events;
 
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.PolygonGroup;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,17 +48,17 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     private final String worldName;
     private final String townName;
     private final UUID townUUID;
-    private final List<Polygon> polygons;
+    private final List<PolygonGroup> polygonGroups;
     private final MarkerOptions.Builder markerOptionsBuilder;
 
     private boolean cancelled = false;
 
-    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, List<Polygon> polys, MarkerOptions.Builder markerOptionsBuilder) {
+    public WorldRenderTownEvent(String worldName, String townName, UUID townUUID, List<PolygonGroup> polyGroups, MarkerOptions.Builder markerOptionsBuilder) {
         super(!Bukkit.isPrimaryThread());
         this.worldName = worldName;
         this.townName = townName;
         this.townUUID = townUUID;
-        this.polygons = polys;
+        this.polygonGroups = polyGroups;
         this.markerOptionsBuilder = markerOptionsBuilder;
     }
 
@@ -92,18 +95,42 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
     /**
      * Get the list of polygons that make up the outline of the town being rendered.
      *
-     * NOTE: This list is directly modifiable.
+     * NOTE: Modifying this list will have <b>no effect</b>.
      *
      * @return list of polygons that make up town outline.
+     *
+     * @deprecated Use {@link WorldRenderTownEvent#getPolygonGroups} instead. Slated for removal in 4.0.0.
      */
     @NotNull
+    @Deprecated
+    @Unmodifiable
     public List<Polygon> getMultiPolygon() {
+        List<Polygon> polygons = new ArrayList<>();
+        for (PolygonGroup polygonGroup : polygonGroups) {
+            polygons.addAll(polygonGroup.getPolygons());
+        }
+
         return polygons;
     }
 
     /**
-     * Get the marker options for the town outline.
+     * Get the list of polygon groups that make up the outline of the town being rendered.
      *
+     * NOTE: This list is directly modifiable.
+     *
+     * @return list of polygon groups that make up town outline.
+     *
+     * @since 3.0.0
+     */
+    @NotNull
+    public List<PolygonGroup> getPolygonGroups() {
+        return polygonGroups;
+    }
+
+    /**
+     * Get the default marker options for the town outline.
+     * {@link PolygonGroup}s are allowed to modify the marker options before rendering the final result.
+     * <br><br>
      * NOTE: These options are directly modifiable.
      *
      * @return marker options for the town outline.

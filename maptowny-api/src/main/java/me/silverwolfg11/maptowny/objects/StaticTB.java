@@ -23,11 +23,7 @@
 package me.silverwolfg11.maptowny.objects;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collector;
 
@@ -39,16 +35,10 @@ import java.util.stream.Collector;
 public class StaticTB {
 
     private final int x, z;
-    private final Map<String, Object> properties;
 
     private StaticTB(int x, int z) {
-        this(x, z, null);
-    }
-
-    private StaticTB(int x, int z, Map<String, Object> properties) {
         this.x = x;
         this.z = z;
-        this.properties = properties;
     }
 
     public int x() {
@@ -101,54 +91,6 @@ public class StaticTB {
         return getPairToLong(x + xOffset, z + zOffset);
     }
 
-    // Properties Methods
-
-    /**
-     * Get the current map of properties for this static TB.
-     * If there are no properties set, an empty map is returned.
-     *
-     * @return an immutable map of properties for this TB.
-     *
-     * @since 3.0.0
-     */
-    @UnmodifiableView
-    @NotNull
-    public Map<@NotNull String, @NotNull Object> getProperties() {
-        if (properties == null)
-            return Collections.emptyMap();
-
-        return Collections.unmodifiableMap(properties);
-    }
-
-    /**
-     * Check if the static TB has some property.
-     *
-     * @param propertyKey Unique key for a static TB property.
-     * @return true if the static TB has a property with the key.
-     *
-     * @since 3.0.0
-     */
-    public boolean hasProperty(@NotNull String propertyKey) {
-        return properties != null && properties.containsKey(propertyKey);
-    }
-
-    /**
-     * Get the property for the static TB matching the property key.
-     *
-     * @param propertyKey Unique key for the property.
-     * @return the property value or {@code null} if the property doesn't exist.
-     *
-     * @since 3.0.0
-     */
-    @Nullable
-    public Object getProperty(@NotNull String propertyKey) {
-        if (properties == null)
-            return null;
-
-        return properties.get(propertyKey);
-    }
-
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -164,21 +106,6 @@ public class StaticTB {
 
     public static StaticTB from(int x, int z) {
         return new StaticTB(x, z);
-    }
-
-    /**
-     * Create a static TB
-     * @param x X-Coord
-     * @param z Z-Coord
-     * @param properties Properties that the static TB has.
-     *
-     * @return the newly created static TB.
-     *
-     * @since 3.0.0
-     */
-    public static StaticTB from(int x, int z,
-                                @Nullable Map<@NotNull String, @NotNull Object> properties) {
-        return new StaticTB(x, z, properties);
     }
 
     public static StaticTB fromHashed(long hashed) {

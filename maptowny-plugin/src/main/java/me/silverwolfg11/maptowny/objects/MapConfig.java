@@ -45,6 +45,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +89,7 @@ public class MapConfig {
     private ColorPriorities colorPriorities = new ColorPriorities();
 
     @SerializableConfig
-    private class LayerInfo {
+    private static class LayerInfo {
         @Comment("Name of the layer")
         private String name = "Towny";
 
@@ -110,7 +111,7 @@ public class MapConfig {
     }
 
     @SerializableConfig
-    private class FillStyle {
+    private static class FillStyle {
         @Comment("Whether to fill the claim with color")
         private boolean fill = true;
 
@@ -119,10 +120,6 @@ public class MapConfig {
 
         @Node("fill-opacity")
         private double fillOpacity = 0.2;
-
-        @Comment("Use specified nation color as the fill color instead?")
-        @Node("use-nation-color-fill")
-        private boolean useNationColorFill = true;
 
         @Comment({"", "Whether to draw a stroke along the claim path."})
         private boolean stroke = true;
@@ -137,25 +134,11 @@ public class MapConfig {
         @Node("stroke-opacity")
         private double strokeOpacity = 1.0;
 
-        @Comment("Use specified nation color as the stroke color instead?")
-        @Node("use-nation-color-stroke")
-        private boolean useNationColorStroke = false;
-
-        @Node("use-town-color-fill")
-        @Comment({"Use specified town color as the fill color instead?",
-                  "This option will take priority over the 'use-nation-color-fill' option if it is enabled."})
-        private boolean useTownColorFill = false;
-
-        @Node("use-town-color-stroke")
-        @Comment({"Use specified town color as the stroke color instead?",
-                "This option will take priority over the 'use-nation-color-stroke' option if it is enabled."})
-        private boolean useTownColorStroke = false;
-
         private transient Color awtFillColor, awtStrokeColor;
     }
 
     @SerializableConfig
-    private class IconInfo {
+    private static class IconInfo {
         @Comment({"Icon for the town's homeblock. Icon must be a valid image URL.",
                 "Default Icon created by icon king1 licensed under Creative Commons 3.0",
                 "https://creativecommons.org/licenses/by/3.0/"})
@@ -183,7 +166,7 @@ public class MapConfig {
     }
 
     @SerializableConfig
-    private class TownBlockColor {
+    private static class TownBlockColor {
         @Node("fill-color")
         private String fillColorStr = "none";
 
@@ -205,23 +188,21 @@ public class MapConfig {
     }
 
     @SerializableConfig
-    private class TownBlockTypes {
-        @Comment("Separate claim representations by town block type.")
-        private boolean enabled = false;
+    private static class TownBlockTypes {
         @Comment({"",
                   "Valid townblock types can be found on .",
                   "Each type requires a \"fill-color\" and \"stroke-color\".",
                   "If the color is not being used, set its value to \"none\"."})
         @Node("types")
-        private Map<TownBlockType, TownBlockColor> typeColors = new HashMap<>();
+        private Map<String, TownBlockColor> typeColors = new HashMap<>();
 
         public TownBlockTypes() {
-            typeColors.put(TownBlockType.COMMERCIAL, new TownBlockColor());
+            typeColors.put("Shop", new TownBlockColor());
         }
     }
 
     @SerializableConfig
-    private class ColorPriorities {
+    private static class ColorPriorities {
         @Node("stroke")
         private List<ColorSource> strokePriorities = new ArrayList<>();
 
@@ -230,7 +211,7 @@ public class MapConfig {
 
         public ColorPriorities() {
             List<ColorSource> defaultPriorities = Arrays.asList(
-                    ColorSource.TOWNBLOCK_TYPE, ColorSource.TOWN, ColorSource.NATION
+                    ColorSource.TOWN, ColorSource.NATION
             );
 
             strokePriorities.addAll(defaultPriorities);
@@ -289,20 +270,12 @@ public class MapConfig {
                 .strokeOpacity(fillStyle.strokeOpacity);
     }
 
-    public boolean useNationFillColor() {
-        return fillStyle.useNationColorFill;
+    public Color getDefaultFillColor() {
+        return fillStyle.awtFillColor;
     }
 
-    public boolean useNationStrokeColor() {
-        return fillStyle.useNationColorStroke;
-    }
-
-    public boolean useTownFillColor() {
-        return fillStyle.useTownColorFill;
-    }
-
-    public boolean useTownStrokeColor() {
-        return fillStyle.useTownColorStroke;
+    public Color getDefaultStrokeColor() {
+        return fillStyle.awtStrokeColor;
     }
 
     @Nullable
@@ -358,14 +331,19 @@ public class MapConfig {
     }
 
     public boolean clusterByTownBlockType() {
-        return townBlockTypes.enabled;
+        return getFillColorPriorities().contains(ColorSource.TOWNBLOCK_TYPE) ||
+                getStrokeColorPriorities().contains(ColorSource.TOWNBLOCK_TYPE);
     }
 
-    private TownBlockColor getTownBlockTypeColors(TownBlockType type) {
+    public Collection<String> getConfigTownBlockTypeNames() {
+        return townBlockTypes.typeColors.keySet();
+    }
+
+    private TownBlockColor getTownBlockTypeColors(String typeName) {
         if (townBlockTypes.typeColors == null)
             return null;
 
-        TownBlockColor tbColor = townBlockTypes.typeColors.getOrDefault(type, null);
+        TownBlockColor tbColor = townBlockTypes.typeColors.getOrDefault(typeName, null);
 
         if (tbColor == null) {
             return null;
@@ -376,14 +354,14 @@ public class MapConfig {
         return tbColor;
     }
     @Nullable
-    public Color getFillColor(TownBlockType type) {
-        TownBlockColor tbColor = getTownBlockTypeColors(type);
+    public Color getFillColor(String townblockTypeName) {
+        TownBlockColor tbColor = getTownBlockTypeColors(townblockTypeName);
         return tbColor != null ? tbColor.fillColor : null;
     }
 
     @Nullable
-    public Color getStrokeColor(TownBlockType type) {
-        TownBlockColor tbColor = getTownBlockTypeColors(type);
+    public Color getStrokeColor(String townblockTypeName) {
+        TownBlockColor tbColor = getTownBlockTypeColors(townblockTypeName);
         return tbColor != null ? tbColor.strokeColor : null;
     }
 

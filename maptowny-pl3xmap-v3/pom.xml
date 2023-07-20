@@ -59,7 +59,7 @@
         <dependency>
             <groupId>maven.modrinth</groupId>
             <artifactId>pl3xmap</artifactId>
-            <version>1.19.4-386</version>
+            <version>1.19.4-435</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

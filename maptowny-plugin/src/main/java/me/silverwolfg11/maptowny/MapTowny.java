@@ -57,7 +57,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // Plugin startup logic
         try {
             config = MapConfig.loadConfig(getDataFolder(), getLogger());
-        } catch (IOException e) {
+        } catch (Exception e) {
             // IOException caused by creating new file usually, so disabling is a valid option
             getLogger().log(Level.SEVERE, "Error loading config. Disabling plugin...", e);
             setEnabled(false);
