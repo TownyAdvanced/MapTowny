@@ -245,6 +245,57 @@ public class TBCluster {
         return clusters;
     }
 
+    /**
+     * Create a cluster representing a hole in the existing cluster. The {@link StaticTB}s in this cluster are not in the existing
+     * cluster and represent an area fanning out from (including) the starting block.
+     * <br>
+     * This will only work properly if the starting block is enclosed by the existing cluster, otherwise will be undefined behavior.
+     * <br>
+     * The cluster is a group of connected {@link StaticTB}s.
+     * <br>
+     * A {@link StaticTB} is connected if it is adjacent (axis-parallel) to another {@link StaticTB}.
+     *
+     * @param existingCluster Cluster of townblocks to check against.
+     * @param startingBlock Starting chunk of negative space. This chunk cannot be in the existing cluster.
+     * @param maxClusterSize Maximum number of blocks the negative space cluster can have. This prevents the method from going into an infinite loop
+     *                       in case the existing cluster does not enclose the starting block.
+     *
+     * @return a new cluster that represents a hole in the existing cluster.
+     * @since 3.0.0
+     */
+    @NotNull
+    public static TBCluster findNegativeSpaceCluster(@NotNull TBCluster existingCluster, @NotNull StaticTB startingBlock, int maxClusterSize) {
+        Objects.requireNonNull(existingCluster);
+        Objects.requireNonNull(startingBlock);
+
+        TBCluster negSpaceCluster = new TBCluster();
+        if (existingCluster.isEmpty())
+            return negSpaceCluster;
+
+        // Use BFS to find adjacent (axis-parallel) blocks not in the cluster.
+        Deque<StaticTB> toVisit = new ArrayDeque<>();
+        toVisit.add(startingBlock);
+
+        while (!toVisit.isEmpty() && (negSpaceCluster.size() <= maxClusterSize)) {
+            StaticTB visitingTB = toVisit.pop();
+            negSpaceCluster.add(visitingTB);
+
+            for (int i = 0; i < 2; ++i) {
+                for (int dir : DIRECTIONS) {
+                    int xOffset = i == 0 ? dir : 0;
+                    int zOffset = i == 1 ? dir : 0;
+
+                    StaticTB offsetTB = visitingTB.add(xOffset, zOffset);
+                    long offsetHash = offsetTB.toLong();
+                    if (!existingCluster.has(offsetHash) && !negSpaceCluster.has(offsetHash))
+                        toVisit.push(offsetTB);
+                }
+            }
+        }
+
+        return negSpaceCluster;
+    }
+
     // Would use streams, but unfortunately they don't handle duplicate values
     private static Map<Long, StaticTB> collectionToMap(Collection<StaticTB> townBlocks) {
         Map<Long, StaticTB> tbMap = new HashMap<>((4 * townBlocks.size()) / 3);

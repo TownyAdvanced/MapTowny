@@ -24,10 +24,11 @@ package me.silverwolfg11.maptowny;
 
 import me.silverwolfg11.maptowny.objects.StaticTB;
 import me.silverwolfg11.maptowny.objects.TBCluster;
-import me.silverwolfg11.maptowny.util.NegativeSpaceFinder;
+import me.silverwolfg11.maptowny.util.PolygonUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -46,8 +47,8 @@ public class NegativeSpaceTest {
     @DisplayName("No Negative Space: Single Block")
     void testNoNSpaceSingleBlock() {
         TBCluster cluster = clusterOf(tb(0,0));
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // +++
@@ -64,8 +65,8 @@ public class NegativeSpaceTest {
                 tb(-1, 3), tb(0, 3), tb(1, 3)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     //     ++++
@@ -88,8 +89,8 @@ public class NegativeSpaceTest {
                 tb(3, 2)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // +
@@ -106,8 +107,8 @@ public class NegativeSpaceTest {
                 tb(-1, 3)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // ++++
@@ -122,8 +123,8 @@ public class NegativeSpaceTest {
                 tb(0, 2), tb(1, 2), tb(2, 2), tb(3, 2)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // +++
@@ -138,8 +139,8 @@ public class NegativeSpaceTest {
                 tb(0, 2), tb(1, 2), tb(2, 2)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // + +++
@@ -157,8 +158,8 @@ public class NegativeSpaceTest {
 
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // The purpose of this test is to test unclaimed diagonal blocks.
@@ -176,8 +177,8 @@ public class NegativeSpaceTest {
                 tb(2, 3), tb(3, 3), tb(4, 3), tb(5, 3), tb(6, 3)
         );
 
-        Collection<StaticTB> negSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertTrue(negSpace.isEmpty());
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertTrue(negSpaceClusters.isEmpty());
     }
 
     // Test shapes that do have negative spaces
@@ -194,11 +195,14 @@ public class NegativeSpaceTest {
                 tb(-1, -1), tb(0, -1), tb(1, -1)
         );
 
-        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
-        assertEquals(output.size(), 1);
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertEquals(1, negSpaceClusters.size());
+
+        TBCluster negSpaceCluster = negSpaceClusters.get(0);
+        assertEquals(1, negSpaceCluster.size());
 
         StaticTB missingTB = tb(0, 0);
-        assertEquals(output.get(0), missingTB);
+        assertTrue(negSpaceCluster.has(missingTB));
     }
 
     // +++
@@ -217,11 +221,25 @@ public class NegativeSpaceTest {
                 tb(-1, -2), tb(0, -2), tb(1, -2)
         );
 
-        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
-        Collection<StaticTB> expectedMissing = list(tb(0, 1), tb(0, -1));
+        List<StaticTB> expectedMissing = new ArrayList<>(list(tb(0, 1), tb(0, -1)));
 
-        assertEquals(output.size(), expectedMissing.size());
-        assertTrue(output.containsAll(expectedMissing));
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertEquals(2, negSpaceClusters.size());
+
+        int found = 0;
+        for (TBCluster negSpaceCluster : negSpaceClusters) {
+            assertEquals(1, negSpaceCluster.size());
+            int idx = 0;
+            while (idx < expectedMissing.size()) {
+                if (negSpaceCluster.has(expectedMissing.get(idx))) {
+                    expectedMissing.remove(idx);
+                    found++;
+                }
+                idx++;
+            }
+        }
+
+        assertEquals(2, found, "Negative space clusters do not have the exact amount of missing blocks. The clusters had " + found + " blocks.");
     }
 
     // +++
@@ -240,11 +258,13 @@ public class NegativeSpaceTest {
                 tb(-1, 2), tb(1, -2)
         );
 
-        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
-        Collection<StaticTB> expectedMissing = list(tb(0, 1));
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertEquals(1, negSpaceClusters.size());
 
-        assertEquals(output.size(), expectedMissing.size());
-        assertTrue(output.containsAll(expectedMissing));
+        TBCluster negSpaceCluster = negSpaceClusters.get(0);
+        assertEquals(1, negSpaceCluster.size());
+
+        assertTrue(negSpaceCluster.has(tb(0, 1)));
     }
 
     // ++++
@@ -261,11 +281,17 @@ public class NegativeSpaceTest {
                 tb(0, 3), tb(1, 3), tb(2, 3), tb(3, 3)
         );
 
-        List<StaticTB> output = NegativeSpaceFinder.findNegativeSpace(cluster);
         Collection<StaticTB> expectedMissing = list(tb(1, 1), tb(2, 1), tb(2, 2));
 
-        assertEquals(expectedMissing.size(), output.size());
-        assertTrue(output.containsAll(expectedMissing));
+        List<TBCluster> negSpaceClusters = PolygonUtil.getPolyInfoFromCluster(cluster, 1).getNegativeSpaceClusters();
+        assertEquals(1, negSpaceClusters.size());
+
+        TBCluster negSpaceCluster = negSpaceClusters.get(0);
+        assertEquals(expectedMissing.size(), negSpaceCluster.size());
+
+        for (StaticTB expectedTB : expectedMissing) {
+            assertTrue(negSpaceCluster.has(expectedTB));
+        }
     }
 
 }

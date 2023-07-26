@@ -24,6 +24,7 @@ package me.silverwolfg11.maptowny.objects;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collector;
 
@@ -49,6 +50,19 @@ public class StaticTB {
         return z;
     }
 
+    /**
+     * Get the relative {@link StaticTB} via a positional offset.
+     *
+     * @param xOffset x offset from this static TB.
+     * @param zOffset z offset from this static TB.
+     *
+     * @return a new static TB with the adjusted coordinates.
+     *
+     * @since 3.0.0
+     */
+    public StaticTB add(int xOffset, int zOffset) {
+        return new StaticTB(x + xOffset, z + zOffset);
+    }
 
     private int getLLX(int tbSize) {
         return x() * tbSize;
@@ -61,26 +75,35 @@ public class StaticTB {
     // Get lower left
     @NotNull
     public Point2D getLL(int tbSize) {
-        return Point2D.of(getLLX(tbSize), getLLZ(tbSize));
+        return getCorner(tbSize, true, false);
     }
 
     // Get lower right
     @NotNull
     public Point2D getLR(int tbSize) {
-        return Point2D.of(getLLX(tbSize) + (tbSize - 1), getLLZ(tbSize));
+        return getCorner(tbSize, false, true);
     }
 
     // Get upper left
     @NotNull
     public Point2D getUL(int tbSize) {
-        return Point2D.of(getLLX(tbSize), getLLZ(tbSize) + (tbSize - 1));
+        return getCorner(tbSize, true, true);
     }
 
     // Get upper right
     @NotNull
     public Point2D getUR(int tbSize) {
-        final int offset = tbSize - 1;
-        return Point2D.of(getLLX(tbSize) + offset, getLLZ(tbSize) + offset);
+        return getCorner(tbSize, false, true);
+    }
+
+    /**
+     * Get a corner point of this townblock
+     * @since 3.0.0
+     */
+    public Point2D getCorner(int tbSize, boolean left, boolean up) {
+        final int x = getLLX(tbSize) + (left ? 0 : (tbSize - 1));
+        final int z = getLLZ(tbSize) + (up ? (tbSize - 1) : 0);
+        return Point2D.of(x, z);
     }
 
     public long toLong() {
