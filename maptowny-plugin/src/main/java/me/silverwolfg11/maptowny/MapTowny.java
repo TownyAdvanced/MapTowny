@@ -22,6 +22,8 @@
 
 package me.silverwolfg11.maptowny;
 
+import com.github.Anon8281.universalScheduler.UniversalScheduler;
+import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import com.palmergames.bukkit.towny.Towny;
 import me.silverwolfg11.maptowny.events.MapReloadEvent;
 import me.silverwolfg11.maptowny.listeners.TownClaimListener;
@@ -44,6 +46,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     private TownyLayerManager layerManager;
     private MapPlatform mapPlatform;
     private MapConfig config;
+    private static TaskScheduler scheduler;
 
     @Override
     public void onEnable() {
@@ -53,6 +56,8 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             setEnabled(false);
             return;
         }
+
+        scheduler = UniversalScheduler.getScheduler(this);
 
         // Plugin startup logic
         try {
@@ -91,9 +96,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // If towny is in safe-mode, do not attempt to render towns.
         if (!Towny.getPlugin().isError()) {
             // Schedule render task when the layer manager is initialized.
-            layerManager.onInitialize(() ->
-                    new RenderTownsTask(this).runTaskTimer(this, 20, config.getUpdatePeriod() * 20L * 60)
-            );
+            layerManager.onInitialize(() -> scheduler.runTaskTimer(new RenderTownsTask(this), 20L, config.getUpdatePeriod() * 20L * 60L));
         }
     }
 
@@ -201,7 +204,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     public void reload() throws IOException {
         config = MapConfig.loadConfig(getDataFolder(), getLogger());
-        Bukkit.getScheduler().cancelTasks(this);
+        scheduler.cancelTasks();
         layerManager.close();
         layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
@@ -209,6 +212,6 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
     }
 
     public void async(Runnable run) {
-        Bukkit.getScheduler().runTaskAsynchronously(this, run);
+        scheduler.runTaskAsynchronously(run);
     }
 }

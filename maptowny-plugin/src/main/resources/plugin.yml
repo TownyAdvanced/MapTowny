@@ -6,6 +6,7 @@ depend: [ Towny ]
 softdepend: [ squaremap, Pl3xMap, dynmap, BlueMap ]
 authors: [ Silverwolfg11 ]
 description: A web-map addon to support Towny.
+folia-supported: true
 
 commands:
   maptowny:
