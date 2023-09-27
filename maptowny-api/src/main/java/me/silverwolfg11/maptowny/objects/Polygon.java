@@ -24,26 +24,46 @@ package me.silverwolfg11.maptowny.objects;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simple wrapper class that stores a polygon as a list of points and negative space.
+ * Simple wrapper class that stores a polygon as a list of points and some enclosed space.
  * <br>
  * All points in a polygon are connected and stored in sequence of connection.
  * <br>
- * The negative space of a polygon represents holes inside the polygon. These holes are also represented
- * as a list of points.
+ * Negative space is subtractive where sub-polygons represent the area
+ * in which the polygon does not exist (one or more holes).<br>
+ * Segmented space consists of sub-polygons
+ * that cumulatively make up the area of the original polygon.
+ * <br>
  *
  * @since 2.0.0
  */
 public class Polygon {
 
     private final List<Point2D> polygon;
+    private final List<List<Point2D>> segmentedSpace;
     private final List<List<Point2D>> negativeSpace;
 
     public Polygon(@NotNull List<Point2D> polygon, @NotNull List<List<Point2D>> negativeSpace) {
+        this(polygon,  negativeSpace, new ArrayList<>());
+    }
+
+    /**
+     * Create a new polygon with enclosed space. For polygons that do not have enclosed space, the segment parameter can be anything.
+     *
+     * @param polygon List of points that form the outline of the polygon.
+     * @param negativeSpace Collection of list of points that outline each negative space polygon.
+     * @param segmentedSpace Collection of list of points that outline each additive sub-polygon.
+     *
+     * @since 3.0.0
+     */
+    public Polygon(@NotNull List<Point2D> polygon, @NotNull List<List<Point2D>> negativeSpace,
+                                                   @NotNull List<List<Point2D>> segmentedSpace) {
         this.polygon = polygon;
         this.negativeSpace = negativeSpace;
+        this.segmentedSpace = segmentedSpace;
     }
 
     /**
@@ -58,6 +78,31 @@ public class Polygon {
     @NotNull
     public List<Point2D> getPoints() {
         return polygon;
+    }
+
+    /**
+     * Check if the polygon has segmented space represented.
+     * <br>
+     * Segmented space can only exist if {@link #hasNegativeSpace()} is {@code true}.
+     * Some platforms may not use segmented space which will result
+     * in empty segmented space.
+     *
+     * @return if the polygon has segmented space represented.
+     * @since 3.0.0
+     */
+    public boolean hasSegmentedSpace() {
+        return !segmentedSpace.isEmpty();
+    }
+
+    /**
+     * Get the segmented space that cumulatively represent the polygon.
+     *
+     * @return a list of polygons that added together represent the area
+     *         of the original polygon.
+     * @since 3.0.0
+     */
+    public List<List<Point2D>> getSegmentedSpace() {
+        return segmentedSpace;
     }
 
     /**

@@ -37,7 +37,6 @@ import me.silverwolfg11.maptowny.objects.TownRenderEntry;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapWorld;
-import me.silverwolfg11.maptowny.util.NegativeSpaceFinder;
 import me.silverwolfg11.maptowny.util.PolygonUtil;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -52,7 +51,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -218,25 +216,27 @@ public class TownyLayerManager implements LayerManager {
             List<Polygon> parts = new ArrayList<>();
 
             for (TBCluster cluster : clusters) {
-                // Check if the cluster has negative space
-                List<StaticTB> negativeSpace = NegativeSpaceFinder.findNegativeSpace(cluster);
-                List<List<Point2D>> negSpacePolys = Collections.emptyList();
+                PolygonUtil.PolyFormResult result = PolygonUtil.getPolyInfoFromCluster(cluster, townblockSize);
 
-                // If the cluster does have negative space, get the outlines of the negative space polygons
-                if (!negativeSpace.isEmpty()) {
-                    List<TBCluster> negSpaceClusters = TBCluster.findClusters(negativeSpace);
+                List<List<Point2D>> negativeSpace = new ArrayList<>();
+                List<List<Point2D>> segmentedSpace = new ArrayList<>();
 
-                    negSpacePolys = negSpaceClusters.stream()
-                            .map(tbclust -> PolygonUtil.formPolyFromCluster(tbclust, townblockSize))
-                            .filter(Objects::nonNull)
+                // Handle enclosed space within the polygon
+                if (!result.getNegativeSpaceClusters().isEmpty()) {
+                    negativeSpace = result.getNegativeSpaceClusters().stream()
+                            .map(negCluster -> PolygonUtil.getPolyInfoFromCluster(negCluster, townblockSize, false).getPolygonPoints())
                             .collect(Collectors.toList());
+
+                    if (mapPlatform.usesSegmentedPolygons()) {
+                        segmentedSpace = PolygonUtil.segmentPolygon(cluster, result.getNegativeSpaceClusters(), townblockSize);
+                    }
                 }
 
                 // Form the main polygon
-                List<Point2D> poly = PolygonUtil.formPolyFromCluster(cluster, townblockSize);
+                List<Point2D> poly = result.getPolygonPoints();
 
-                if (poly != null) {
-                    Polygon part = new Polygon(poly, negSpacePolys);
+                if (!poly.isEmpty()) {
+                    Polygon part = new Polygon(poly, negativeSpace, segmentedSpace);
                     parts.add(part);
                 }
                 else {
