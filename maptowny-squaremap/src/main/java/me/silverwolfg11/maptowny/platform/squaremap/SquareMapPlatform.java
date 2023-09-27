@@ -57,6 +57,11 @@ public class SquareMapPlatform implements MapPlatform {
     }
 
     @Override
+    public boolean usesSegmentedPolygons() {
+        return false;
+    }
+
+    @Override
     public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         SquaremapProvider.get().iconRegistry().register(Key.of(iconKey), icon);
     }

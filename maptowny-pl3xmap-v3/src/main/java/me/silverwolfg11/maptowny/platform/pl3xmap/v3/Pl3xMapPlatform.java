@@ -55,6 +55,11 @@ public class Pl3xMapPlatform implements MapPlatform {
     }
 
     @Override
+    public boolean usesSegmentedPolygons() {
+        return false;
+    }
+
+    @Override
     public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         // Assume that all images are PNGs for right now.
         // Maybe in the future, there will be an API addition to keep track of the image type.

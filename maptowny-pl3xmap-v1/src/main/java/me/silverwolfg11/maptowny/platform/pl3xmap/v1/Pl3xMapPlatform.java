@@ -52,6 +52,11 @@ public class Pl3xMapPlatform implements MapPlatform {
     }
 
     @Override
+    public boolean usesSegmentedPolygons() {
+        return false;
+    }
+
+    @Override
     public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         Pl3xMapProvider.get().iconRegistry().register(Key.of(iconKey), icon);
     }

@@ -64,6 +64,11 @@ public class DynmapPlatform implements MapPlatform {
     }
 
     @Override
+    public boolean usesSegmentedPolygons() {
+        return true;
+    }
+
+    @Override
     public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
         // Delete icon if it's been previously registered
         final MarkerIcon oldMarkerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);

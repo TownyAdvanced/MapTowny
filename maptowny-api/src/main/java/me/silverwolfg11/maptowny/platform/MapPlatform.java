@@ -88,6 +88,16 @@ public interface MapPlatform {
     @Nullable
     MapWorld getWorld(@NotNull World world);
 
+    /**
+     * Check if the platform uses segmented polygons in rendering claim markers.
+     * See {@link me.silverwolfg11.maptowny.objects.Polygon} for more info.
+     *
+     * @return {@code true} if the platform uses and handles segmented polygons, {@code false} otherwise.
+     *
+     * @since 3.0.0
+     */
+    boolean usesSegmentedPolygons();
+
     // Icon Related Functions
 
     /**
