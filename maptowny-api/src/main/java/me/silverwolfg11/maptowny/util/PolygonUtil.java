@@ -135,7 +135,8 @@ public class PolygonUtil {
             borderMap.put(dir, new HashSet<>());
         }
 
-        if (findHoles && cluster.size() > 8) {
+        // Only clusters with at least 8 blocks can have holes.
+        if (findHoles && cluster.size() >= 8) {
             for (StaticTB tb : cluster.getBlocks()) {
                 // Find the top/bottom borders
                 for (DIRECTION dir : dirValues) {
@@ -197,9 +198,9 @@ public class PolygonUtil {
             }
 
             if (nextDir != currDir) {
-                boolean up = (currDir == DIRECTION.RIGHT || nextDir == DIRECTION.RIGHT);
-                boolean left = (currDir == DIRECTION.UP || nextDir == DIRECTION.UP);
-                poly.add(townBlock.getCorner(tbSize, left, up));
+                boolean lower = (currDir != DIRECTION.RIGHT) && (nextDir != DIRECTION.RIGHT);
+                boolean left = (currDir == DIRECTION.UP) || (nextDir == DIRECTION.UP);
+                poly.add(townBlock.getCorner(tbSize, lower, left));
             }
 
             currDir = nextDir;
@@ -233,12 +234,6 @@ public class PolygonUtil {
 
         // Go through each negative space block
 
-
-
-
-
-
-
         while (!negSpaceStarters.isEmpty()) {
             StaticTB startingBlock = negSpaceStarters.stream().findAny().get();
             negSpaceStarters.remove(startingBlock);
@@ -266,7 +261,7 @@ public class PolygonUtil {
         List<List<Point2D>> polyList = new ArrayList<>();
 
         if (negSpaceClusters.isEmpty()) {
-            polyList.add(getPolyInfoFromCluster(polyCluster, tbSize).getPolygonPoints());
+            polyList.add(getPolyInfoFromCluster(polyCluster, tbSize, false).getPolygonPoints());
             return polyList;
         }
 
