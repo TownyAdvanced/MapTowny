@@ -189,7 +189,8 @@ public final class MarkerOptions {
                 this.fillOpacity,
                 this.fillRule,
                 this.clickTooltip,
-                this.hoverTooltip
+                this.hoverTooltip,
+                this.name
         );
     }
 
@@ -267,7 +268,8 @@ public final class MarkerOptions {
                 final double fillOpacity,
                 final @NotNull FillRule fillRule,
                 final @Nullable String clickTooltip,
-                final @Nullable String hoverTooltip
+                final @Nullable String hoverTooltip,
+                final @Nullable String name
         ) {
             this.stroke = stroke;
             this.strokeColor = strokeColor;
@@ -279,6 +281,7 @@ public final class MarkerOptions {
             this.fillRule = fillRule;
             this.clickTooltip = clickTooltip;
             this.hoverTooltip = hoverTooltip;
+            this.name = name;
         }
 
         /**
