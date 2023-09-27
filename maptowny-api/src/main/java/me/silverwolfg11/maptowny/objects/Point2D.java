@@ -72,18 +72,54 @@ public class Point2D {
     }
 
     /**
+     * Create a copy of a point.
+     *
+     * @param point Point to copy
+     * @return point
+     *
+     * @since 3.0.0
+     */
+    public static @NotNull Point2D of(@NotNull final Point2D point) {
+        Objects.requireNonNull(point, "Provided point cannot be null!");
+        return of(point.x(), point.z());
+    }
+
+    /**
+     * Create a point from a bukkit location
+     * (specifically the x and z coords).
+     *
+     * @param loc Location to convert to a point.
+     * @return point
+     *
+     * @since 3.0.0
+     */
+    public static @NotNull Point2D of(@NotNull final Location loc) {
+        Objects.requireNonNull(loc, "Provided location cannot be null!");
+        return of(loc.getX(), loc.getZ());
+    }
+
+    /**
      * Create a new point from an x and z position
      *
      * @param x x position
      * @param z z position
      * @return point
+     *
+     * @deprecated Use {@link Point2D#of(double, double)} instead.
+     *             Slated for removal in 4.0.0
      */
+    @Deprecated
     public static @NotNull Point2D point(final double x, final double z) {
         return new Point2D(x, z);
     }
 
+    /**
+     *
+     * @deprecated Use {@link Point2D#of(Location)} instead.
+     *             Slated for removal in 4.0.0
+     */
     public static @NotNull Point2D fromLocation(Location loc) {
-        return point(loc.getX(), loc.getZ());
+        return of(loc.getX(), loc.getZ());
     }
 
     @Override
@@ -101,5 +137,10 @@ public class Point2D {
     @Override
     public int hashCode() {
         return Objects.hash(this.x, this.z);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + this.x + "," + this.z + ")";
     }
 }

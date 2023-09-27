@@ -170,7 +170,7 @@ public class TownRenderEntry {
             return Collections.emptyMap();
 
         return sortByWorld(
-                town.getAllOutpostSpawns(), Point2D::fromLocation,
+                town.getAllOutpostSpawns(), Point2D::of,
                 l -> {
                     World world = l.getWorld();
 
