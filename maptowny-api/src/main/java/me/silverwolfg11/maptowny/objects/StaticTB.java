@@ -24,7 +24,6 @@ package me.silverwolfg11.maptowny.objects;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collector;
 
@@ -75,34 +74,50 @@ public class StaticTB {
     // Get lower left
     @NotNull
     public Point2D getLL(int tbSize) {
-        return getCorner(tbSize, true, false);
+        return getCorner(tbSize, true, true);
     }
 
     // Get lower right
     @NotNull
     public Point2D getLR(int tbSize) {
-        return getCorner(tbSize, false, true);
+        return getCorner(tbSize, true, false);
     }
 
     // Get upper left
     @NotNull
     public Point2D getUL(int tbSize) {
-        return getCorner(tbSize, true, true);
+        return getCorner(tbSize, false, true);
     }
 
     // Get upper right
     @NotNull
     public Point2D getUR(int tbSize) {
-        return getCorner(tbSize, false, true);
+        return getCorner(tbSize, false, false);
     }
 
     /**
-     * Get a corner point of this townblock
+     * Get the corner point of this townblock.
+     * These points represent the true floating point corners, not the block corners of a chunk.
      * @since 3.0.0
      */
-    public Point2D getCorner(int tbSize, boolean left, boolean up) {
+    public Point2D getCorner(int tbSize, boolean lower, boolean left) {
+        // To get block corners, it would be tbSize - 1 (since the blocks cannot overlap)
+        // but floating point corners are shared across chunks.
+        final int x = getLLX(tbSize) + (left ? 0 : tbSize);
+        final int z = getLLZ(tbSize) + (lower ? 0 : tbSize);
+        return Point2D.of(x, z);
+    }
+
+    /**
+     * Get the block corners of this townblock.
+     * These points represent the block boundaries of the townblock which do not overlap
+     * with the block boundaries of others townblocks.
+     *
+     * @since 3.0.0
+     */
+    public Point2D getBlockCorner(int tbSize, boolean lower, boolean left) {
         final int x = getLLX(tbSize) + (left ? 0 : (tbSize - 1));
-        final int z = getLLZ(tbSize) + (up ? (tbSize - 1) : 0);
+        final int z = getLLZ(tbSize) + (lower ? 0 : (tbSize - 1));
         return Point2D.of(x, z);
     }
 

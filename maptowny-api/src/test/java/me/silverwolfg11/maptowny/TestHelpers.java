@@ -84,11 +84,11 @@ public class TestHelpers {
     static Point2D cornerPoint(StaticTB tb, CORNER corner) {
         int xOffset = 0;
         if (corner == CORNER.LOWER_RIGHT || corner == CORNER.UPPER_RIGHT)
-            xOffset = (TILE_SIZE - 1);
+            xOffset = TILE_SIZE;
 
         int zOffset = 0;
         if (corner == CORNER.UPPER_LEFT || corner == CORNER.UPPER_RIGHT)
-            zOffset = (TILE_SIZE - 1);
+            zOffset = TILE_SIZE;
 
         return Point2D.of((tb.x() * TILE_SIZE) + xOffset, (tb.z() * TILE_SIZE) + zOffset);
     }
