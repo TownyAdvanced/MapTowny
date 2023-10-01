@@ -31,6 +31,7 @@ import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.objects.StaticTB;
 import me.silverwolfg11.maptowny.objects.TBCluster;
 import me.silverwolfg11.maptowny.objects.TownRenderEntry;
@@ -236,7 +237,15 @@ public class TownyLayerManager implements LayerManager {
                 List<Point2D> poly = result.getPolygonPoints();
 
                 if (!poly.isEmpty()) {
-                    Polygon part = new Polygon(poly, negativeSpace, segmentedSpace);
+                    Polygon part;
+
+                    if (!segmentedSpace.isEmpty()) {
+                        part = new SegmentedPolygon(poly, negativeSpace, segmentedSpace);
+                    }
+                    else {
+                        part = new Polygon(poly, negativeSpace);
+                    }
+
                     parts.add(part);
                 }
                 else {

@@ -25,6 +25,7 @@ package me.silverwolfg11.maptowny.platform.dynmap;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.AreaMarker;
@@ -148,7 +149,7 @@ public class DynmapLayerWrapper implements MapLayer {
         lineMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
     }
 
-    private void createSegmentedPolygon(String markerKey, Polygon poly, MarkerOptions markerOptions) {
+    private void createSegmentedPolygon(String markerKey, SegmentedPolygon poly, MarkerOptions markerOptions) {
         // A segmented polygon consists of two or more line markers representing the border of the polygon and
         // several area markers representing the interior of the polygon.
 
@@ -171,20 +172,20 @@ public class DynmapLayerWrapper implements MapLayer {
 
         segmentedPolys.add(markerKey);
 
-        for(int i = 0; i < poly.getSegmentedSpace().size(); i++) {
-            createAreaPoly(markerKey + i, poly.getSegmentedSpace().get(i), areaOptions);
+        for(int i = 0; i < poly.getSegments().size(); i++) {
+            createAreaPoly(markerKey + i, poly.getSegments().get(i), areaOptions);
         }
 
         // Segmented polys are represented as a multipolygon and a line marker.
-        multiPolys.put(markerKey, poly.getSegmentedSpace().size());
+        multiPolys.put(markerKey, poly.getSegments().size());
     }
 
     private void addSinglePolyMarker(String markerKey, Polygon poly, MarkerOptions markerOptions) {
-        if (!poly.hasSegmentedSpace()) {
-            createAreaPoly(markerKey, poly.getPoints(), markerOptions);
+        if (poly instanceof SegmentedPolygon) {
+            createSegmentedPolygon(markerKey, (SegmentedPolygon) poly, markerOptions);
         }
         else {
-            createSegmentedPolygon(markerKey, poly, markerOptions);
+            createAreaPoly(markerKey, poly.getPoints(), markerOptions);
         }
     }
 
