@@ -31,10 +31,12 @@ import org.dynmap.DynmapAPI;
 import org.dynmap.markers.AreaMarker;
 import org.dynmap.markers.GenericMarker;
 import org.dynmap.markers.Marker;
+import org.dynmap.markers.MarkerDescription;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PolyLineMarker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -42,10 +44,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class DynmapLayerWrapper implements MapLayer {
     private final DynmapAPI dynmapAPI;
@@ -54,9 +57,9 @@ public class DynmapLayerWrapper implements MapLayer {
     private final int zIndex;
 
     // Simulate Dynmap having a MultiPolygon Marker
-    // Marker Key -> Number of Polygons
-    private final Map<String, Integer> multiPolys = new ConcurrentHashMap<>();
-    private final Set<String> segmentedPolys = ConcurrentHashMap.newKeySet();
+    // Marker key -> Child Polys
+    // Parent keys should not be actual markers.
+    private final Map<String, @Unmodifiable List<String>> parentPolys = new ConcurrentHashMap<>();
 
     public DynmapLayerWrapper(DynmapAPI dynmapAPI, String worldName, MarkerSet markerSet, int zIndex) {
         this.dynmapAPI = dynmapAPI;
@@ -153,31 +156,32 @@ public class DynmapLayerWrapper implements MapLayer {
         // A segmented polygon consists of two or more line markers representing the border of the polygon and
         // several area markers representing the interior of the polygon.
 
+        List<String> childKeys = new ArrayList<>();
         // Create exterior border line
         createLineMarker(markerKey + "_line0", poly.getPoints(), true, markerOptions);
+        childKeys.add(markerKey + "_line0");
 
-        // Create negative space outlines
-        if (poly.hasNegativeSpace()) {
-            int segmentIdx = 1;
-            for (List<Point2D> negSpacePts : poly.getNegativeSpace()) {
-                final String lineMarkerKey = markerKey + "_line" + segmentIdx;
-                createLineMarker(lineMarkerKey, negSpacePts, true, markerOptions);
-                segmentIdx++;
-            }
+        // Segmented polygons will always have negative space.
+        int segmentIdx = 1;
+        for (List<Point2D> negSpacePts : poly.getNegativeSpace()) {
+            final String lineMarkerKey = markerKey + "_line" + segmentIdx;
+            createLineMarker(lineMarkerKey, negSpacePts, true, markerOptions);
+            childKeys.add(lineMarkerKey);
+            segmentIdx++;
         }
 
         MarkerOptions areaOptions = markerOptions.asBuilder()
                 .strokeOpacity(0)
                 .build();
 
-        segmentedPolys.add(markerKey);
-
         for(int i = 0; i < poly.getSegments().size(); i++) {
-            createAreaPoly(markerKey + i, poly.getSegments().get(i), areaOptions);
+            final String segmentKey = markerKey + i;
+            createAreaPoly(segmentKey, poly.getSegments().get(i), areaOptions);
+            childKeys.add(segmentKey);
         }
 
         // Segmented polys are represented as a multipolygon and a line marker.
-        multiPolys.put(markerKey, poly.getSegments().size());
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
     }
 
     private void addSinglePolyMarker(String markerKey, Polygon poly, MarkerOptions markerOptions) {
@@ -207,12 +211,15 @@ public class DynmapLayerWrapper implements MapLayer {
         }
 
         // Create individual area-markers (polygon)
+        List<String> childKeys = new ArrayList<>(polygons.size());
         for (int i = 0; i < polygons.size(); i++) {
             Polygon poly = polygons.get(i);
-            addSinglePolyMarker(markerKey + i, poly, markerOptions);
+            final String polyKey = markerKey + i;
+            addSinglePolyMarker(polyKey, poly, markerOptions);
+            childKeys.add(polyKey);
         }
 
-        multiPolys.put(markerKey, polygons.size());
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
     }
 
     @Override
@@ -250,54 +257,43 @@ public class DynmapLayerWrapper implements MapLayer {
         return markerSet.findMarker(toWorldKey(markerKey)) != null;
     }
 
-    @Override
-    public boolean removeMarker(@NotNull String markerKey) {
-        final String worldKey = toWorldKey(markerKey);
-        // Remove all segmented representations
-        if (segmentedPolys.contains(markerKey)) {
-            int segmentIdx = 0;
-            PolyLineMarker marker;
-            while ((marker = markerSet.findPolyLineMarker(worldKey + "_line" + segmentIdx))
-                    != null) {
-                marker.deleteMarker();
-                segmentIdx++;
-            }
-
-            segmentedPolys.remove(markerKey);
-        }
-
-        // Remove all multipolygon representations
-        if (multiPolys.containsKey(markerKey)) {
-            int polySize = multiPolys.get(markerKey);
-            for (int i = 0; i < polySize; ++i) {
-                removeMarker(markerKey + i);
-            }
-
-            multiPolys.remove(markerKey);
-            return true;
-        }
+    private MarkerDescription findDynmapMarker(@NotNull String worldMarkerKey) {
+        MarkerDescription marker;
 
         // Dynmap stores different types of markers separately
+        if ((marker = markerSet.findAreaMarker(worldMarkerKey)) != null) {
+            return marker;
+        }
 
-        // Check if it's an area marker
-        AreaMarker areaMarker = markerSet.findAreaMarker(worldKey);
-        if (areaMarker != null) {
-            areaMarker.deleteMarker();
+        if ((marker = markerSet.findPolyLineMarker(worldMarkerKey)) != null) {
+            return marker;
+        }
+
+        if ((marker = markerSet.findMarker(worldMarkerKey)) != null) {
+            return marker;
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean removeMarker(@NotNull String markerKey) {
+        // Check if marker key is a parent
+        List<String> childrenKeys = parentPolys.get(markerKey);
+        if (childrenKeys != null) {
+            for (String childrenKey : childrenKeys) {
+                removeMarker(childrenKey);
+            }
             return true;
         }
 
-        // Check if it's a line marker
-        PolyLineMarker lineMarker = markerSet.findPolyLineMarker(worldKey);
-        if (lineMarker != null) {
-            lineMarker.deleteMarker();
-            return true;
-        }
-
-        Marker marker = markerSet.findMarker(worldKey);
+        final String worldKey = toWorldKey(markerKey);
+        GenericMarker marker = findDynmapMarker(worldKey);
         if (marker != null) {
             marker.deleteMarker();
             return true;
         }
+
         return false;
     }
 
@@ -329,22 +325,19 @@ public class DynmapLayerWrapper implements MapLayer {
         }
 
         // Handle local data
-        multiPolys.keySet().removeIf(markerKeyFilter);
-        segmentedPolys.removeIf(markerKeyFilter);
+        parentPolys.keySet().removeIf(markerKeyFilter);
     }
 
     @Override
     public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
-        final String worldKey = toWorldKey(markerKey);
+        String worldKey = toWorldKey(markerKey);
 
-        Marker marker;
-        if (multiPolys.containsKey(markerKey)) {
-            // Use first marker of the polygon to get the marker options for all polygons
-            marker = markerSet.findMarker(worldKey + 0);
+        if (parentPolys.containsKey(markerKey)) {
+            // Use first child marker of the parent if it exists
+            worldKey = toWorldKey(parentPolys.get(markerKey).get(0));
         }
-        else {
-            marker = markerSet.findMarker(worldKey);
-        }
+
+        final MarkerDescription marker = findDynmapMarker(worldKey);
 
         if (marker == null)
             return CompletableFuture.completedFuture(null);
@@ -372,27 +365,24 @@ public class DynmapLayerWrapper implements MapLayer {
 
     @Override
     public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
-        final String worldKey = toWorldKey(markerKey);
+        List<MarkerDescription> markers = Collections.emptyList();
 
-        List<Marker> markers = Collections.emptyList();
-
-        if (multiPolys.containsKey(markerKey)) {
-            int polySize = multiPolys.get(markerKey);
-            markers = new ArrayList<>(polySize);
-
-            for (int polyIdx = 0; polyIdx < polySize; ++polyIdx) {
-                Marker marker = markerSet.findMarker(worldKey + polyIdx);
-                if (marker != null)
-                    markers.add(marker);
-            }
+        if (parentPolys.containsKey(markerKey)) {
+            markers = parentPolys.get(markerKey)
+                    .stream()
+                    .map(this::toWorldKey)
+                    .map(this::findDynmapMarker)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         }
         else {
-            Marker marker = markerSet.findMarker(worldKey);
+            final String worldKey = toWorldKey(markerKey);
+            MarkerDescription marker = findDynmapMarker(worldKey);
             if (marker != null)
                 markers = Collections.singletonList(marker);
         }
 
-        for (Marker marker : markers) {
+        for (MarkerDescription marker : markers) {
             marker.setLabel(markerOptions.name());
             marker.setDescription(markerOptions.clickTooltip());
 
