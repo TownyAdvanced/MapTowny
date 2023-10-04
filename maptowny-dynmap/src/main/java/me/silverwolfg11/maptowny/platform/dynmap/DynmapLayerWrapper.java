@@ -122,8 +122,8 @@ public class DynmapLayerWrapper implements MapLayer {
         final String worldKey = toWorldKey(markerKey);
 
         // Validate if ends need to be joined
-        if (joinEnds && !points.isEmpty()
-                && points.get(0).equals(points.get(points.size() - 1))) {
+        if (joinEnds &&
+                (points.isEmpty() || points.get(0).equals(points.get(points.size() - 1)))) {
             joinEnds = false;
         }
 
@@ -284,6 +284,7 @@ public class DynmapLayerWrapper implements MapLayer {
             for (String childrenKey : childrenKeys) {
                 removeMarker(childrenKey);
             }
+            parentPolys.remove(markerKey);
             return true;
         }
 
