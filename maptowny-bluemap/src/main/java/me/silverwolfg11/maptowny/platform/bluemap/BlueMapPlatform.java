@@ -89,7 +89,7 @@ public class BlueMapPlatform implements MapPlatform {
 
     @Override
     public boolean usesSegmentedPolygons() {
-        return false;
+        return true;
     }
 
     @Override

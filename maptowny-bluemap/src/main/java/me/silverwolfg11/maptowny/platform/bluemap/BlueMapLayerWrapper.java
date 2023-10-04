@@ -23,21 +23,27 @@
 package me.silverwolfg11.maptowny.platform.bluemap;
 
 import com.flowpowered.math.vector.Vector2d;
+import com.flowpowered.math.vector.Vector3d;
+import de.bluecolored.bluemap.api.markers.LineMarker;
 import de.bluecolored.bluemap.api.markers.Marker;
 import de.bluecolored.bluemap.api.markers.MarkerSet;
+import de.bluecolored.bluemap.api.markers.ObjectMarker;
 import de.bluecolored.bluemap.api.markers.POIMarker;
 import de.bluecolored.bluemap.api.markers.ShapeMarker;
 import de.bluecolored.bluemap.api.math.Color;
+import de.bluecolored.bluemap.api.math.Line;
 import de.bluecolored.bluemap.api.math.Shape;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
-import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -52,10 +58,10 @@ public class BlueMapLayerWrapper implements MapLayer {
 
     private final BlueMapIconMapper iconMapper;
 
-    // Simulate BlueMap having a MultiPolygon Marker
-    // Marker Key -> Number of Polygons
-    // Raw Marker Keys, not world keys
-    private final Map<String, Integer> multiPolys = new ConcurrentHashMap<>();
+    // Allow multi-marker representation from one marker key.
+    // Marker Key -> Children Markers
+    // Parent keys are not actual markers.
+    private final Map<String, @Unmodifiable List<String>> parentPolys = new ConcurrentHashMap<>();
 
     public BlueMapLayerWrapper(BlueMapIconMapper iconMapper, MarkerSet markerSet, int zIndex) {
         this.iconMapper = iconMapper;
@@ -63,21 +69,13 @@ public class BlueMapLayerWrapper implements MapLayer {
         this.zIndex = zIndex;
     }
 
-    private String toMarkerSetKey(String markerKey) {
-        if (multiPolys.containsKey(markerKey)) {
-            return markerKey + 0;
-        }
-
-        return markerKey;
-    }
-
-    private Vector2d pointToVec(Point2D point) {
+    private Vector2d pointToVec2d(Point2D point) {
         return new Vector2d(point.x(), point.z());
     }
 
-    private Vector2d[] pointsToVecs(Collection<Point2D> points) {
+    private Vector2d[] pointsToVecs2d(Collection<Point2D> points) {
         return points.stream()
-                .map(this::pointToVec)
+                .map(this::pointToVec2d)
                 .toArray(Vector2d[]::new);
     }
 
@@ -96,38 +94,100 @@ public class BlueMapLayerWrapper implements MapLayer {
         return alpha / 255d;
     }
 
+    private void addShapeMarker(@NotNull String markerKey, List<Point2D> points, MarkerOptions markerOptions) {
+        final Shape shape = new Shape(pointsToVecs2d(points));
+
+        final ShapeMarker shapeMarker = ShapeMarker.builder()
+                .label(markerOptions.name())
+                .shape(shape, zIndex)
+                .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
+                .lineWidth(markerOptions.strokeWeight())
+                .fillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()))
+                .detail(markerOptions.clickTooltip())
+                .build();
+
+        markerSet.getMarkers().put(markerKey, shapeMarker);
+    }
+
+    private void addLineMarker(@NotNull String markerKey, List<Point2D> points, boolean joinEnds, MarkerOptions markerOptions) {
+        Line.Builder lineBuilder = Line.builder();
+
+        // Check if really need to join ends
+        if (joinEnds && ((points.size() < 2) || (points.get(0).equals(points.get(points.size() - 1))))) {
+            joinEnds = false;
+        }
+
+        for (Point2D point : points) {
+            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
+        }
+
+        if (joinEnds) {
+            final Point2D firstPoint = points.get(0);
+            lineBuilder.addPoint(new Vector3d(firstPoint.x(), firstPoint.z(), zIndex));
+        }
+
+        LineMarker lineMarker = LineMarker.builder()
+                .label(markerOptions.name())
+                .line(lineBuilder.build())
+                .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
+                .lineWidth(markerOptions.strokeWeight())
+                .detail(markerOptions.clickTooltip())
+                .build();
+
+        markerSet.getMarkers().put(markerKey, lineMarker);
+    }
+
+    private void addSegmentedPoly(@NotNull String markerKey, SegmentedPolygon segPoly, MarkerOptions markerOptions) {
+        final List<String> childKeys = new ArrayList<>(segPoly.getNegativeSpace().size() + segPoly.getSegments().size() + 1);
+
+        // Add polygon outline
+        addLineMarker(markerKey + "_line0", segPoly.getPoints(), true, markerOptions);
+        childKeys.add(markerKey + "_line0");
+
+        // Add negative space outlines
+        for (int i = 0; i < segPoly.getNegativeSpace().size(); i++) {
+            final String negSpaceKey = markerKey + "_line" + (i + 1);
+            addLineMarker(negSpaceKey, segPoly.getNegativeSpace().get(i), true, markerOptions);
+            childKeys.add(negSpaceKey);
+        }
+
+        // Add segmented areas
+        MarkerOptions segAreaOptions = markerOptions.asBuilder()
+                                                    .strokeOpacity(0)
+                                                    .strokeWeight(0)
+                                                    .build();
+
+        for (int i = 0; i < segPoly.getSegments().size(); i++) {
+            final String segKey = markerKey + "_seg" + i;
+            addShapeMarker(segKey, segPoly.getSegments().get(i), segAreaOptions);
+            childKeys.add(segKey);
+        }
+
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
+    }
+
+    private void addPolyMarker(@NotNull String markerKey, Polygon polygon, MarkerOptions markerOptions) {
+        if (polygon instanceof SegmentedPolygon) {
+            addSegmentedPoly(markerKey, (SegmentedPolygon) polygon, markerOptions);
+        }
+        else {
+            addShapeMarker(markerKey, polygon.getPoints(), markerOptions);
+        }
+    }
+
     @Override
     public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
-        // Delete markers if current multipoly size is less than old multipoly size
-        if (multiPolys.containsKey(markerKey)) {
-            int oldPolySize = multiPolys.remove(markerKey);
-            int currPolySize = polygons.size();
+        // Delete old markers
+        removeMarker(markerKey);
 
-            // Delete all old markers
-            for (int i = currPolySize; i < oldPolySize; ++i) {
-                markerSet.getMarkers().remove(markerKey + i);
-            }
-        }
-
+        final List<String> childKeys = new ArrayList<>(polygons.size());
         for (int i = 0; i < polygons.size(); i++) {
-            final String polyId = markerKey + i;
-            final Polygon polygon = polygons.get(i);
-
-            final Shape shape = new Shape(pointsToVecs(polygon.getPoints()));
-
-            final ShapeMarker shapeMarker = ShapeMarker.builder()
-                    .label(markerOptions.name())
-                    .shape(shape, zIndex)
-                    .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
-                    .lineWidth(markerOptions.strokeWeight())
-                    .fillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()))
-                    .detail(markerOptions.clickTooltip())
-                    .build();
-
-            markerSet.getMarkers().put(polyId, shapeMarker);
+            final String polyKey = markerKey + i;
+            addPolyMarker(polyKey, polygons.get(i), markerOptions);
+            childKeys.add(polyKey);
         }
 
-        multiPolys.put(markerKey, polygons.size());
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
     }
 
     @Override
@@ -151,25 +211,21 @@ public class BlueMapLayerWrapper implements MapLayer {
 
     @Override
     public boolean hasMarker(@NotNull String markerKey) {
-        final String targetKey = toMarkerSetKey(markerKey);
-
-        return markerSet.getMarkers().containsKey(targetKey);
+        return parentPolys.containsKey(markerKey) ||
+                markerSet.getMarkers().containsKey(markerKey);
     }
 
     @Override
     public boolean removeMarker(@NotNull String markerKey) {
         // Remove all multipolygon representations
-        if (multiPolys.containsKey(markerKey)) {
-            int polySize = multiPolys.get(markerKey);
-            boolean markerExists = false;
-
-            for (int i = 0; i < polySize; ++i) {
-                final String finalKey = markerKey + i;
-                markerExists |= markerSet.getMarkers().remove(finalKey) != null;
+        if (parentPolys.containsKey(markerKey)) {
+            List<String> childKeys = parentPolys.get(markerKey);
+            for (String childKey : childKeys) {
+                removeMarker(childKey);
             }
 
-            multiPolys.remove(markerKey);
-            return markerExists;
+            parentPolys.remove(markerKey);
+            return true;
         }
 
         return markerSet.getMarkers().remove(markerKey) != null;
@@ -213,9 +269,20 @@ public class BlueMapLayerWrapper implements MapLayer {
 
     @Override
     public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
-        String targetKey = toMarkerSetKey(markerKey);
-
-        Marker marker = markerSet.getMarkers().get(targetKey);
+        Marker marker = null;
+        if (parentPolys.containsKey(markerKey)) {
+            List<String> childKeys = parentPolys.get(markerKey);
+            for (String childKey : childKeys) {
+                marker = markerSet.getMarkers().get(childKey);
+                // Try to find ShapeMarker since they have the most details
+                if (marker instanceof ShapeMarker) {
+                    break;
+                }
+            }
+        }
+        else {
+            marker = markerSet.getMarkers().get(markerKey);
+        }
 
         if (marker == null) {
             return CompletableFuture.completedFuture(null);
@@ -229,27 +296,37 @@ public class BlueMapLayerWrapper implements MapLayer {
     private void updateMarkerOptions(Marker marker, MarkerOptions markerOptions) {
         marker.setLabel(markerOptions.name());
 
-        if (marker instanceof ShapeMarker) {
+        if (marker instanceof ObjectMarker) {
+            final ObjectMarker objMarker = (ObjectMarker) marker;
+            objMarker.setDetail(markerOptions.clickTooltip());
+            objMarker.setLabel(markerOptions.name());
+        }
+
+        if (marker instanceof LineMarker) {
+            LineMarker lineMarker = (LineMarker) marker;
+            lineMarker.setLineColor(toBMColor(markerOptions.strokeColor(), markerOptions.fillOpacity()));
+            lineMarker.setLineWidth(markerOptions.strokeWeight());
+        }
+        else if (marker instanceof ShapeMarker) {
             ShapeMarker shapeMarker = (ShapeMarker) marker;
             shapeMarker.setFillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()));
             shapeMarker.setLineColor(toBMColor(markerOptions.strokeColor(), markerOptions.fillOpacity()));
             shapeMarker.setLineWidth(markerOptions.strokeWeight());
-            shapeMarker.setDetail(markerOptions.clickTooltip());
         }
     }
 
     @Override
     public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
-        if (multiPolys.containsKey(markerKey)) {
-            int polySize = multiPolys.get(markerKey);
-            for (int i = 0; i < polySize; ++i) {
-                Marker marker = markerSet.getMarkers().get(markerKey + i);
+        Collection<String> markerKeys = parentPolys.get(markerKey);
+        if (markerKeys == null) {
+            markerKeys = Collections.singleton(markerKey);
+        }
+
+        for (String keys : markerKeys) {
+            Marker marker = markerSet.getMarkers().get(keys);
+            if (marker != null) {
                 updateMarkerOptions(marker, markerOptions);
             }
-        }
-        else {
-            Marker marker = markerSet.getMarkers().get(markerKey);
-            updateMarkerOptions(marker, markerOptions);
         }
     }
 }
