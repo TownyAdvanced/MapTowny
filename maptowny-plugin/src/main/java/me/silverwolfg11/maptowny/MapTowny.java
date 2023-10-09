@@ -28,6 +28,8 @@ import me.silverwolfg11.maptowny.listeners.TownClaimListener;
 import me.silverwolfg11.maptowny.managers.TownyLayerManager;
 import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.schedulers.MapTownyScheduler;
+import me.silverwolfg11.maptowny.schedulers.MapTownySchedulerFactory;
 import me.silverwolfg11.maptowny.tasks.RenderTownsTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -41,6 +43,7 @@ import java.util.logging.Level;
 
 public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
+    private MapTownyScheduler scheduler;
     private TownyLayerManager layerManager;
     private MapPlatform mapPlatform;
     private MapConfig config;
@@ -74,6 +77,14 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
             return;
         }
 
+        // Setup scheduler
+        scheduler = MapTownySchedulerFactory.create(this);
+        if (scheduler == null) {
+            getLogger().severe("Error: No valid scheduler found! Disabling plugin...");
+            setEnabled(false);
+            return;
+        }
+
         getLogger().info("Using web-map plugin: " + mapPlatform.getPlatformName());
 
         // Load layer manager
@@ -85,6 +96,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         command.setExecutor(commandExec);
         command.setTabCompleter(commandExec);
 
+
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new TownClaimListener(this), this);
 
@@ -92,7 +104,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         if (!Towny.getPlugin().isError()) {
             // Schedule render task when the layer manager is initialized.
             layerManager.onInitialize(() ->
-                    new RenderTownsTask(this).runTaskTimer(this, 20, config.getUpdatePeriod() * 20L * 60)
+                    scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 20, config.getUpdatePeriod() * 20L * 60)
             );
         }
     }
@@ -201,14 +213,14 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
 
     public void reload() throws IOException {
         config = MapConfig.loadConfig(getDataFolder(), getLogger());
-        Bukkit.getScheduler().cancelTasks(this);
+        scheduler.cancelAllTasks();
         layerManager.close();
         layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
-        new RenderTownsTask(this).runTaskTimer(this, 0, config.getUpdatePeriod() * 20L * 60);
+        scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 0, config.getUpdatePeriod() * 20L * 60);
     }
 
     public void async(Runnable run) {
-        Bukkit.getScheduler().runTaskAsynchronously(this, run);
+        scheduler.scheduleAsyncTask(run);
     }
 }

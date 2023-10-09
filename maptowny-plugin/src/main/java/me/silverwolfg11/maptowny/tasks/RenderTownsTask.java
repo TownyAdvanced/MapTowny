@@ -26,7 +26,6 @@ import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.maptowny.MapTowny;
 import me.silverwolfg11.maptowny.objects.TownRenderEntry;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +35,7 @@ import java.util.UUID;
 
 // Must be ran synchronously
 // Uses TownyAPI
-public class RenderTownsTask extends BukkitRunnable {
+public class RenderTownsTask implements Runnable {
 
     private final MapTowny plugin;
 

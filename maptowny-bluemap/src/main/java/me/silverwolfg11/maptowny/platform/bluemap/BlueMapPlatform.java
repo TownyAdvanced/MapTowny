@@ -26,7 +26,8 @@ import de.bluecolored.bluemap.api.BlueMapAPI;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
-import org.bukkit.Bukkit;
+import me.silverwolfg11.maptowny.schedulers.MapTownyScheduler;
+import me.silverwolfg11.maptowny.schedulers.MapTownySchedulerFactory;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class BlueMapPlatform implements MapPlatform {
             callback.run();
             // Have to delay it, otherwise it will end up concurrently modifying
             // the onEnablers list.
-            Bukkit.getScheduler().runTask(plugin, () -> future.complete(null));
+            MapTownySchedulerFactory.create(plugin).scheduleTask(() -> future.complete(null));
         };
         future.thenRun(() -> BlueMapAPI.unregisterListener(apiConsumer));
 

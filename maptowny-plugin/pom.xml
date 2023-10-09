@@ -112,6 +112,12 @@
         </dependency>
         <dependency>
             <groupId>me.silverwolfg11</groupId>
+            <artifactId>maptowny-scheduler</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.silverwolfg11</groupId>
             <artifactId>maptowny-api</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>

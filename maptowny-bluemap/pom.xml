@@ -47,6 +47,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>me.silverwolfg11</groupId>
+            <artifactId>maptowny-scheduler</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.github.BlueMap-Minecraft</groupId>
             <artifactId>BlueMapAPI</artifactId>
             <version>v2.1.0</version>

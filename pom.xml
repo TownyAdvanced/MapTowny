@@ -9,6 +9,7 @@
     <version>3.0.0-ALPHA</version>
 
     <modules>
+        <module>maptowny-schedulers</module>
         <module>maptowny-api</module>
         <module>maptowny-plugin</module>
         <module>maptowny-bluemap</module>
