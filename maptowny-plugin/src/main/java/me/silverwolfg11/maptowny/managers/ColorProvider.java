@@ -24,45 +24,62 @@ package me.silverwolfg11.maptowny.managers;
 
 import com.palmergames.bukkit.towny.object.Town;
 import me.silverwolfg11.maptowny.objects.ColorSource;
+import me.silverwolfg11.maptowny.objects.MapConfig;
+import me.silverwolfg11.maptowny.objects.groups.TBGroup;
+import me.silverwolfg11.maptowny.objects.groups.TBTypeTBGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 // Provide the colors and sources for a town's fill and stroke.
 public class ColorProvider {
     private final List<ColorSource> fillSources;
     private final List<ColorSource> strokeSources;
+    private final Map<String, ColorGroup> tbColors;
 
-    private final Color defaultFillColor, defaultStrokeColor;
+    private final ColorGroup defaultGroup;
     private final Logger pluginLogger;
 
-    public ColorProvider(Logger pluginLogger,
-                         List<ColorSource> fillSources, List<ColorSource> strokeSources,
-                         Color defaultFill, Color defaultStroke) {
+    public ColorProvider(Logger pluginLogger, MapConfig config) {
         this.pluginLogger = pluginLogger;
 
         // Ensure uniqueness of sources
-        this.fillSources = new ArrayList<>(new LinkedHashSet<>(fillSources));
-        this.strokeSources = new ArrayList<>(new LinkedHashSet<>(strokeSources));
+        this.fillSources = uniqueList(config.getFillColorPriorities());
+        this.strokeSources = uniqueList(config.getStrokeColorPriorities());
 
-        this.defaultFillColor = defaultFill;
-        this.defaultStrokeColor = defaultStroke;
+        this.defaultGroup = ColorGroup.of(config.getDefaultFillColor(),
+                                          config.getDefaultStrokeColor());
+
+        this.tbColors = setupTypeMap(config);
     }
 
-    @Nullable
-    private Color decideColorFromTown(ColorSource source, Town town) {
-        if (source == ColorSource.TOWN) {
-            return getTownColor(town);
-        } else if (source == ColorSource.NATION) {
-            return getNationColor(town);
+    private Map<String, ColorGroup> setupTypeMap(MapConfig config) {
+        // Check if needed
+        if (fillSources.stream().noneMatch(c -> c == ColorSource.TOWNBLOCK_TYPE) &&
+                strokeSources.stream().noneMatch(c -> c == ColorSource.TOWNBLOCK_TYPE)) {
+            return Collections.emptyMap();
         }
 
-        return null;
+        Map<String, ColorGroup> colorMap = new HashMap<>();
+
+        for (String tbType : config.getConfigTownBlockTypeNames()) {
+            final Color fillColor = config.getFillColor(tbType);
+            final Color strokeColor = config.getStrokeColor(tbType);
+
+            if (fillColor != null || strokeColor != null) {
+                colorMap.put(tbType, ColorGroup.of(fillColor, strokeColor));
+            }
+        }
+
+        return colorMap;
     }
 
     public TownColorSource getTownColorSource(Town town) {
@@ -75,7 +92,7 @@ public class ColorProvider {
                 continue;
             }
 
-            final Color decidedColor = decideColorFromTown(source, town);
+            final Color decidedColor = fetchColorFromTown(source, town);
 
             if (decidedColor != null) {
                 fillColor = decidedColor;
@@ -84,7 +101,7 @@ public class ColorProvider {
         }
 
         if (fillColor == null)
-            fillColor = defaultFillColor;
+            fillColor = defaultGroup.fillColor;
 
         boolean useTBColorStroke = false;
         Color strokeColor = null;
@@ -95,7 +112,7 @@ public class ColorProvider {
                 continue;
             }
 
-            final Color decidedColor = decideColorFromTown(source, town);
+            final Color decidedColor = fetchColorFromTown(source, town);
 
             if (decidedColor != null) {
                 strokeColor = decidedColor;
@@ -104,9 +121,36 @@ public class ColorProvider {
         }
 
         if (strokeColor == null)
-            strokeColor = defaultStrokeColor;
+            strokeColor = defaultGroup.strokeColor;
 
-        return new TownColorSource(useTBColorFill, useTBColorStroke, strokeColor, fillColor);
+        return new TownColorSource(ColorGroup.of(fillColor, strokeColor),
+                                   getDynamicColorGroups(useTBColorFill, useTBColorStroke));
+    }
+
+    private List<TBGroup> getDynamicColorGroups(boolean useTBFill, boolean useTBStroke) {
+        if (!useTBFill && !useTBStroke) {
+            return Collections.emptyList();
+        }
+
+        List<TBGroup> dynamicGroups = new ArrayList<>(tbColors.size());
+        for (Map.Entry<String, ColorGroup> entry : tbColors.entrySet()) {
+            final Color fillColor = useTBFill ? entry.getValue().fillColor : null;
+            final Color strokeColor = useTBStroke ? entry.getValue().strokeColor : null;
+            dynamicGroups.add(new TBTypeTBGroup(entry.getKey(), fillColor, strokeColor));
+        }
+
+        return dynamicGroups;
+    }
+
+    @Nullable
+    private Color fetchColorFromTown(ColorSource source, Town town) {
+        if (source == ColorSource.TOWN) {
+            return getTownColor(town);
+        } else if (source == ColorSource.NATION) {
+            return getNationColor(town);
+        }
+
+        return null;
     }
 
     // Convert given town hex code to color with error handling.
@@ -143,25 +187,45 @@ public class ColorProvider {
         return hex == null ? null : convertTownHexCodeToColor(hex, town);
     }
 
-    public static class TownColorSource {
+    // Create an ordered list guaranteeing unique elements
+    // Duplicate elements in the original list are not inserted.
+    private static <T> List<T> uniqueList(List<T> list) {
+        return new ArrayList<>(new LinkedHashSet<>(list));
+    }
 
-        // These booleans indicate whether
-        // the townblock type should determine
-        // the fill color and/or stroke color.
-        public final boolean useTBFill, useTBStroke;
+    public static class ColorGroup {
         @Nullable
-        public final Color fillColor;
+        public final Color fillColor, strokeColor;
 
-        @Nullable
-        public final Color strokeColor;
-
-        private TownColorSource(boolean useTBFill, boolean useTBStroke,
-                                @Nullable Color strokeColor,
-                                @Nullable Color fillColor) {
-            this.useTBFill = useTBFill;
-            this.useTBStroke = useTBStroke;
+        private ColorGroup(@Nullable Color fillColor,
+                           @Nullable Color strokeColor) {
             this.fillColor = fillColor;
             this.strokeColor = strokeColor;
+        }
+
+        private static ColorGroup of(@Nullable Color fillColor,
+                                     @Nullable Color strokeColor) {
+            return new ColorGroup(fillColor, strokeColor);
+        }
+    }
+
+    public static class TownColorSource {
+
+        @NotNull
+        public final ColorGroup defaultColors;
+        @NotNull
+        public final List<TBGroup> dynamicColorGroups;
+
+        private TownColorSource(@NotNull ColorGroup defaultGroup,
+                                @Nullable List<TBGroup> dynamicColorGroups) {
+            this.defaultColors = defaultGroup;
+
+            if (dynamicColorGroups == null || dynamicColorGroups.isEmpty()) {
+                this.dynamicColorGroups = new ArrayList<>();
+            }
+            else {
+                this.dynamicColorGroups = dynamicColorGroups;
+            }
         }
     }
 }

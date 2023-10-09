@@ -96,9 +96,7 @@ public class TownyLayerManager implements LayerManager {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
         this.mapPlatform = platform;
-        this.colorProvider = new ColorProvider(plugin.getLogger(),
-                plugin.config().getFillColorPriorities(), plugin.config().getStrokeColorPriorities(),
-                plugin.config().getDefaultFillColor(), plugin.config().getDefaultStrokeColor());
+        this.colorProvider = new ColorProvider(plugin.getLogger(), plugin.config());
 
         this.layerPlatformObserver = createLayerPlatformObserver();
         this.mapPlatform.registerObserver(layerPlatformObserver);
@@ -202,46 +200,24 @@ public class TownyLayerManager implements LayerManager {
         }
     }
 
-    private List<TBGroup> buildGeneralTBGroups(boolean useTBTypeFill, boolean useTBTypeStroke) {
-        final List<TBGroup> generalGroups = new ArrayList<>();
-
-        final MapConfig pluginConfig = plugin.config();
-
-        // Check if grouping by townblock type is necessary
-        if (useTBTypeFill || useTBTypeStroke) {
-            // Only group by townblock types that have configured stroke / fill changes.
-            for (final String tbTypeName : pluginConfig.getConfigTownBlockTypeNames()) {
-                final Color strokeColor = useTBTypeStroke ? pluginConfig.getStrokeColor(tbTypeName) : null;
-                final Color fillColor = useTBTypeFill ? pluginConfig.getFillColor(tbTypeName) : null;
-
-                if (strokeColor == null && fillColor == null)
-                    continue;
-
-                generalGroups.add(new TBTypeTBGroup(tbTypeName, fillColor, strokeColor));
-            }
-        }
-
-        // Add a default TB group at the end
-        generalGroups.add(new TBGroup());
-
-        return generalGroups;
-    }
-
     // Only ran synchronous
     @NotNull
     public TownRenderEntry buildTownEntry(Town town) {
         // Get all objects that must be fetched synchronously
         // This includes anything that uses the Towny or Bukkit API.
         ColorProvider.TownColorSource colorSource = colorProvider.getTownColorSource(town);
-        Color fillColor = colorSource.fillColor;
-        Color strokeColor = colorSource.strokeColor;
+        final Color fillColor = colorSource.defaultColors.fillColor;
+        final Color strokeColor = colorSource.defaultColors.strokeColor;
+
+        List<TBGroup> townblockGroups = new ArrayList<>(colorSource.dynamicColorGroups);
+        // Add a default TB group at the end
+        townblockGroups.add(new TBGroup());
 
         Logger logger = plugin.getLogger();
         String clickText = townInfoManager.getClickTooltip(town, logger);
         String hoverText = townInfoManager.getHoverTooltip(town, logger);
 
-        return new TownRenderEntry(town, usingOutposts,
-                                   buildGeneralTBGroups(colorSource.useTBFill, colorSource.useTBStroke),
+        return new TownRenderEntry(town, usingOutposts, townblockGroups,
                                    strokeColor, fillColor, clickText, hoverText);
     }
 
@@ -290,8 +266,6 @@ public class TownyLayerManager implements LayerManager {
         // Fast-return if there are no townblocks
         if (!tre.hasWorldBlocks())
             return;
-
-        plugin.getLogger().info("Rendering town " + tre.getTownName()); // FIXME DEBUG
 
         // Single-reference in case config reloads during method
         MapConfig config = plugin.config();
