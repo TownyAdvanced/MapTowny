@@ -126,19 +126,7 @@
         <!-- Platforms -->
         <dependency>
             <groupId>me.silverwolfg11</groupId>
-            <artifactId>maptowny-pl3xmap-v1</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>me.silverwolfg11</groupId>
-            <artifactId>maptowny-pl3xmap-v2</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>me.silverwolfg11</groupId>
-            <artifactId>maptowny-pl3xmap-v3</artifactId>
+            <artifactId>maptowny-pl3xmap</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>

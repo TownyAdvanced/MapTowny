@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Silverwolfg11
+ * Copyright (c) 2023 Silverwolfg11
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,20 @@
  * SOFTWARE.
  */
 
-package me.silverwolfg11.maptowny.platform.pl3xmap.v2;
+package me.silverwolfg11.maptowny.platform.pl3xmap;
 
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
-import net.pl3x.map.Key;
-import net.pl3x.map.markers.Point;
-import net.pl3x.map.markers.layer.SimpleLayer;
-import net.pl3x.map.markers.marker.Icon;
-import net.pl3x.map.markers.marker.Marker;
-import net.pl3x.map.markers.marker.MultiPolygon;
-import net.pl3x.map.markers.marker.Polyline;
-import net.pl3x.map.markers.option.Fill;
-import net.pl3x.map.markers.option.Options;
+import net.pl3x.map.core.markers.Point;
+import net.pl3x.map.core.markers.layer.SimpleLayer;
+import net.pl3x.map.core.markers.marker.Icon;
+import net.pl3x.map.core.markers.marker.Marker;
+import net.pl3x.map.core.markers.marker.MultiPolygon;
+import net.pl3x.map.core.markers.marker.Polyline;
+import net.pl3x.map.core.markers.option.Fill;
+import net.pl3x.map.core.markers.option.Options;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -109,38 +108,36 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     @Override
     public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
-        List<net.pl3x.map.markers.marker.Polygon> parts = new ArrayList<>(polygons.size());
+        List<net.pl3x.map.core.markers.marker.Polygon> parts = new ArrayList<>(polygons.size());
         for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
             Polygon polygon = polygons.get(polyIdx);
             List<List<Point2D>> negSpace = polygon.getNegativeSpace();
 
             List<Polyline> polyLines = new ArrayList<>(1 + negSpace.size());
             polyLines.add(
-                    new Polyline(Key.of(markerKey + "_" + polyIdx + "_0"),
+                    new Polyline(markerKey + "_" + polyIdx + "_0",
                                     toPoints(polygon.getPoints()))
             );
 
             for (int i = 0; i < negSpace.size(); i++) {
-                Key lineKey = Key.of(markerKey + "_" + polyIdx + "_" + (i + 1));
-                polyLines.add(new Polyline(lineKey, toPoints(negSpace.get(i))));
+                String lineKey = markerKey + "_" + polyIdx + "_" + (i + 1);
+                polyLines.add(new Polyline((lineKey), toPoints(negSpace.get(i))));
             }
 
-            parts.add(new net.pl3x.map.markers.marker.Polygon(Key.of(markerKey + "_" + polyIdx), polyLines));
+            parts.add(new net.pl3x.map.core.markers.marker.Polygon(markerKey + "_" + polyIdx, polyLines));
         }
 
-
-        Key pMarkerKey = Key.of(markerKey);
-        MultiPolygon multiPolygon = MultiPolygon.multiPolygon(pMarkerKey, parts);
+        MultiPolygon multiPolygon = MultiPolygon.multiPolygon(markerKey, parts);
 
         var options = buildOptions(markerOptions);
         multiPolygon.setOptions(options);
 
-        layer.addMarker(pMarkerKey, multiPolygon);
+        layer.addMarker(multiPolygon);
     }
 
     @Override
     public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
-        Icon icon = Marker.icon(Key.of(markerKey), toPoint(iconLoc), Key.of(iconKey), sizeX, sizeY);
+        Icon icon = Marker.icon(markerKey, toPoint(iconLoc), (iconKey), sizeX, sizeY);
         // Convert marker options
         Options iconOptions = Options.builder()
                 .popupContent(markerOptions.clickTooltip())
@@ -149,33 +146,33 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
         icon.setOptions(iconOptions);
 
-        layer.addMarker(Key.of(markerKey), icon);
+        layer.addMarker(icon);
     }
 
     @Override
     public boolean hasMarker(@NotNull String markerKey) {
-        return layer.hasMarker(Key.of(markerKey));
+        return layer.hasMarker(markerKey);
     }
 
     @Override
     public boolean removeMarker(@NotNull String markerKey) {
-        return layer.removeMarker(Key.of(markerKey)) != null;
+        return layer.removeMarker(markerKey) != null;
     }
 
     @Override
     public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
-        List<Key> markersToRemove = layer.registeredMarkers().keySet().stream()
-                .filter(k -> markerKeyFilter.test(k.toString()))
+        List<String> markersToRemove = layer.registeredMarkers().keySet().stream()
+                .filter(markerKeyFilter)
                 .toList();
 
-        for (Key key : markersToRemove) {
+        for (String key : markersToRemove) {
             layer.removeMarker(key);
         }
     }
 
     @Override
     public @NotNull CompletableFuture<MarkerOptions> getMarkerOptions(@NotNull String markerKey) {
-        Marker<?> marker = layer.registeredMarkers().get(Key.of(markerKey));
+        Marker<?> marker = layer.registeredMarkers().get((markerKey));
 
         if (marker == null)
             return CompletableFuture.completedFuture(null);
@@ -218,7 +215,7 @@ public class Pl3xMapLayerWrapper implements MapLayer {
 
     @Override
     public void setMarkerOptions(@NotNull String markerKey, @NotNull MarkerOptions markerOptions) {
-        Marker<?> marker = layer.registeredMarkers().get(Key.of(markerKey));
+        Marker<?> marker = layer.registeredMarkers().get(markerKey);
 
         if (marker == null)
             return;

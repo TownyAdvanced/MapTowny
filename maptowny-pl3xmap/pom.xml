@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2022 Silverwolfg11
+  ~ Copyright (c) 2023 Silverwolfg11
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>maptowny-pl3xmap-v2</artifactId>
+    <artifactId>maptowny-pl3xmap</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -41,8 +41,12 @@
 
     <repositories>
         <repository>
-            <id>Modrinth</id>
-            <url>https://api.modrinth.com/maven</url>
+            <id>modrinth-repo</id>
+            <url>https://api.modrinth.com/maven/</url>
+        </repository>
+        <repository>
+            <id>glaremasters repo</id>
+            <url>https://repo.glaremasters.me/repository/towny/</url>
         </repository>
     </repositories>
 
@@ -51,22 +55,12 @@
             <groupId>me.silverwolfg11</groupId>
             <artifactId>maptowny-api</artifactId>
             <version>${project.parent.version}</version>
-            <scope>provided</scope>
         </dependency>
-        <!-- Use Modrinth for Pl3xMap v2 while in alpha release -->
-        <!-- Maven API Documentation: https://docs.modrinth.com/docs/tutorials/maven/ -->
         <dependency>
             <groupId>maven.modrinth</groupId>
-            <!-- Project ID for Pl3xMap on Modrinth: https://modrinth.com/plugin/pl3xmap -->
-            <artifactId>YMXhf1UJ</artifactId>
-            <version>1.19.2-319</version>
+            <artifactId>pl3xmap</artifactId>
+            <version>1.20.2-SNAPSHOT</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 

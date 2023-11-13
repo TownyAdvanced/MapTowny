@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Silverwolfg11
+ * Copyright (c) 2023 Silverwolfg11
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,46 +20,47 @@
  * SOFTWARE.
  */
 
-package me.silverwolfg11.maptowny.platform.pl3xmap.v1;
+package me.silverwolfg11.maptowny.platform.pl3xmap;
 
 import me.silverwolfg11.maptowny.objects.LayerOptions;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapWorld;
-import net.pl3x.map.api.Key;
-import net.pl3x.map.api.SimpleLayerProvider;
+import net.pl3x.map.core.markers.layer.SimpleLayer;
+import net.pl3x.map.core.world.World;
 import org.jetbrains.annotations.NotNull;
 
 public class Pl3xMapWorldWrapper implements MapWorld {
-    private final net.pl3x.map.api.MapWorld mapWorld;
+    private final World mapWorld;
 
-    private Pl3xMapWorldWrapper(@NotNull net.pl3x.map.api.MapWorld pMapWorld) {
+    private Pl3xMapWorldWrapper(@NotNull World pMapWorld) {
         this.mapWorld = pMapWorld;
     }
 
-    public static Pl3xMapWorldWrapper from(net.pl3x.map.api.MapWorld pMapWorld) {
+    public static Pl3xMapWorldWrapper from(World pMapWorld) {
         return new Pl3xMapWorldWrapper(pMapWorld);
     }
 
     @Override
     public @NotNull MapLayer registerLayer(@NotNull String layerKey, @NotNull LayerOptions options) {
-        net.pl3x.map.api.SimpleLayerProvider layerProvider = SimpleLayerProvider.builder(options.getName())
-                .defaultHidden(options.isDefaultHidden())
-                .layerPriority(options.getLayerPriority())
-                .zIndex(options.getZIndex())
-                .showControls(options.showControls())
-                .build();
+        SimpleLayer layer = new SimpleLayer(layerKey, options::getName);
 
-        mapWorld.layerRegistry().register(Key.of(layerKey), layerProvider);
-        return Pl3xMapLayerWrapper.from(layerProvider);
+        layer.setDefaultHidden(options.isDefaultHidden());
+        layer.setPriority(options.getLayerPriority());
+        layer.setZIndex(options.getZIndex());
+        layer.setShowControls(options.showControls());
+
+        mapWorld.getLayerRegistry().register(layer);
+
+        return Pl3xMapLayerWrapper.from(layer);
     }
 
     @Override
     public boolean hasLayer(@NotNull String layerKey) {
-        return mapWorld.layerRegistry().hasEntry(Key.of(layerKey));
+        return mapWorld.getLayerRegistry().has(layerKey);
     }
 
     @Override
     public void unregisterLayer(@NotNull String layerKey) {
-        mapWorld.layerRegistry().unregister(Key.of(layerKey));
+        mapWorld.getLayerRegistry().unregister(layerKey);
     }
 }

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package me.silverwolfg11.maptowny.platform.pl3xmap.v3;
+package me.silverwolfg11.maptowny.platform.pl3xmap;
 
 import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapWorld;
