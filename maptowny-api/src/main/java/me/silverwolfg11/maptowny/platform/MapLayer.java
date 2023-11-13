@@ -41,6 +41,20 @@ import java.util.function.Predicate;
 public interface MapLayer {
 
     /**
+     * Add polygon marker to the layer.
+     * If a marker with the marker key already exists, it will be overwritten.
+     *
+     * The platform is tasked with rendering the marker.
+     *
+     * @param markerKey Unique marker key to associate with the marker.
+     * @param polygon Polygon to associate with the marker.
+     * @param markerOptions Options influencing the style of the marker.
+     *
+     * @since 3.0.0
+     */
+    void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon, @NotNull MarkerOptions markerOptions);
+
+    /**
      * Add a multi-polygon marker to the layer.
      * If a marker with the marker key already exists, it will be overwritten.
      *
@@ -51,6 +65,20 @@ public interface MapLayer {
      * @param markerOptions Options influencing the style of the marker.
      */
     void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions);
+
+    /**
+     * Add line marker to the layer.
+     * If a marker with the marker key already exists, it will be overwritten.
+     *
+     * The platform is tasked with rendering the marker.
+     *
+     * @param markerKey Unique marker key to associate with the marker.
+     * @param line List of points rendered as a line.
+     * @param markerOptions Options influencing the style of the marker.
+     *
+     * @since 3.0.0
+     */
+    void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions);
 
     /**
      * Add an icon marker to the layer.

@@ -25,7 +25,6 @@ package me.silverwolfg11.maptowny.platform.dynmap;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
-import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.AreaMarker;
@@ -87,8 +86,11 @@ public class DynmapLayerWrapper implements MapLayer {
         return new Color(rgb, false);
     }
 
-    private void createAreaPoly(String markerKey, List<Point2D> points, MarkerOptions markerOptions) {
+    @Override
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+                              @NotNull MarkerOptions markerOptions) {
         final String worldKey = toWorldKey(markerKey);
+        final List<Point2D> points = polygon.getPoints();
 
         double[] x = new double[points.size()];
         double[] z = new double[points.size()];
@@ -118,83 +120,9 @@ public class DynmapLayerWrapper implements MapLayer {
         areaMarker.setRangeY(zIndex, zIndex);
     }
 
-    private void createLineMarker(String markerKey, List<Point2D> points, boolean joinEnds, MarkerOptions markerOptions) {
-        final String worldKey = toWorldKey(markerKey);
-
-        // Validate if ends need to be joined
-        if (joinEnds &&
-                (points.isEmpty() || points.get(0).equals(points.get(points.size() - 1)))) {
-            joinEnds = false;
-        }
-
-        // Create line poly first
-        final int lineSize = points.size() + (joinEnds ? 1 : 0);
-        double[] x = new double[lineSize];
-        double[] z = new double[lineSize];
-        double[] y = new double[lineSize];
-        Arrays.fill(y, zIndex);
-
-        for (int j = 0; j < points.size(); j++) {
-            Point2D point = points.get(j);
-            x[j] = point.x();
-            z[j] = point.z();
-        }
-
-        if (joinEnds) {
-            // Set last point in array to first point in array
-            // to join the ends.
-            x[points.size()] = points.get(0).x();
-            z[points.size()] = points.get(0).z();
-        }
-
-        PolyLineMarker lineMarker = markerSet.createPolyLineMarker(worldKey, markerOptions.name(), false, worldName, x, y, z, false);
-        lineMarker.setDescription(markerOptions.clickTooltip());
-        lineMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
-    }
-
-    private void createSegmentedPolygon(String markerKey, SegmentedPolygon poly, MarkerOptions markerOptions) {
-        // A segmented polygon consists of two or more line markers representing the border of the polygon and
-        // several area markers representing the interior of the polygon.
-
-        List<String> childKeys = new ArrayList<>();
-        // Create exterior border line
-        createLineMarker(markerKey + "_line0", poly.getPoints(), true, markerOptions);
-        childKeys.add(markerKey + "_line0");
-
-        // Segmented polygons will always have negative space.
-        int segmentIdx = 1;
-        for (List<Point2D> negSpacePts : poly.getNegativeSpace()) {
-            final String lineMarkerKey = markerKey + "_line" + segmentIdx;
-            createLineMarker(lineMarkerKey, negSpacePts, true, markerOptions);
-            childKeys.add(lineMarkerKey);
-            segmentIdx++;
-        }
-
-        MarkerOptions areaOptions = markerOptions.asBuilder()
-                .strokeOpacity(0)
-                .build();
-
-        for(int i = 0; i < poly.getSegments().size(); i++) {
-            final String segmentKey = markerKey + i;
-            createAreaPoly(segmentKey, poly.getSegments().get(i), areaOptions);
-            childKeys.add(segmentKey);
-        }
-
-        // Segmented polys are represented as a multipolygon and a line marker.
-        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
-    }
-
-    private void addSinglePolyMarker(String markerKey, Polygon poly, MarkerOptions markerOptions) {
-        if (poly instanceof SegmentedPolygon) {
-            createSegmentedPolygon(markerKey, (SegmentedPolygon) poly, markerOptions);
-        }
-        else {
-            createAreaPoly(markerKey, poly.getPoints(), markerOptions);
-        }
-    }
-
     @Override
-    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
+    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons,
+                                   @NotNull MarkerOptions markerOptions) {
         // Dynmap has no concept of multi-polygon markers, only single polygon markers.
         // To simulate a multi-polygon marker, just create multiple polygon markers.
 
@@ -206,7 +134,7 @@ public class DynmapLayerWrapper implements MapLayer {
             return;
 
         if (polygons.size() == 1) {
-            addSinglePolyMarker(markerKey, polygons.get(0), markerOptions);
+            addPolyMarker(markerKey, polygons.get(0), markerOptions);
             return;
         }
 
@@ -215,11 +143,33 @@ public class DynmapLayerWrapper implements MapLayer {
         for (int i = 0; i < polygons.size(); i++) {
             Polygon poly = polygons.get(i);
             final String polyKey = markerKey + i;
-            addSinglePolyMarker(polyKey, poly, markerOptions);
+            addPolyMarker(polyKey, poly, markerOptions);
             childKeys.add(polyKey);
         }
 
         parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
+    }
+
+    @Override
+    public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
+        final String worldKey = toWorldKey(markerKey);
+
+        // Create line poly first
+        final int lineSize = line.size();
+        double[] x = new double[lineSize];
+        double[] z = new double[lineSize];
+        double[] y = new double[lineSize];
+        Arrays.fill(y, zIndex);
+
+        for (int j = 0; j < line.size(); j++) {
+            Point2D point = line.get(j);
+            x[j] = point.x();
+            z[j] = point.z();
+        }
+
+        PolyLineMarker lineMarker = markerSet.createPolyLineMarker(worldKey, markerOptions.name(), false, worldName, x, y, z, false);
+        lineMarker.setDescription(markerOptions.clickTooltip());
+        lineMarker.setLineStyle(markerOptions.strokeWeight(), markerOptions.strokeOpacity(), toDynmapRGB(markerOptions.strokeColor()));
     }
 
     @Override

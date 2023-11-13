@@ -106,25 +106,43 @@ public class Pl3xMapLayerWrapper implements MapLayer {
         return builder.build();
     }
 
+    private List<Polyline> polyToPolylines(String polygonKey, Polygon polygon) {
+        List<List<Point2D>> negSpace = polygon.getNegativeSpace();
+
+        List<Polyline> polyLines = new ArrayList<>(1 + negSpace.size());
+        polyLines.add(
+                new Polyline(polygonKey + "_0", toPoints(polygon.getPoints()))
+        );
+
+        for (int i = 0; i < negSpace.size(); i++) {
+            String lineKey = polygonKey + "_" + (i + 1);
+            polyLines.add(new Polyline(lineKey, toPoints(negSpace.get(i))));
+        }
+
+        return polyLines;
+    }
+
     @Override
-    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+                              @NotNull MarkerOptions markerOptions) {
+        final var polyLines = polyToPolylines(markerKey, polygon);
+        var polyMarker = new net.pl3x.map.core.markers.marker.Polygon(markerKey, polyLines);
+
+        final var options = buildOptions(markerOptions);
+        polyMarker.setOptions(options);
+
+        layer.addMarker(polyMarker);
+    }
+
+    @Override
+    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons,
+                                   @NotNull MarkerOptions markerOptions) {
         List<net.pl3x.map.core.markers.marker.Polygon> parts = new ArrayList<>(polygons.size());
         for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
-            Polygon polygon = polygons.get(polyIdx);
-            List<List<Point2D>> negSpace = polygon.getNegativeSpace();
+            final String polygonKey = markerKey + "_" + polyIdx;
+            var polyLines = polyToPolylines(polygonKey, polygons.get(polyIdx));
 
-            List<Polyline> polyLines = new ArrayList<>(1 + negSpace.size());
-            polyLines.add(
-                    new Polyline(markerKey + "_" + polyIdx + "_0",
-                                    toPoints(polygon.getPoints()))
-            );
-
-            for (int i = 0; i < negSpace.size(); i++) {
-                String lineKey = markerKey + "_" + polyIdx + "_" + (i + 1);
-                polyLines.add(new Polyline((lineKey), toPoints(negSpace.get(i))));
-            }
-
-            parts.add(new net.pl3x.map.core.markers.marker.Polygon(markerKey + "_" + polyIdx, polyLines));
+            parts.add(new net.pl3x.map.core.markers.marker.Polygon(polygonKey, polyLines));
         }
 
         MultiPolygon multiPolygon = MultiPolygon.multiPolygon(markerKey, parts);
@@ -133,6 +151,15 @@ public class Pl3xMapLayerWrapper implements MapLayer {
         multiPolygon.setOptions(options);
 
         layer.addMarker(multiPolygon);
+    }
+
+    @Override
+    public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
+        var polyLine = Polyline.polyline(markerKey, toPoints(line));
+        var options = buildOptions(markerOptions);
+        polyLine.setOptions(options);
+
+        layer.addMarker(polyLine);
     }
 
     @Override

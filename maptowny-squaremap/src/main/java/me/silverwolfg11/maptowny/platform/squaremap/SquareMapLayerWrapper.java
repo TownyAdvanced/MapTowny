@@ -27,13 +27,13 @@ import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import xyz.jpenilla.squaremap.api.Key;
 import xyz.jpenilla.squaremap.api.Point;
 import xyz.jpenilla.squaremap.api.SimpleLayerProvider;
 import xyz.jpenilla.squaremap.api.marker.Icon;
 import xyz.jpenilla.squaremap.api.marker.Marker;
 import xyz.jpenilla.squaremap.api.marker.MultiPolygon;
+import xyz.jpenilla.squaremap.api.marker.Polyline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +85,21 @@ public class SquareMapLayerWrapper implements MapLayer {
     }
 
     @Override
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon, @NotNull MarkerOptions markerOptions) {
+        List<Point> polyPoints = toPoints(polygon.getPoints());
+        List<List<Point>> negSpace = polygon.getNegativeSpace().stream()
+                .map(this::toPoints)
+                .collect(Collectors.toList());
+
+        xyz.jpenilla.squaremap.api.marker.Polygon polyMarker =
+                xyz.jpenilla.squaremap.api.marker.Polygon.polygon(polyPoints, negSpace);
+
+        polyMarker.markerOptions(buildOptions(markerOptions));
+
+        layerProvider.addMarker(Key.of(markerKey), polyMarker);
+    }
+
+    @Override
     public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
         List<MultiPolygon.MultiPolygonPart> parts = new ArrayList<>(polygons.size());
         for (Polygon polygon : polygons) {
@@ -99,6 +114,14 @@ public class SquareMapLayerWrapper implements MapLayer {
         multiPolygon.markerOptions(buildOptions(markerOptions));
 
         layerProvider.addMarker(Key.of(markerKey), multiPolygon);
+    }
+
+    @Override
+    public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
+        Polyline polyLine = Polyline.polyline(toPoints(line));
+        polyLine.markerOptions(buildOptions(markerOptions));
+
+        layerProvider.addMarker(Key.of(markerKey), polyLine);
     }
 
     @Override

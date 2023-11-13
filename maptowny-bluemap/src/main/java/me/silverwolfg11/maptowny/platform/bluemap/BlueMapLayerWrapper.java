@@ -41,11 +41,7 @@ import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -93,9 +89,13 @@ public class BlueMapLayerWrapper implements MapLayer {
         // Opacity is a percentage
         return alpha / 255d;
     }
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+                              @NotNull MarkerOptions markerOptions) {
+        Objects.requireNonNull(markerKey);
+        Objects.requireNonNull(polygon);
+        Objects.requireNonNull(markerOptions);
 
-    private void addShapeMarker(@NotNull String markerKey, List<Point2D> points, MarkerOptions markerOptions) {
-        final Shape shape = new Shape(pointsToVecs2d(points));
+        final Shape shape = new Shape(pointsToVecs2d(polygon.getPoints()));
 
         final ShapeMarker shapeMarker = ShapeMarker.builder()
                 .label(markerOptions.name())
@@ -109,74 +109,9 @@ public class BlueMapLayerWrapper implements MapLayer {
         markerSet.getMarkers().put(markerKey, shapeMarker);
     }
 
-    private void addLineMarker(@NotNull String markerKey, List<Point2D> points, boolean joinEnds, MarkerOptions markerOptions) {
-        Line.Builder lineBuilder = Line.builder();
-
-        // Check if really need to join ends
-        if (joinEnds && ((points.size() < 2) || (points.get(0).equals(points.get(points.size() - 1))))) {
-            joinEnds = false;
-        }
-
-        for (Point2D point : points) {
-            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
-        }
-
-        if (joinEnds) {
-            final Point2D firstPoint = points.get(0);
-            lineBuilder.addPoint(new Vector3d(firstPoint.x(), firstPoint.z(), zIndex));
-        }
-
-        LineMarker lineMarker = LineMarker.builder()
-                .label(markerOptions.name())
-                .line(lineBuilder.build())
-                .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
-                .lineWidth(markerOptions.strokeWeight())
-                .detail(markerOptions.clickTooltip())
-                .build();
-
-        markerSet.getMarkers().put(markerKey, lineMarker);
-    }
-
-    private void addSegmentedPoly(@NotNull String markerKey, SegmentedPolygon segPoly, MarkerOptions markerOptions) {
-        final List<String> childKeys = new ArrayList<>(segPoly.getNegativeSpace().size() + segPoly.getSegments().size() + 1);
-
-        // Add polygon outline
-        addLineMarker(markerKey + "_line0", segPoly.getPoints(), true, markerOptions);
-        childKeys.add(markerKey + "_line0");
-
-        // Add negative space outlines
-        for (int i = 0; i < segPoly.getNegativeSpace().size(); i++) {
-            final String negSpaceKey = markerKey + "_line" + (i + 1);
-            addLineMarker(negSpaceKey, segPoly.getNegativeSpace().get(i), true, markerOptions);
-            childKeys.add(negSpaceKey);
-        }
-
-        // Add segmented areas
-        MarkerOptions segAreaOptions = markerOptions.asBuilder()
-                                                    .strokeOpacity(0)
-                                                    .strokeWeight(0)
-                                                    .build();
-
-        for (int i = 0; i < segPoly.getSegments().size(); i++) {
-            final String segKey = markerKey + "_seg" + i;
-            addShapeMarker(segKey, segPoly.getSegments().get(i), segAreaOptions);
-            childKeys.add(segKey);
-        }
-
-        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
-    }
-
-    private void addPolyMarker(@NotNull String markerKey, Polygon polygon, MarkerOptions markerOptions) {
-        if (polygon instanceof SegmentedPolygon) {
-            addSegmentedPoly(markerKey, (SegmentedPolygon) polygon, markerOptions);
-        }
-        else {
-            addShapeMarker(markerKey, polygon.getPoints(), markerOptions);
-        }
-    }
-
     @Override
-    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons, @NotNull MarkerOptions markerOptions) {
+    public void addMultiPolyMarker(@NotNull String markerKey, @NotNull List<Polygon> polygons,
+                                   @NotNull MarkerOptions markerOptions) {
         // Delete old markers
         removeMarker(markerKey);
 
@@ -191,19 +126,38 @@ public class BlueMapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc, int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
+    public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
+        Line.Builder lineBuilder = Line.builder();
+
+        for (Point2D point : line) {
+            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
+        }
+
+        var lineMarker = de.bluecolored.bluemap.api.markers.LineMarker.builder()
+                .label(markerOptions.name())
+                .line(lineBuilder.build())
+                .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
+                .lineWidth(markerOptions.strokeWeight())
+                .detail(markerOptions.clickTooltip())
+                .build();
+
+        markerSet.getMarkers().put(markerKey, lineMarker);
+    }
+
+    @Override
+    public void addIconMarker(@NotNull String markerKey, @NotNull String iconKey, @NotNull Point2D iconLoc,
+                              int sizeX, int sizeY, @NotNull MarkerOptions markerOptions) {
         // Use a POI Marker
         // POI Markers have no descriptions
-
         String bmIconAdress = iconMapper.getBlueMapAddress(iconKey);
 
         if (bmIconAdress == null)
             return;
 
-        POIMarker poiMarker = POIMarker.toBuilder()
+        POIMarker poiMarker = POIMarker.builder()
                 .label(markerOptions.name())
                 .icon(bmIconAdress, sizeX / 2, sizeY / 2)
-                .position((int) iconLoc.x(), zIndex, (int) iconLoc.z())
+                .position(iconLoc.x(), zIndex, iconLoc.z())
                 .build();
 
         markerSet.getMarkers().put(markerKey, poiMarker);
