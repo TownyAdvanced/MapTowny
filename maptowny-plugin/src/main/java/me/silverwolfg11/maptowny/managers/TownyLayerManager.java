@@ -342,16 +342,16 @@ public class TownyLayerManager implements LayerManager {
             if (outpostPoints == null)
                 return;
 
-            int outpostNum = 1;
-            for (Point2D outpostPoint : outpostPoints) {
+            for (int outpostIdx = 0; outpostIdx < outpostPoints.size(); outpostIdx++) {
+                Point2D outpostPoint = outpostPoints.get(outpostIdx);
                 MarkerOptions iconOptions = MarkerOptions.builder()
-                                                         .name(generalOptions.name())
-                                                         .clickTooltip(generalOptions.clickTooltip())
-                                                         .hoverTooltip(generalOptions.hoverTooltip())
-                                                         .build();
+                        .name(generalOptions.name())
+                        .clickTooltip(generalOptions.clickTooltip())
+                        .hoverTooltip(generalOptions.hoverTooltip())
+                        .build();
 
-                worldProvider.addIconMarker(keyPrefix + outpostNum, outpostIconKey, outpostPoint,
-                                            iconSizeX, iconSizeZ, iconOptions);
+                worldProvider.addIconMarker(keyPrefix + (outpostIdx + 1), outpostIconKey, outpostPoint,
+                        iconSizeX, iconSizeZ, iconOptions);
             }
         }
     }
