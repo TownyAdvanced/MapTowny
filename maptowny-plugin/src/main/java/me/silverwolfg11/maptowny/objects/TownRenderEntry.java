@@ -127,7 +127,7 @@ public class TownRenderEntry {
     }
 
     public boolean hasWorldBlocks() {
-        return worldBlocks.isEmpty();
+        return !worldBlocks.isEmpty();
     }
 
     @NotNull

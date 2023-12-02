@@ -183,7 +183,7 @@ public class TownyLayerManager implements LayerManager {
             return;
 
         // Fast-return if there are no townblocks
-        if (tre.hasWorldBlocks())
+        if (!tre.hasWorldBlocks())
             return;
 
         // Single-reference in case config reloads during method
