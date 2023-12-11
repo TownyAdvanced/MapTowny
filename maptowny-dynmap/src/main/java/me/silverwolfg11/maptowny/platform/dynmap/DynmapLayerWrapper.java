@@ -25,6 +25,7 @@ package me.silverwolfg11.maptowny.platform.dynmap;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.AreaMarker;
@@ -85,12 +86,9 @@ public class DynmapLayerWrapper implements MapLayer {
         // Color Format: 0xAARRGGBB
         return new Color(rgb, false);
     }
-
-    @Override
-    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+    private void addNonSegmentedPoly(@NotNull String markerKey, @NotNull List<Point2D> points,
                               @NotNull MarkerOptions markerOptions) {
         final String worldKey = toWorldKey(markerKey);
-        final List<Point2D> points = polygon.getPoints();
 
         double[] x = new double[points.size()];
         double[] z = new double[points.size()];
@@ -118,6 +116,48 @@ public class DynmapLayerWrapper implements MapLayer {
         }
 
         areaMarker.setRangeY(zIndex, zIndex);
+    }
+
+    private void addSegmentedPolygon(String markerKey, SegmentedPolygon poly, MarkerOptions markerOptions) {
+        // A segmented polygon consists of two or more line markers representing the border of the polygon and
+        // several area markers representing the interior of the polygon.
+
+        List<String> childKeys = new ArrayList<>();
+        // Create exterior border line
+        addLineMarker(markerKey + "_line0", poly.getPoints(), true, markerOptions);
+        childKeys.add(markerKey + "_line0");
+
+        // Segmented polygons will always have negative space.
+        int segmentIdx = 1;
+        for (List<Point2D> negSpacePts : poly.getNegativeSpace()) {
+            final String lineMarkerKey = markerKey + "_line" + segmentIdx;
+            addLineMarker(lineMarkerKey, negSpacePts, true, markerOptions);
+            childKeys.add(lineMarkerKey);
+            segmentIdx++;
+        }
+
+        MarkerOptions areaOptions = markerOptions.asBuilder()
+                .strokeOpacity(0)
+                .build();
+
+        for (int i = 0; i < poly.getSegments().size(); i++) {
+            final String segmentKey = markerKey + i;
+            addNonSegmentedPoly(segmentKey, poly.getSegments().get(i), areaOptions);
+            childKeys.add(segmentKey);
+        }
+
+        // Segmented polys are represented as a multipolygon and a line marker.
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
+    }
+
+    @Override
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+                              @NotNull MarkerOptions markerOptions) {
+        if (polygon instanceof SegmentedPolygon) {
+            addSegmentedPolygon(markerKey, (SegmentedPolygon) polygon, markerOptions);
+        } else {
+            addNonSegmentedPoly(markerKey, polygon.getPoints(), markerOptions);
+        }
     }
 
     @Override
@@ -152,10 +192,22 @@ public class DynmapLayerWrapper implements MapLayer {
 
     @Override
     public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
+        addLineMarker(markerKey, line, false, markerOptions);
+    }
+
+    private void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line,
+                               boolean joinEnds, @NotNull MarkerOptions markerOptions) {
         final String worldKey = toWorldKey(markerKey);
 
+        // Validate if ends need to be joined
+        if (joinEnds &&
+                (line.isEmpty() || line.get(0).equals(line.get(line.size() - 1)))) {
+            joinEnds = false;
+        }
+
         // Create line poly first
-        final int lineSize = line.size();
+        final int lineSize = line.size() + (joinEnds ? 1 : 0);;
+
         double[] x = new double[lineSize];
         double[] z = new double[lineSize];
         double[] y = new double[lineSize];
@@ -165,6 +217,13 @@ public class DynmapLayerWrapper implements MapLayer {
             Point2D point = line.get(j);
             x[j] = point.x();
             z[j] = point.z();
+        }
+
+        if (joinEnds) {
+            // Set last point in array to first point in array
+            // to join the ends.
+            x[line.size()] = line.get(0).x();
+            z[line.size()] = line.get(0).z();
         }
 
         PolyLineMarker lineMarker = markerSet.createPolyLineMarker(worldKey, markerOptions.name(), false, worldName, x, y, z, false);
