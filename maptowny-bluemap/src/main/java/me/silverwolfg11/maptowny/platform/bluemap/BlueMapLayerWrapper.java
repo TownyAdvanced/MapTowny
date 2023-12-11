@@ -38,6 +38,7 @@ import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -89,13 +90,30 @@ public class BlueMapLayerWrapper implements MapLayer {
         // Opacity is a percentage
         return alpha / 255d;
     }
-    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
-                              @NotNull MarkerOptions markerOptions) {
-        Objects.requireNonNull(markerKey);
-        Objects.requireNonNull(polygon);
-        Objects.requireNonNull(markerOptions);
 
-        final Shape shape = new Shape(pointsToVecs2d(polygon.getPoints()));
+    @Contract(pure = true, value = "_, _ -> new")
+    private Line toLine(@NotNull List<Point2D> points, boolean joinEnds) {
+        if (points == null || points.size() == 0)
+            return new Line();
+
+        Line.Builder lineBuilder = Line.builder();
+
+        for (Point2D point : points) {
+            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
+        }
+
+        if (joinEnds && (points.size() > 1) &&
+                !points.get(0).equals(points.get(points.size() - 1))) {
+            var startingPoint = points.get(0);
+            lineBuilder.addPoint(new Vector3d(startingPoint.x(), startingPoint.z(), zIndex));
+        }
+
+        return lineBuilder.build();
+    }
+
+    private void addNonSegmentedPoly(@NotNull String markerKey, @NotNull List<Point2D> polygon,
+                                     @NotNull MarkerOptions markerOptions) {
+        final Shape shape = new Shape(pointsToVecs2d(polygon));
 
         final ShapeMarker shapeMarker = ShapeMarker.builder()
                 .label(markerOptions.name())
@@ -107,6 +125,50 @@ public class BlueMapLayerWrapper implements MapLayer {
                 .build();
 
         markerSet.getMarkers().put(markerKey, shapeMarker);
+    }
+
+    private void addSegmentedPoly(@NotNull String markerKey, @NotNull SegmentedPolygon polygon,
+                                  @NotNull MarkerOptions markerOptions) {
+        final List<String> childKeys = new ArrayList<>(polygon.getNegativeSpace().size()
+                                                        + polygon.getSegments().size() + 1);
+
+        // Add polygon outline
+        addLineMarker(markerKey + "_line0", toLine(polygon.getPoints(), true), markerOptions);
+        childKeys.add(markerKey + "_line0");
+
+        // Add negative space outlines
+        for (int i = 0; i < polygon.getNegativeSpace().size(); i++) {
+            final String negSpaceKey = markerKey + "_line" + (i + 1);
+            addLineMarker(negSpaceKey, toLine(polygon.getNegativeSpace().get(i), true), markerOptions);
+            childKeys.add(negSpaceKey);
+        }
+
+        // Add segmented areas
+        MarkerOptions segAreaOptions = markerOptions.asBuilder()
+                .strokeOpacity(0)
+                .strokeWeight(0)
+                .build();
+
+        for (int i = 0; i < polygon.getSegments().size(); i++) {
+            final String segKey = markerKey + "_seg" + i;
+            addNonSegmentedPoly(segKey, polygon.getSegments().get(i), segAreaOptions);
+            childKeys.add(segKey);
+        }
+
+        parentPolys.put(markerKey, Collections.unmodifiableList(childKeys));
+    }
+    public void addPolyMarker(@NotNull String markerKey, @NotNull Polygon polygon,
+                              @NotNull MarkerOptions markerOptions) {
+        Objects.requireNonNull(markerKey);
+        Objects.requireNonNull(polygon);
+        Objects.requireNonNull(markerOptions);
+
+        if (polygon instanceof SegmentedPolygon) {
+            addSegmentedPoly(markerKey, (SegmentedPolygon) polygon, markerOptions);
+        }
+        else {
+            addNonSegmentedPoly(markerKey, polygon.getPoints(), markerOptions);
+        }
     }
 
     @Override
@@ -127,15 +189,13 @@ public class BlueMapLayerWrapper implements MapLayer {
 
     @Override
     public void addLineMarker(@NotNull String markerKey, @NotNull List<Point2D> line, @NotNull MarkerOptions markerOptions) {
-        Line.Builder lineBuilder = Line.builder();
+        addLineMarker(markerKey, toLine(line, false), markerOptions);
+    }
 
-        for (Point2D point : line) {
-            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
-        }
-
+    private void addLineMarker(@NotNull String markerKey, @NotNull Line line, @NotNull MarkerOptions markerOptions) {
         var lineMarker = de.bluecolored.bluemap.api.markers.LineMarker.builder()
                 .label(markerOptions.name())
-                .line(lineBuilder.build())
+                .line(line)
                 .lineColor(toBMColor(markerOptions.strokeColor(), markerOptions.strokeOpacity()))
                 .lineWidth(markerOptions.strokeWeight())
                 .detail(markerOptions.clickTooltip())
