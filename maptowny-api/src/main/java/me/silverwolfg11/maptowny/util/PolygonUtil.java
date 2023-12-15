@@ -253,6 +253,21 @@ public class PolygonUtil {
         return negSpaceClusters;
     }
 
+    /**
+     * Segment a polygon into several polygons.
+     * The segmentation algorithm requires the cluster that makes up the polygon, and the cluster
+     * that represents the negative space of the polygon.<br>
+     * See {@link PolygonUtil#getPolyInfoFromCluster(TBCluster, int)} on how to generate that information.
+     * <br><br>
+     * The polygon is segmented at locations adjacent to the negative space. The algorithm does not guarantee the optimal number
+     * of partitions, but does guarantee that the resulting partitioned polygons contain no holes (no negative space).
+     *
+     * @param polyCluster Cluster of townblocks that make up the polygon.
+     * @param negSpaceClusters Cluster<b>s</b> of townblocks that make up the negative space (holes).
+     * @param tbSize Size of the townblock.
+     * @return a list of polygons (represented as a list of points that outline each polygon) that when aggregated make up the area of
+     *         the original provided polygon.
+     */
     // Idea is adapted from https://github.com/Mark-225/NeincraftPlugin/blob/main/src/main/java/de/neincraft/neincraftplugin/modules/plots/util/PlotUtils.java
     public static List<List<Point2D>> segmentPolygon(@NotNull TBCluster polyCluster, @NotNull List<TBCluster> negSpaceClusters, int tbSize) {
         Objects.requireNonNull(polyCluster);
