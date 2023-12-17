@@ -31,7 +31,7 @@ public class MapTownySchedulerFactory {
     private static MapTownyScheduler loadScheduler(JavaPlugin plugin, @NotNull String schedulerClassName, String schedulerName) {
         try {
             Class<?> schedulerClass = Class.forName("me.silverwolfg11.maptowny.schedulers." + schedulerClassName);
-            return (MapTownyScheduler) schedulerClass.getConstructor(JavaPlugin.class).newInstance(plugin);
+            return (MapTownyScheduler) schedulerClass.getDeclaredConstructor(JavaPlugin.class).newInstance(plugin);
         } catch (ReflectiveOperationException ex) {
             plugin.getLogger().log(Level.SEVERE, "Failed to load " + schedulerName + " scheduler!", ex);
             return null;

@@ -5,7 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 class MapTownyFoliaScheduler extends MapTownyScheduler {
 
-    protected MapTownyFoliaScheduler(JavaPlugin plugin) {
+    MapTownyFoliaScheduler(JavaPlugin plugin) {
         super(plugin);
     }
 
