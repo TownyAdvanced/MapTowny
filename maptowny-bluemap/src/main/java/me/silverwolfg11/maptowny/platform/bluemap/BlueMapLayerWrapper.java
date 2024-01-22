@@ -78,11 +78,15 @@ public class BlueMapLayerWrapper implements MapLayer {
 
     private Color toBMColor(java.awt.Color awtColor, double alphaPercent) {
         // Use explicit constructor to avoid worrying about how the ints are packed.
-        return new Color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue(), (int) alphaPercent * 255);
+        // BlueMap Color RGB values need to be between 0-255
+        // while alpha is a percentage.
+        return new Color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue(), (float) alphaPercent);
     }
 
     private java.awt.Color fromBMColor(Color bmColor) {
-        return new java.awt.Color(bmColor.getRed(), bmColor.getGreen(), bmColor.getBlue(), bmColor.getAlpha());
+        // Java Color requires everything as percentage OR everything between 0-255.
+        int convertedAlpha = (int)((double)(bmColor.getAlpha() * 255.0F) + 0.5);
+        return new java.awt.Color(bmColor.getRed(), bmColor.getGreen(), bmColor.getBlue(), convertedAlpha);
     }
 
     private double getOpacityFromColor(java.awt.Color color) {
@@ -99,13 +103,14 @@ public class BlueMapLayerWrapper implements MapLayer {
         Line.Builder lineBuilder = Line.builder();
 
         for (Point2D point : points) {
-            lineBuilder.addPoint(new Vector3d(point.x(), point.z(), zIndex));
+            // BlueMap uses the y-axis as the vertical axis
+            lineBuilder.addPoint(new Vector3d(point.x(), zIndex, point.z()));
         }
 
         if (joinEnds && (points.size() > 1) &&
                 !points.get(0).equals(points.get(points.size() - 1))) {
             var startingPoint = points.get(0);
-            lineBuilder.addPoint(new Vector3d(startingPoint.x(), startingPoint.z(), zIndex));
+            lineBuilder.addPoint(new Vector3d(startingPoint.x(), zIndex, startingPoint.z()));
         }
 
         return lineBuilder.build();
@@ -176,6 +181,12 @@ public class BlueMapLayerWrapper implements MapLayer {
                                    @NotNull MarkerOptions markerOptions) {
         // Delete old markers
         removeMarker(markerKey);
+
+        // Avoid layer of indirection
+        if (polygons.size() == 1) {
+            addPolyMarker(markerKey, polygons.get(0), markerOptions);
+            return;
+        }
 
         final List<String> childKeys = new ArrayList<>(polygons.size());
         for (int i = 0; i < polygons.size(); i++) {
