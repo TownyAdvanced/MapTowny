@@ -38,12 +38,42 @@ public class TestHelpers {
 
     // Helper methods
     @SafeVarargs
-    static final <T> List<T> list(T... items) {
+    static <T> List<T> list(T... items) {
         return Arrays.asList(items);
     }
 
     static StaticTB tb(int x, int z) {
         return StaticTB.from(x, z);
+    }
+
+    static class ClusterBuilder {
+        private ClusterBuilder() {}
+        private final List<StaticTB> tbList = new ArrayList<>();
+
+        public static ClusterBuilder builder() {
+            return new ClusterBuilder();
+        }
+
+        public ClusterBuilder add(StaticTB tb) {
+            tbList.add(tb);
+            return this;
+        }
+
+        // Starting townblock + delta
+        // Delta has to be non-negative
+        public ClusterBuilder row(StaticTB startingTB, int delta) {
+            assert delta > -1;
+            tbList.add(startingTB);
+            for (int i = 1; i <= delta; i++) {
+                tbList.add(startingTB.add(i, 0));
+            }
+
+            return this;
+        }
+
+        public TBCluster buildCluster() {
+            return clusterOf(tbList);
+        }
     }
 
     static TBCluster clusterOf(StaticTB... tbs) {
@@ -91,6 +121,29 @@ public class TestHelpers {
             zOffset = TILE_SIZE;
 
         return Point2D.of((tb.x() * TILE_SIZE) + xOffset, (tb.z() * TILE_SIZE) + zOffset);
+    }
+
+    static class PointList {
+        private final List<Point2D> pointList = new ArrayList<>();
+        private PointList() {
+        }
+
+        public static PointList builder() {
+            return new PointList();
+        }
+
+        PointList add(StaticTB tb, CORNER corner) {
+            return add(cornerPoint(tb, corner));
+        }
+
+        PointList add(Point2D point) {
+            pointList.add(point);
+            return this;
+        }
+
+        List<Point2D> build() {
+            return pointList;
+        }
     }
 
 }
