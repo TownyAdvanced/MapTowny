@@ -30,9 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -148,7 +148,7 @@ public class PolygonUtil {
         }
 
         // Path algorithm inserts unnecessary duplicate points
-        Set<Point2D> poly = new LinkedHashSet<>();
+        Collection<Point2D> poly = new ArrayList<>();
 
         // Keep track of origin block
         long startHash = rightMostBlock.toLong();
