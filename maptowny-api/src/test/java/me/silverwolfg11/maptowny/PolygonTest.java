@@ -225,4 +225,41 @@ public class PolygonTest {
         polygonHasPoints(output, expected);
     }
 
+    // --+++-
+    // +++-+-
+    // ---+++
+    @Test
+    @DisplayName("Polygon: 3x3")
+    void TestDuplicateCorners() {
+        TBCluster cluster = ClusterBuilder.builder()
+                .row(tb(2, 2), 2)
+                .row(tb(0, 1), 2).add(tb(4, 1))
+                .row(tb(3, 0), 2)
+                .buildCluster();
+
+        // Should only generate 4 points that we care about
+        // Upper Left, Upper Right, Lower Left, Lower Right points (not in that order)
+        List<Point2D> expected = PointList.builder()
+                .add(tb(4, 2), CORNER.UPPER_RIGHT)
+                .add(tb(4, 0), CORNER.UPPER_RIGHT)
+                .add(tb(5, 0), CORNER.UPPER_RIGHT)
+                .add(tb(5, 0), CORNER.LOWER_RIGHT)
+                .add(tb(3, 0), CORNER.LOWER_LEFT)
+                .add(tb(3, 0), CORNER.UPPER_LEFT)
+                .add(tb(3, 0), CORNER.UPPER_RIGHT)
+                .add(tb(4, 2), CORNER.LOWER_LEFT)
+                .add(tb(2, 2), CORNER.LOWER_RIGHT)
+                .add(tb(2, 1), CORNER.LOWER_RIGHT) // Doesn't get added in failed tests
+                .add(tb(0, 1), CORNER.LOWER_LEFT)
+                .add(tb(0, 1), CORNER.UPPER_LEFT)
+                .add(tb(2, 1), CORNER.UPPER_LEFT)
+                .add(tb(2, 2), CORNER.UPPER_LEFT)
+                .build();
+
+        List<Point2D> output = PolygonUtil.getPolyInfoFromCluster(cluster, TILE_SIZE, false)
+                .getPolygonPoints();
+
+        polygonHasPoints(output, expected);
+    }
+
 }
