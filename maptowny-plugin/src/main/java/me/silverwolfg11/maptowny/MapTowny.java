@@ -193,7 +193,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         layerManager.close();
         layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
-        scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 0, config.getUpdatePeriod() * 20L * 60);
+        scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 20, config.getUpdatePeriod() * 20L * 60);
     }
 
     public void async(Runnable run) {
