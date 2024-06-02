@@ -6,7 +6,7 @@
 
     <groupId>me.silverwolfg11</groupId>
     <artifactId>MapTowny</artifactId>
-    <version>3.0.0-ALPHA-1</version>
+    <version>3.0.0-ALPHA-2</version>
 
     <modules>
         <module>maptowny-schedulers</module>
