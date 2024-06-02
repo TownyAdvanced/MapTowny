@@ -103,9 +103,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // If towny is in safe-mode, do not attempt to render towns.
         if (!Towny.getPlugin().isError()) {
             // Schedule render task when the layer manager is initialized.
-            layerManager.onInitialize(() ->
-                    scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 20, config.getUpdatePeriod() * 20L * 60)
-            );
+            layerManager.onInitialize(this::scheduleRenderTownTask);
         }
     }
 
@@ -122,6 +120,17 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         // Finalize map platform shutdown
         if (mapPlatform != null)
             mapPlatform.shutdown();
+    }
+
+    private void scheduleRenderTownTask() {
+        long periodTicks = (long) (config.getUpdatePeriod() * 60 * 20);
+        if (periodTicks < 1) {
+            // Prevent zero-tick render period
+            getLogger().severe("Render period cannot be less than 1 tick! Using a render period of 1 tick...");
+            periodTicks = 1;
+        }
+
+        scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 20, periodTicks);
     }
 
     // Load the appropriate map platform or the map plugin that Pl3xMapTowny should use.
@@ -193,7 +202,7 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         layerManager.close();
         layerManager = new TownyLayerManager(this, mapPlatform);
         Bukkit.getPluginManager().callEvent(new MapReloadEvent()); // API Event
-        scheduler.scheduleRepeatingTask(new RenderTownsTask(this), 20, config.getUpdatePeriod() * 20L * 60);
+        scheduleRenderTownTask();
     }
 
     public void async(Runnable run) {

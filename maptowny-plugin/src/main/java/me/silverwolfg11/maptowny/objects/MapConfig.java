@@ -55,7 +55,7 @@ public class MapConfig {
 
     @Comment({"", "How often should the plugin render all towns? (In minutes)"})
     @Node("update-period")
-    private int updatePeriod = 5;
+    private double updatePeriod = 5;
 
     @Comment({"", "Layer Properties"})
     @Node("layer")
@@ -168,7 +168,7 @@ public class MapConfig {
         return Collections.unmodifiableList(enabledWorlds);
     }
 
-    public int getUpdatePeriod() {
+    public double getUpdatePeriod() {
         return updatePeriod;
     }
 
