@@ -123,13 +123,6 @@ public class TownInfoManager {
         });
         register("residentcount", t -> String.valueOf(t.getNumResidents()));
         register("board", Government::getBoard);
-        register("nationstatus", t -> {
-            if (!t.hasNation())
-                return "";
-
-            final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
-            return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
-        });
         register("public", t -> String.valueOf(t.isPublic()));
         register("peaceful", t -> String.valueOf(t.isNeutral()));
 
@@ -143,6 +136,17 @@ public class TownInfoManager {
 
         registerParenthesesReplacement("nation",
                 t-> t.hasNation() ? TownyAPI.getInstance().getTownNationOrNull(t).getName() : ""
+        );
+
+        registerParenthesesReplacement("nationstatus",
+                t -> {
+                    if (!t.hasNation()) {
+                        return "";
+                    }
+
+                    final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
+                    return (t.isCapital() ? "Capital of " : "Member of ") + nationName;
+                }
         );
 
         // Register Economy Replacements
