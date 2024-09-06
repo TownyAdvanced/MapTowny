@@ -145,7 +145,7 @@ public class TownInfoManager {
                     }
 
                     final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
-                    return (t.isCapital() ? "Capital of " : "Member of ") + nationName;
+                    return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
                 }
         );
 
