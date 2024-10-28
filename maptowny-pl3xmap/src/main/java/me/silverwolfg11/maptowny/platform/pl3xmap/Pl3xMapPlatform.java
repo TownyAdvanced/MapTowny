@@ -23,6 +23,7 @@
 package me.silverwolfg11.maptowny.platform.pl3xmap;
 
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import net.pl3x.map.core.Pl3xMap;
 import net.pl3x.map.core.image.IconImage;
@@ -33,6 +34,19 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.image.BufferedImage;
 
 public class Pl3xMapPlatform implements MapPlatform {
+
+    private final Pl3xMapObserverHandler observerHandler = new Pl3xMapObserverHandler();
+
+    @Override
+    public boolean registerObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.registerObserver(observer);
+    }
+
+    @Override
+    public boolean unregisterObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.unregisterObserver(observer);
+    }
+
     @Override
     public @NotNull String getPlatformName() {
         return "Pl3xMap";
@@ -74,5 +88,10 @@ public class Pl3xMapPlatform implements MapPlatform {
     @Override
     public boolean unregisterIcon(@NotNull String iconKey) {
         return Pl3xMap.api().getIconRegistry().unregister(iconKey) != null;
+    }
+
+    @Override
+    public void shutdown() {
+        observerHandler.disableObservers();
     }
 }

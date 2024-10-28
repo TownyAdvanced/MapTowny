@@ -37,7 +37,9 @@ import me.silverwolfg11.maptowny.objects.TBCluster;
 import me.silverwolfg11.maptowny.objects.TownRenderEntry;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import me.silverwolfg11.maptowny.platform.MapWorld;
+import me.silverwolfg11.maptowny.tasks.RenderTownsTask;
 import me.silverwolfg11.maptowny.util.PolygonUtil;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -64,6 +66,7 @@ public class TownyLayerManager implements LayerManager {
     private final MapTowny plugin;
     private final TownInfoManager townInfoManager;
     private final MapPlatform mapPlatform;
+    private final MapPlatformObserver layerPlatformObserver;
 
     private final Map<String, MapLayer> worldProviders = new ConcurrentHashMap<>();
     private final Collection<UUID> renderedTowns = ConcurrentHashMap.newKeySet();
@@ -89,8 +92,9 @@ public class TownyLayerManager implements LayerManager {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
         this.mapPlatform = platform;
-        // Schedule initialization
-        mapPlatform.onFirstInitialize(this::initialize);
+
+        this.layerPlatformObserver = createLayerPlatformObserver();
+        this.mapPlatform.registerObserver(layerPlatformObserver);
     }
 
     // Callbacks execute when the LayerManager completes initialization.
@@ -104,9 +108,50 @@ public class TownyLayerManager implements LayerManager {
         }
     }
 
+    private MapPlatformObserver createLayerPlatformObserver() {
+        return new MapPlatformObserver() {
+            @Override
+            public void onObserverSetup() {
+                initialize();
+            }
+
+            @Override
+            public void onPlatformEnabled() {
+                reloadPlatform();
+            }
+        };
+    }
+
     private void initialize() {
         MapPlatform platform = mapPlatform;
 
+        loadWorldProviders(platform);
+        loadIcons(platform);
+
+        isInitialized = true;
+        for (Runnable callback : initializerCallbacks) {
+            callback.run();
+        }
+
+        // Allow GC
+        initializerCallbacks.clear();
+        initializerCallbacks = null;
+    }
+
+    // Assumes platform's marker sets and icons are
+    // empty.
+    private void reloadPlatform() {
+        renderedTowns.clear();
+        loadIcons(mapPlatform);
+
+        plugin.getScheduler().scheduleTask(() -> {
+            loadWorldProviders(mapPlatform);
+            new RenderTownsTask(plugin).run();
+        });
+    }
+
+    // Must be called on the Bukkit thread.
+    private void loadWorldProviders(MapPlatform platform) {
         // Load world providers
         for (String worldName : plugin.config().getEnabledWorlds()) {
             World world = Bukkit.getWorld(worldName);
@@ -125,7 +170,9 @@ public class TownyLayerManager implements LayerManager {
             MapLayer mapLayer = platform.getWorld(world).registerLayer(LAYER_KEY, layerOptions);
             worldProviders.put(world.getName(), mapLayer);
         }
+    }
 
+    private void loadIcons(MapPlatform platform) {
         // Load icons
         int iconWidth = plugin.config().getIconSizeX();
         int iconHeight = plugin.config().getIconSizeY();
@@ -146,16 +193,6 @@ public class TownyLayerManager implements LayerManager {
         else {
             usingOutposts = false;
         }
-
-        // Run initialization callbacks
-        isInitialized = true;
-        for (Runnable callback : initializerCallbacks) {
-            callback.run();
-        }
-
-        // Allow GC
-        initializerCallbacks.clear();
-        initializerCallbacks = null;
     }
 
     // Only ran synchronous
@@ -479,6 +516,8 @@ public class TownyLayerManager implements LayerManager {
 
         if (mapPlatform.hasIcon(OUTPOST_ICON))
             mapPlatform.unregisterIcon(OUTPOST_ICON);
+
+        mapPlatform.unregisterObserver(layerPlatformObserver);
     }
 
     // API Methods

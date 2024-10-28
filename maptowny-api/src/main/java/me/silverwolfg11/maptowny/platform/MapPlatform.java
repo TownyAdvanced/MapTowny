@@ -51,6 +51,7 @@ public interface MapPlatform {
      * </ul>
      *
      * @param callback Callback to execute
+     * @deprecated 3.0.0+ - Use {@link MapPlatformObserver} instead.
      */
     default void onFirstInitialize(Runnable callback) {
         callback.run();
@@ -67,10 +68,28 @@ public interface MapPlatform {
      * </ul>
      *
      * @param callback Callback to execute.
+     * @deprecated 3.0.0+ - Use {@link MapPlatformObserver} instead.
      */
     default void onInitialize(Runnable callback) {
         callback.run();
     }
+
+    /**
+     * Register an observer to listen to platform events.
+     * Registering an already registered observer has no effect
+     * and will report as a registration failure.
+     *
+     * @return if registration was successful.
+     * @since 3.0.0
+     */
+    boolean registerObserver(@NotNull MapPlatformObserver observer);
+
+    /**
+     * Unregister an observer.
+     * @return if unregistering was successful.
+     * @since 3.0.0
+     */
+    boolean unregisterObserver(@NotNull MapPlatformObserver observer);
 
     /**
      * Check if the map plugin renders the specific world.
@@ -134,6 +153,8 @@ public interface MapPlatform {
      * Indicate to the platform that it should switch to shutdown mode.
      *
      * The platform will still be able to process all operations during this period.
+     * @deprecated 3.0.0 - Platform cleanup does not need to be split into two phases.
+     * 
      */
     default void startShutdown() {
     }
