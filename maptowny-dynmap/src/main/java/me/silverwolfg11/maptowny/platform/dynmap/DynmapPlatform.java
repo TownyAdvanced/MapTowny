@@ -23,11 +23,11 @@
 package me.silverwolfg11.maptowny.platform.dynmap;
 
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.jetbrains.annotations.NotNull;
@@ -41,15 +41,26 @@ import java.io.IOException;
 
 public class DynmapPlatform implements MapPlatform {
     private final DynmapAPI dynmapAPI;
+    private final DynmapObserverHandler observerHandler;
 
     public DynmapPlatform() {
         dynmapAPI = (DynmapAPI) Bukkit.getPluginManager().getPlugin("dynmap");
+        observerHandler = new DynmapObserverHandler();
     }
-
 
     @Override
     public @NotNull String getPlatformName() {
         return "dynmap";
+    }
+
+    @Override
+    public boolean registerObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.registerObserver(observer);
+    }
+
+    @Override
+    public boolean unregisterObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.unregisterObserver(observer);
     }
 
     @Override
@@ -106,6 +117,11 @@ public class DynmapPlatform implements MapPlatform {
         }
 
         return false;
+    }
+
+    @Override
+    public void shutdown() {
+        observerHandler.disableObservers();
     }
 
     // Logger Accessibility

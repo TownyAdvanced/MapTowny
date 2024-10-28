@@ -23,6 +23,7 @@
 package me.silverwolfg11.maptowny.platform.squaremap;
 
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +34,34 @@ import xyz.jpenilla.squaremap.api.SquaremapProvider;
 import xyz.jpenilla.squaremap.api.WorldIdentifier;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SquareMapPlatform implements MapPlatform {
+
+    private final List<MapPlatformObserver> platformObservers = new ArrayList<>();
+
     @Override
     public @NotNull String getPlatformName() {
         return "squaremap";
+    }
+
+    @Override
+    public boolean registerObserver(@NotNull MapPlatformObserver observer) {
+        if (platformObservers.contains(observer)) {
+            return false;
+        }
+
+        // SquareMap doesn't implement a way to monitor enable/disable.
+        observer.onObserverSetup();
+        platformObservers.add(observer);
+        return true;
+    }
+
+    @Override
+    public boolean unregisterObserver(@NotNull MapPlatformObserver observer) {
+        // Not keeping track of observers
+        return platformObservers.remove(observer);
     }
 
     @Override
@@ -77,5 +101,10 @@ public class SquareMapPlatform implements MapPlatform {
         boolean hasKey = SquaremapProvider.get().iconRegistry().hasEntry(key);
         SquaremapProvider.get().iconRegistry().unregister(key);
         return hasKey;
+    }
+
+    @Override
+    public void shutdown() {
+        platformObservers.clear();
     }
 }

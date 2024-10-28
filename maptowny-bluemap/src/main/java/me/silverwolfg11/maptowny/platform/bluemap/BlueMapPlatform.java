@@ -24,27 +24,24 @@ package me.silverwolfg11.maptowny.platform.bluemap;
 
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
+import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import me.silverwolfg11.maptowny.platform.MapWorld;
 import me.silverwolfg11.maptowny.platform.bluemap.objects.WorldIdentifier;
-import me.silverwolfg11.maptowny.schedulers.MapTownyScheduler;
-import me.silverwolfg11.maptowny.schedulers.MapTownySchedulerFactory;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 public class BlueMapPlatform implements MapPlatform {
 
-    private final JavaPlugin plugin;
     private final BlueMapIconMapper iconMapper;
+    private final BlueMapObserverHandler observerHandler;
 
     public BlueMapPlatform(JavaPlugin plugin) {
-        this.plugin = plugin;
         this.iconMapper = new BlueMapIconMapper(plugin.getLogger());
+        observerHandler = new BlueMapObserverHandler();
     }
 
     @Override
@@ -54,23 +51,38 @@ public class BlueMapPlatform implements MapPlatform {
 
     @Override
     public void onFirstInitialize(Runnable callback) {
-        // Use the future to unregister the listener
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        Consumer<BlueMapAPI> apiConsumer = (api) -> {
-            callback.run();
-            // Have to delay it, otherwise it will end up concurrently modifying
-            // the onEnablers list.
-            MapTownySchedulerFactory.create(plugin).scheduleTask(() -> future.complete(null));
-        };
-        future.thenRun(() -> BlueMapAPI.unregisterListener(apiConsumer));
-
-        BlueMapAPI.onEnable(apiConsumer);
+        observerHandler.registerObserver(new MapPlatformObserver() {
+            @Override
+            public void onObserverSetup() {
+                callback.run();
+            }
+        });
     }
 
     @Override
     public void onInitialize(final Runnable callback) {
-        // BlueMap API asynchronously initializes after the server starts ticking.
-        BlueMapAPI.onEnable(api -> callback.run());
+        // Implement both setup and enabled to maintain old behavior
+        observerHandler.registerObserver(new MapPlatformObserver() {
+            @Override
+            public void onObserverSetup() {
+                callback.run();
+            }
+
+            @Override
+            public void onPlatformEnabled() {
+                callback.run();
+            }
+        });
+    }
+
+    @Override
+    public boolean registerObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.registerObserver(observer);
+    }
+
+    @Override
+    public boolean unregisterObserver(@NotNull MapPlatformObserver observer) {
+        return observerHandler.unregisterObserver(observer);
     }
 
     @Override
@@ -106,5 +118,10 @@ public class BlueMapPlatform implements MapPlatform {
     @Override
     public boolean unregisterIcon(@NotNull String iconKey) {
         return iconMapper.unregisterIcon(iconKey);
+    }
+
+    @Override
+    public void shutdown() {
+        observerHandler.disableObservers();
     }
 }
