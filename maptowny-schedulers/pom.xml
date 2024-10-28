@@ -6,7 +6,7 @@
     <parent>
         <groupId>me.silverwolfg11</groupId>
         <artifactId>MapTowny</artifactId>
-        <version>3.0.0-ALPHA-2</version>
+        <version>3.0.0-ALPHA-3</version>
     </parent>
 
     <artifactId>maptowny-schedulers</artifactId>
