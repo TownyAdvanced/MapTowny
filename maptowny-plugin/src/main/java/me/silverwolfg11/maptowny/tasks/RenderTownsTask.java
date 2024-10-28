@@ -56,7 +56,7 @@ public class RenderTownsTask implements Runnable {
         }
 
         // Render towns async
-        plugin.async(() -> townsToRender.forEach(tre -> plugin.getLayerManager().renderTown(tre)));
+        plugin.getScheduler().scheduleAsyncTask(() -> townsToRender.forEach(tre -> plugin.getLayerManager().renderTown(tre)));
 
         // Remove deleted towns from map
         for (UUID renderedTown : renderedTowns) {

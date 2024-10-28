@@ -46,7 +46,7 @@ public class TownClaimListener implements Listener {
             return;
 
         TownRenderEntry tre = plugin.getLayerManager().buildTownEntry(event.getTown());
-        plugin.async(() -> plugin.getLayerManager().renderTown(tre));
+        plugin.getScheduler().scheduleAsyncTask(() -> plugin.getLayerManager().renderTown(tre));
     }
 
     // Remove town as soon as it's deleted.

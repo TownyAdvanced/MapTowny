@@ -205,10 +205,6 @@ public final class MapTowny extends JavaPlugin implements MapTownyPlugin {
         scheduleRenderTownTask();
     }
 
-    public void async(Runnable run) {
-        scheduler.scheduleAsyncTask(run);
-    }
-
     public MapTownyScheduler getScheduler() {
         return scheduler;
     }

@@ -105,7 +105,7 @@ public class TownyMapCommand implements TabExecutor {
 
         final TownRenderEntry tre = plugin.getLayerManager().buildTownEntry(town);
         // Run processing async
-        plugin.async(() -> {
+        plugin.getScheduler().scheduleAsyncTask(() -> {
             plugin.getLayerManager().renderTown(tre);
             sendMsg(sender, ChatColor.GREEN + "Rendered town " + town.getName() + "!");
         });

@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -520,41 +521,36 @@ public class TownyLayerManager implements LayerManager {
         mapPlatform.unregisterObserver(layerPlatformObserver);
     }
 
+    private void completeOnMainThread(CompletableFuture<Void> syncFutures) {
+        if (Bukkit.isPrimaryThread()) {
+            // Can only get TRE from sync thread
+            syncFutures.complete(null);
+        }
+        else {
+            plugin.getScheduler().scheduleTask(() -> syncFutures.complete(null));
+        }
+    }
+
     // API Methods
 
     @Override
     public void renderTown(final @NotNull Town town) {
-        Runnable renderTown = () -> {
-            final TownRenderEntry tre = buildTownEntry(town);
-            plugin.async(() -> renderTown(tre));
-        };
-
-        if (!Bukkit.isPrimaryThread()) {
-            // Can only get TRE from sync thread
-            Bukkit.getScheduler().runTask(plugin, renderTown);
-        }
-        else {
-            renderTown.run();
-        }
+        completeOnMainThread(
+                new CompletableFuture<>()
+                        .thenApply((Void) -> buildTownEntry(town))
+                        .thenAcceptAsync(this::renderTown, plugin.getScheduler().getAsyncExecutor())
+        );
     }
 
     @Override
     public void renderTowns(@NotNull Collection<Town> towns) {
-        Runnable renderTowns = () -> {
-            final Collection<TownRenderEntry> tres = towns.stream()
-                    .map(this::buildTownEntry)
-                    .collect(Collectors.toList());
+        CompletableFuture<Void> mainThreadSync = new CompletableFuture<>()
+                .thenApply((Void) -> towns.stream()
+                        .map(this::buildTownEntry)
+                        .collect(Collectors.toList()))
+                .thenAcceptAsync((entries) -> entries.forEach(this::renderTown), plugin.getScheduler().getAsyncExecutor());
 
-            plugin.async(() -> tres.forEach(this::renderTown));
-        };
-
-        if (!Bukkit.isPrimaryThread()) {
-            // Can only get TRE from sync thread
-            Bukkit.getScheduler().runTask(plugin, renderTowns);
-        }
-        else {
-            renderTowns.run();
-        }
+        completeOnMainThread(mainThreadSync);
     }
 
     @Override
