@@ -236,15 +236,16 @@ public class MapConfig {
     public BufferedImage loadOutpostIcon(Logger errorLogger) {
         String url = iconInfo.outpostIconImage;
 
-        if (url.isEmpty() || url.equalsIgnoreCase("empty"))
-            return null;
-        else if (url.equalsIgnoreCase("default"))
+        if (url.equalsIgnoreCase("default"))
             url = iconInfo.townIconImage;
 
         return loadIcon("outpost", url, errorLogger);
     }
 
     private BufferedImage loadIcon(String type, String urlStr, Logger errorLogger) {
+        if (urlStr == null || "empty".equals(urlStr) || urlStr.isEmpty())
+            return null;
+
         URL url;
         try {
             url = new URL(urlStr);
