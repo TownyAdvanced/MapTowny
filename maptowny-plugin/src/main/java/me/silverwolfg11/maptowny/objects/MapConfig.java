@@ -156,7 +156,7 @@ public class MapConfig {
 
         @Comment({"Icon for a ruined town. Icon must be a valid image URL.",
                 "Put 'default' to use the town icon image."})
-        @Node("ruins-icon")
+        @Node("ruined-icon")
         private String ruinedIconImage = "default";
 
         @Comment({"Icon for an outpost claim that will appear at the location of outpost spawns. Icon must be a valid image URL.",
