@@ -146,8 +146,18 @@ public class MapConfig {
 
         @Comment({"Icon for a town if they are the capital of the nation. Icon must be a valid image URL.",
                 "Put 'default' to use the town icon image."})
+        @Node("nation-icon")
+        private String nationIconImage = "default";
+
+        @Comment({"Icon for a town if they are the capital of the nation. Icon must be a valid image URL.",
+                "Put 'default' to use the town icon image."})
         @Node("capital-icon")
         private String capitalIconImage = "default";
+
+        @Comment({"Icon for a ruined town. Icon must be a valid image URL.",
+                "Put 'default' to use the town icon image."})
+        @Node("ruined-icon")
+        private String ruinedIconImage = "default";
 
         @Comment({"Icon for an outpost claim that will appear at the location of outpost spawns. Icon must be a valid image URL.",
                 "Put 'default' to use the town icon image.",
@@ -223,6 +233,16 @@ public class MapConfig {
     }
 
     @Nullable
+    public BufferedImage loadNationIcon(Logger errorLogger) {
+        String url = iconInfo.nationIconImage;
+
+        if (url.equalsIgnoreCase("default"))
+            url = iconInfo.townIconImage;
+
+        return loadIcon("nation", url, errorLogger);
+    }
+
+    @Nullable
     public BufferedImage loadCapitalIcon(Logger errorLogger) {
         String url = iconInfo.capitalIconImage;
 
@@ -230,6 +250,16 @@ public class MapConfig {
             url = iconInfo.townIconImage;
 
         return loadIcon("capital", url, errorLogger);
+    }
+
+    @Nullable
+    public BufferedImage loadRuinedIcon(Logger errorLogger) {
+        String url = iconInfo.ruinedIconImage;
+
+        if (url.equalsIgnoreCase("default"))
+            url = iconInfo.townIconImage;
+
+        return loadIcon("ruined", url, errorLogger);
     }
 
     @Nullable
