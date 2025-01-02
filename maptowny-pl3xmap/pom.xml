@@ -34,9 +34,9 @@
     <artifactId>maptowny-pl3xmap</artifactId>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <jdk.version>17</jdk.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <jdk.version>21</jdk.version>
     </properties>
 
     <repositories>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>maven.modrinth</groupId>
             <artifactId>pl3xmap</artifactId>
-            <version>1.20.2-473</version>
+            <version>1.21.4-512</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
