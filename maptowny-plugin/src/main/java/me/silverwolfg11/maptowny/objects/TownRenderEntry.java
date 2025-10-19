@@ -123,7 +123,7 @@ public class TownRenderEntry {
 
     @NotNull
     public Optional<Point2D> getHomeBlockPoint() {
-        return Optional.of(homeBlockPoint);
+        return Optional.ofNullable(homeBlockPoint);
     }
 
     public boolean hasWorldBlocks() {
