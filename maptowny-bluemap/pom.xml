@@ -39,6 +39,13 @@
         <jdk.version>11</jdk.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>bluemap</id>
+            <url>https://repo.bluecolored.de/releases</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>me.silverwolfg11</groupId>
@@ -53,9 +60,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.BlueMap-Minecraft</groupId>
-            <artifactId>BlueMapAPI</artifactId>
-            <version>v2.6.0</version>
+            <groupId>de.bluecolored</groupId>
+            <artifactId>bluemap-api</artifactId>
+            <version>2.7.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

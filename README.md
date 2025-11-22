@@ -5,13 +5,13 @@ A Towny add-on Spigot plugin that enables towns to show up on a web-map.
 
 ## Dependencies
 This plugin requires Towny to be installed on your server.
-- [Towny](https://github.com/TownyAdvanced/Towny) 0.97.1 (or later)
+- [Towny](https://github.com/TownyAdvanced/Towny) 0.101.2.0 (or later)
 
 The plugin also requires one of the following web-map plugins to be installed on your server:
-- [Pl3xMap](https://github.com/granny/Pl3xMap) 1.21.4 (or later)
-- [squaremap](https://github.com/jpenilla/squaremap)
-- [dynmap](https://www.spigotmc.org/resources/dynmap%C2%AE.274/)
-- [BlueMap](https://www.spigotmc.org/resources/bluemap.83557/) v3.3 (or later) (limited support)
+- [Pl3xMap](https://github.com/granny/Pl3xMap) 1.21.5 (or later)
+- [squaremap](https://github.com/jpenilla/squaremap) 1.3.9 (or later)
+- [dynmap](https://www.spigotmc.org/resources/dynmap%C2%AE.274/) 3.7-beta-6 (or later)
+- [BlueMap](https://www.spigotmc.org/resources/bluemap.83557/) v5.12 (or later) (limited support)
 
 ## Features
 Honestly, nothing uber special about this plugin other than it works, but if you really want to know:
