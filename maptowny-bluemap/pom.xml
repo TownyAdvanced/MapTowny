@@ -34,9 +34,9 @@
     <artifactId>maptowny-bluemap</artifactId>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <jdk.version>11</jdk.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <jdk.version>17</jdk.version>
     </properties>
 
     <repositories>

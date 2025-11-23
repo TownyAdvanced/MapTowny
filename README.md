@@ -1,5 +1,6 @@
 # MapTowny
-A Towny add-on Spigot plugin that enables towns to show up on a web-map.
+A Towny add-on PaperMC plugin that enables towns to show up on a web-map.
+* Requires at least Java 17 (Java 21 if using Pl3xMap)
 
 **Supported web-map plugins are Pl3xMap, squaremap, dynmap, and BlueMap**.
 
@@ -30,7 +31,9 @@ The plugin should be ready for use out of the box. The one thing that may need t
 See [this wiki page](https://github.com/TownyAdvanced/MapTowny/wiki/MapTowny-API) for more info.
 
 ## Building
-This plugin is a standard maven project that utilizes the [maven toolchains plugin](https://maven.apache.org/plugins/maven-toolchains-plugin/) in order to build against multiple JDK versions. In order to use the maven toolchains plugin, you must have a `toolchains.xml` file in your `.m2` folder properly configured with at least JDK versions 1.8 and 16. See [this guide](https://maven.apache.org/guides/mini/guide-using-toolchains.html#using-toolchains-in-your-project) for more info on setting up a `toolchains.xml` file. 
+This plugin is a standard maven project that utilizes the [maven toolchains plugin](https://maven.apache.org/plugins/maven-toolchains-plugin/) in order to build against multiple JDK versions. 
+In order to use the maven toolchains plugin, you must have a `toolchains.xml` file in your `.m2` folder properly configured with at least JDK versions 17 and 21 .
+See [this guide](https://maven.apache.org/guides/mini/guide-using-toolchains.html#using-toolchains-in-your-project) for more info on setting up a `toolchains.xml` file. 
 
 Once that is setup, the project can be compiled with the command `mvn clean package` or `mvn clean install` ran in the project directory.
 
