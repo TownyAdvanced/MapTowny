@@ -34,8 +34,8 @@
     <artifactId>maptowny-dynmap</artifactId>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <repositories>
@@ -54,7 +54,7 @@
         </dependency>
         <dependency>
             <groupId>us.dynmap</groupId>
-            <artifactId>dynmap-api</artifactId>
+            <artifactId>DynmapCoreAPI</artifactId>
             <version>3.7-beta-6</version>
             <scope>provided</scope>
             <exclusions>

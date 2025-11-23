@@ -28,7 +28,6 @@ import me.silverwolfg11.maptowny.platform.MapWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
-import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +39,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class DynmapPlatform implements MapPlatform {
-    private final DynmapAPI dynmapAPI;
     private final DynmapObserverHandler observerHandler;
 
     public DynmapPlatform() {
-        dynmapAPI = (DynmapAPI) Bukkit.getPluginManager().getPlugin("dynmap");
         observerHandler = new DynmapObserverHandler();
     }
 
@@ -71,6 +68,11 @@ public class DynmapPlatform implements MapPlatform {
 
     @Override
     public @Nullable MapWorld getWorld(@NotNull World world) {
+        final var dynmapAPI = observerHandler.getDynmapApi();
+        if (dynmapAPI == null) {
+            return null;
+        }
+
         return new DynmapWorldWrapper(dynmapAPI, world.getName());
     }
 
@@ -81,6 +83,11 @@ public class DynmapPlatform implements MapPlatform {
 
     @Override
     public void registerIcon(@NotNull String iconKey, @NotNull BufferedImage icon, int height, int width) {
+        final var dynmapAPI = observerHandler.getDynmapApi();
+        if (dynmapAPI == null) {
+            return;
+        }
+
         // Delete icon if it's been previously registered
         final MarkerIcon oldMarkerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
         if (oldMarkerIcon != null) {
@@ -105,11 +112,17 @@ public class DynmapPlatform implements MapPlatform {
 
     @Override
     public boolean hasIcon(@NotNull String iconKey) {
-        return dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey) != null;
+        final var dynmapAPI = observerHandler.getDynmapApi();
+        return dynmapAPI != null && dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey) != null;
     }
 
     @Override
     public boolean unregisterIcon(@NotNull String iconKey) {
+        final var dynmapAPI = observerHandler.getDynmapApi();
+        if (dynmapAPI == null) {
+            return false;
+        }
+
         MarkerIcon markerIcon = dynmapAPI.getMarkerAPI().getMarkerIcon(iconKey);
         if (markerIcon != null) {
             markerIcon.deleteIcon();

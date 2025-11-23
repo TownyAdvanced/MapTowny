@@ -25,6 +25,7 @@ package me.silverwolfg11.maptowny.platform.dynmap;
 import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
 import org.dynmap.DynmapCommonAPI;
 import org.dynmap.DynmapCommonAPIListener;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +87,11 @@ public class DynmapObserverHandler {
 
     public void disableObservers() {
         DynmapCommonAPIListener.unregister(dynmapListener);
+    }
+
+    @Nullable
+    public DynmapCommonAPI getDynmapApi() {
+        return dynmapApiRef.get();
     }
 
     private void setupObserver(MapPlatformObserver observer) {

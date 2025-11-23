@@ -27,7 +27,7 @@ import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
 import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
 import me.silverwolfg11.maptowny.platform.MapLayer;
-import org.dynmap.DynmapAPI;
+import org.dynmap.DynmapCommonAPI;
 import org.dynmap.markers.AreaMarker;
 import org.dynmap.markers.GenericMarker;
 import org.dynmap.markers.Marker;
@@ -51,7 +51,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class DynmapLayerWrapper implements MapLayer {
-    private final DynmapAPI dynmapAPI;
+    private final DynmapCommonAPI dynmapAPI;
     private final String worldName;
     private final MarkerSet markerSet;
     private final int zIndex;
@@ -61,7 +61,7 @@ public class DynmapLayerWrapper implements MapLayer {
     // Parent keys should not be actual markers.
     private final Map<String, @Unmodifiable List<String>> parentPolys = new ConcurrentHashMap<>();
 
-    public DynmapLayerWrapper(DynmapAPI dynmapAPI, String worldName, MarkerSet markerSet, int zIndex) {
+    public DynmapLayerWrapper(DynmapCommonAPI dynmapAPI, String worldName, MarkerSet markerSet, int zIndex) {
         this.dynmapAPI = dynmapAPI;
         this.worldName = worldName;
         this.markerSet = markerSet;

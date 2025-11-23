@@ -25,15 +25,15 @@ package me.silverwolfg11.maptowny.platform.dynmap;
 import me.silverwolfg11.maptowny.objects.LayerOptions;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapWorld;
-import org.dynmap.DynmapAPI;
+import org.dynmap.DynmapCommonAPI;
 import org.dynmap.markers.MarkerSet;
 import org.jetbrains.annotations.NotNull;
 
 public class DynmapWorldWrapper implements MapWorld {
-    private final DynmapAPI dynmapAPI;
+    private final DynmapCommonAPI dynmapAPI;
     private final String worldName;
 
-    public DynmapWorldWrapper(DynmapAPI dynmapAPI, String worldName) {
+    public DynmapWorldWrapper(DynmapCommonAPI dynmapAPI, String worldName) {
         this.dynmapAPI = dynmapAPI;
         this.worldName = worldName;
     }
