@@ -1,6 +1,6 @@
 # MapTowny
 A Towny add-on PaperMC plugin that enables towns to show up on a web-map.
-* Requires at least Java 17 (Java 21 if using Pl3xMap)
+* Requires Java 17 (if using squaremap or dynmap) or Java 21 (if using Pl3xMap or BlueMap)
 
 **Supported web-map plugins are Pl3xMap, squaremap, dynmap, and BlueMap**.
 
