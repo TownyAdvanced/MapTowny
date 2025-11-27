@@ -138,7 +138,9 @@ public class WorldRenderTownEvent extends Event implements Cancellable {
 
     /**
      * Get the default marker options for the town outline.
-     * {@link PolygonGroup}s are allowed to modify the marker options before rendering the final result.
+     * <br><br>
+     * {@link PolygonGroup}s contain their own marker options for rendering
+     * which will not reflect any updates to these options.
      * <br><br>
      * NOTE: These options are directly modifiable.
      *

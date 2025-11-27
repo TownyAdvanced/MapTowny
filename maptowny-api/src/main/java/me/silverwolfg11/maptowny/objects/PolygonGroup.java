@@ -28,20 +28,22 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.util.List;
 
 /**
- * Polygon groups are a collection of {@link Polygon}s that belong to the same world (analogous to MultiPolygon markers).
- * Each polygon group is allowed to modify the default
- * town marker options to apply changes based on the group's properties.
+ * Polygon groups are a collection of {@link Polygon}s that belong to
+ * the same world (analogous to MultiPolygon markers).
  * <br><br>
- * This class is meant to be extended. The default version of this class does not modify the default
- * town marker options.
+ * Each polygon group contains its own {@link MarkerOptions} to dictate the rendered
+ * styling.
  *
  * @since 3.0.0
  */
 public class PolygonGroup {
-    final List<Polygon> polygons;
+    protected MarkerOptions markerOptions;
+    protected final List<Polygon> polygons;
 
-    public PolygonGroup(@NotNull List<Polygon> polygons) {
+    public PolygonGroup(@NotNull List<Polygon> polygons,
+                        @NotNull MarkerOptions markerOptions) {
         this.polygons = polygons;
+        this.markerOptions = markerOptions;
     }
 
     /**
@@ -55,11 +57,30 @@ public class PolygonGroup {
         return polygons;
     }
 
+
     /**
-     * Modify the marker options builder based on the polygon group's properties.
+     * Get the marker options (styling options) for this polygon group.
+     * <br><br>
+     * Use {@link MarkerOptions#asBuilder()} to modify the marker options, and
+     * {@link #setMarkerOptions(MarkerOptions)} to set this group's marker options.
      *
-     * @param optionsBuilder Marker options builder that is modified.
+     * @return the marker options for this polygon group, or null if not set.
      */
-    public void modifyMarkerOptions(MarkerOptions.Builder optionsBuilder) {
+    @NotNull
+    public MarkerOptions getMarkerOptions() {
+        return markerOptions;
+    }
+
+    /**
+     * Set the marker options (styling options) for this polygon group.
+     *
+     * @param markerOptions the marker options to apply to this polygon group.
+     */
+    public void setMarkerOptions(@NotNull MarkerOptions markerOptions) {
+        if (markerOptions == null) {
+            return;
+        }
+
+        this.markerOptions = markerOptions;
     }
 }

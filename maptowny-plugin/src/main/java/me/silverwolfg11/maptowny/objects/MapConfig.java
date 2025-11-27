@@ -51,7 +51,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SerializableConfig
-@ConfigVersion(1.1)
+@ConfigVersion(2.0)
 public class MapConfig {
 
     @Comment("Worlds that should display town claims.")

@@ -449,7 +449,7 @@ public final class MarkerOptions {
 
         @Override
         public Builder clone() {
-            Builder clone = new Builder(
+            return new Builder(
                     this.stroke,
                     this.strokeColor,
                     this.strokeWeight,
@@ -459,10 +459,9 @@ public final class MarkerOptions {
                     this.fillOpacity,
                     this.fillRule,
                     this.clickTooltip,
-                    this.hoverTooltip
+                    this.hoverTooltip,
+                    this.name
             );
-            clone.name = this.name;
-            return clone;
         }
     }
 

@@ -22,50 +22,80 @@
 
 package me.silverwolfg11.maptowny.objects.groups;
 
-import com.palmergames.bukkit.towny.object.TownBlock;
-import me.silverwolfg11.maptowny.objects.Polygon;
-import me.silverwolfg11.maptowny.objects.PolygonGroup;
 import me.silverwolfg11.maptowny.objects.StaticTB;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-// Class meant to be extended
-// TBGroups should only contain townblocks from the same world.
-public class TBGroup implements Cloneable {
-    protected List<StaticTB> townblocks = new ArrayList<>();
+/**
+ * TBGroups are a collection of townblocks grouped by unique properties.
+ * These properties may be embedded within group data.
+ * <br><br>
+ * Methods will return an immutable view to the data.
+ * <br></br>
+ * Pre-conditions:
+ * <br>- There must be at least one townblock within the group.
+ * <br>- All {@link StaticTB}s within the group must be in the same world.
+ */
+public record TBGroup(@NotNull List<StaticTB> townblocks, @NotNull Map<String, Object> groupData) implements Cloneable {
 
-    // Method meant to be overrided
-    public boolean canAddTownBlock(TownBlock tb) {
-        return true;
-    }
-
-    public void addTownBlock(StaticTB tb) {
-        townblocks.add(tb);
-    }
-
-
-    // Method meant to be overrided
-    public PolygonGroup buildPolygonGroup(List<Polygon> polygons) {
-        return new PolygonGroup(polygons);
-    }
-
-    @NotNull
-    public List<StaticTB> getTownblocks() {
-        return townblocks;
-    }
-
-    // Method meant to be overloaded
-    protected void copyInternals(TBGroup clone) {
-        clone.townblocks = new ArrayList<>(townblocks);
-    }
-
-    // Method meant to be overrided.
     @Override
     public TBGroup clone() {
-        TBGroup clone = new TBGroup();
-        copyInternals(clone);
-        return clone;
+        return new TBGroup(new ArrayList<>(this.townblocks), new HashMap<>(this.groupData));
+    }
+
+    public static class Builder implements Cloneable {
+        private List<StaticTB> townblocks = new ArrayList<>();
+        private Map<String, Object> groupData = new HashMap<>();
+
+        private Builder() {
+        }
+
+        // All parameters in this constructor are copied.
+        private Builder(List<StaticTB> townblocks, Map<String, Object> groupData) {
+            this.townblocks = new ArrayList<>(townblocks);
+            this.groupData = new HashMap<>(groupData);
+        }
+
+        public Builder addTownblock(StaticTB townblock) {
+            this.townblocks.add(townblock);
+            return this;
+        }
+
+        public Builder addTownblocks(Collection<StaticTB> townblocks) {
+            this.townblocks.addAll(townblocks);
+            return this;
+        }
+
+        public Builder addData(String key, Object value) {
+            this.groupData.put(key, value);
+            return this;
+        }
+
+        public Builder addData(@NotNull Map<String, Object> data) {
+            if ((data != null) && (!data.isEmpty())) {
+                this.groupData.putAll(data);
+            }
+
+            return this;
+        }
+
+        public TBGroup build() {
+            return new TBGroup(Collections.unmodifiableList(townblocks), Collections.unmodifiableMap(groupData));
+        }
+
+        @Override
+        protected Object clone() throws CloneNotSupportedException {
+            return new Builder(townblocks, groupData);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 }

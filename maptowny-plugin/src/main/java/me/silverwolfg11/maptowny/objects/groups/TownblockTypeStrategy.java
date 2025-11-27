@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Silverwolfg11
+ * Copyright (c) 2025 Silverwolfg11
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,35 @@
 
 package me.silverwolfg11.maptowny.objects.groups;
 
-import me.silverwolfg11.maptowny.objects.MarkerOptions;
-import me.silverwolfg11.maptowny.objects.Polygon;
-import me.silverwolfg11.maptowny.objects.PolygonGroup;
+import com.palmergames.bukkit.towny.object.TownBlock;
+import com.palmergames.bukkit.towny.object.TownBlockType;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Color;
-import java.util.List;
+import java.util.Map;
 
-public class ColorPolygonGroup extends PolygonGroup {
+/**
+ * A grouping strategy that only accepts townblocks
+ * of a particular {@link com.palmergames.bukkit.towny.object.TownBlockType}.
+ *
+ * The group data contains the townblock type name.
+ */
+public class TownblockTypeStrategy extends GroupingStrategy {
+    private final String dataKey;
+    private final String townblockTypeName;
 
-    private final Color strokeColor;
-    private final Color fillColor;
-
-    public ColorPolygonGroup(@NotNull List<Polygon> polygons, Color strokeColor, Color fillColor) {
-        super(polygons);
-        this.strokeColor = strokeColor;
-        this.fillColor = fillColor;
+    public TownblockTypeStrategy(String dataKey, String townblockTypeName) {
+        this.dataKey = dataKey;
+        this.townblockTypeName = townblockTypeName;
     }
 
     @Override
-    public void modifyMarkerOptions(MarkerOptions.Builder optionsBuilder) {
-        if (strokeColor != null) {
-            optionsBuilder.strokeColor(strokeColor);
-        }
+    public boolean accept(@NotNull TownBlock townblock) {
+        final TownBlockType type = townblock.getType();
+        return (type != null) && (type.getName().equalsIgnoreCase(townblockTypeName));
+    }
 
-        if (fillColor != null) {
-            optionsBuilder.fillColor(fillColor);
-        }
+    @Override
+    public @NotNull Map<String, Object> provideGroupData() {
+        return Map.of(dataKey, townblockTypeName);
     }
 }
