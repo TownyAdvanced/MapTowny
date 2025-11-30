@@ -70,7 +70,7 @@ public class ColorProvider {
 
     private Map<String, ColorGroup> populateTypeMap(MapConfig config) {
         // Check if needed
-        if (config.clusterByTownBlockType()) {
+        if (!config.clusterByTownBlockType()) {
             return Collections.emptyMap();
         }
 

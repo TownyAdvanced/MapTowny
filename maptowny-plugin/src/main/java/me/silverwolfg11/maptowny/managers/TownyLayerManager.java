@@ -207,11 +207,12 @@ public class TownyLayerManager implements LayerManager {
 
         // Provide how to group the town's townblocks.
         List<GroupingStrategy> groupingStrategies = new ArrayList<>();
-        // Always add a default strategy
-        groupingStrategies.add(GroupingStrategy.defaultStrategy());
         if (townColoring.usesTownblockColors()) {
             groupingStrategies.addAll(colorProvider.getTownblockTypeStrategies());
         }
+        // Always add a default strategy last
+        // to capture remaining townblocks.
+        groupingStrategies.add(GroupingStrategy.defaultStrategy());
 
         Logger logger = plugin.getLogger();
         String clickText = townInfoManager.getClickTooltip(town, logger);
