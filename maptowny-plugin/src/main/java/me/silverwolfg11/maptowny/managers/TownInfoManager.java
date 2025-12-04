@@ -54,7 +54,7 @@ public class TownInfoManager {
     private final TextReplacement<Town> hoverReplacements;
 
     // Used for %founded% replacements.
-    private final SimpleDateFormat registeredTimeFormat =  new SimpleDateFormat("MMM d yyyy");
+    private final SimpleDateFormat registeredTimeFormat = new SimpleDateFormat("MMM d yyyy");
 
     public TownInfoManager(File dataFolder, Logger errorLogger) {
         final String CLICK_FILE_NAME = "click_tooltip.html";
@@ -92,8 +92,7 @@ public class TownInfoManager {
 
         if (replacementFileRaw != null) {
             return TextReplacement.fromHTML(replacementFileRaw);
-        }
-        else {
+        } else {
             return TextReplacement.empty();
         }
     }
@@ -170,6 +169,10 @@ public class TownInfoManager {
         }
 
         registerRanks();
+
+        // Sort replacements
+        clickReplacements.sortReplacements();
+        hoverReplacements.sortReplacements();
     }
 
     // Register a replacement that will replace parenthesis if empty.
@@ -265,7 +268,7 @@ public class TownInfoManager {
         InputStream input = getClass().getClassLoader().getResourceAsStream(resource);
 
         if (input == null) {
-            errorLogger.severe("The resource file '"  + resource + "' could not be found!");
+            errorLogger.severe("The resource file '" + resource + "' could not be found!");
             return;
         }
 

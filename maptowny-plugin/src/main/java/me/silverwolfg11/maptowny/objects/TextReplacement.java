@@ -26,7 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -36,10 +40,12 @@ import java.util.regex.Pattern;
 // replacing text based an object passed in.
 
 // The replacements are cached to speed up performance when fetching the replaced text.
+// This class is not thread-safe.
 public class TextReplacement<T> {
 
-    private final String replacementText;
-    private final List<KVPair<String, Function<T, String>>> replacements = new ArrayList<>();
+    private final @Nullable String replacementText;
+    private final Map<String, Function<T, String>> replacements = new HashMap<>();
+    private List<ReplacementLoc<T>> sortedReplacements = null;
 
     private TextReplacement(@Nullable String replacementText) {
         this.replacementText = replacementText;
@@ -61,14 +67,53 @@ public class TextReplacement<T> {
             return false;
         }
 
-        replacements.add(new KVPair<>(key, replacementFunc));
+        replacements.put(key, replacementFunc);
+        sortedReplacements = null;
 
         return true;
     }
 
     public void unregisterReplacement(@NotNull String key) {
         Objects.requireNonNull(key);
-        replacements.removeIf(p -> p.hasKey() && p.key.equals(key));
+        boolean removed = replacements.remove(key) != null;
+
+        // We can avoid re-sorting replacements since
+        // the positions won't shift during removal.
+        if (removed && sortedReplacements != null) {
+            sortedReplacements.removeIf(loc -> loc.key().equals(key));
+        }
+    }
+
+    // Sort the replacements based on the index
+    // of their keys in the original text.
+    // This builds a list of ALL occurrences of ALL registered keys.
+    public void sortReplacements() {
+        if (sortedReplacements != null) {
+            return;
+        }
+
+        if (replacementText == null) {
+            sortedReplacements = Collections.emptyList();
+            return;
+        }
+
+        List<ReplacementLoc<T>> locations = new ArrayList<>();
+
+        // For each registered replacement key, find ALL occurrences in the text
+        for (Map.Entry<String, Function<T, String>> entry : replacements.entrySet()) {
+            String key = entry.getKey();
+            int index = 0;
+
+            // Find all occurrences of this key
+            while ((index = replacementText.indexOf(key, index)) != -1) {
+                locations.add(new ReplacementLoc<>(index, key, entry.getValue()));
+                index += key.length();
+            }
+        }
+
+        // Sort by position in text
+        locations.sort(Comparator.comparingInt(ReplacementLoc::replacementTxtIdx));
+        sortedReplacements = locations;
     }
 
     @NotNull
@@ -76,39 +121,46 @@ public class TextReplacement<T> {
         if (replacementText == null || replacementText.isEmpty())
             return "";
 
-        String text = replacementText;
+        sortReplacements();
 
-        for (KVPair<String, Function<T, String>> replacement : replacements) {
-            String replacementKey = replacement.key;
+        StringBuilder sb = new StringBuilder(replacementText.length());
 
-            String applied = null;
-            // Yes, it's bad to catch general exceptions.
-            // However, if there were any expected exceptions, it wouldn't be called an exception.
+        int lastPos = 0;
+
+        for (ReplacementLoc<T> replacement : sortedReplacements) {
+            // Append text from last position up to this replacement
+            sb.append(replacementText, lastPos, replacement.replacementTxtIdx());
+
+            // Apply the replacement function
+            String applied;
             try {
-                applied = replacement.value.apply(appliedObj);
+                applied = replacement.replacementFunc().apply(appliedObj);
             } catch (Exception e) {
                 if (exceptionHandler != null) {
-                    exceptionHandler.accept(replacementKey, e);
+                    exceptionHandler.accept(replacement.key(), e);
                 }
                 applied = "[Error]";
             }
 
-            // Replacements are allowed to return a null value.
+            // Replacements are allowed to return a null value
             if (applied == null)
                 applied = "";
 
-            // Use replace because we want to match exactly, not based on regex.
-            text = text.replace(replacementKey, applied);
+            sb.append(applied);
+            lastPos = replacement.replacementTxtIdx() + replacement.key().length();
         }
 
-        return text;
+        // Append remaining text after the last replacement
+        sb.append(replacementText, lastPos, replacementText.length());
+
+        return sb.toString();
     }
 
     /**
      * Get an empty text replacement object with no replacement text.
      *
      * @param <V> Context-dependent object class that is used to get the replaced text.
-     * @return    An empty text replacement object.
+     * @return An empty text replacement object.
      */
     @NotNull
     public static <V> TextReplacement<V> empty() {
@@ -120,7 +172,7 @@ public class TextReplacement<T> {
      *
      * @param textToReplace The base text to apply replacements on.
      * @param <V>           Context-dependent object class that is used to get the replaced text.
-     * @return              a text replacement object for that specific replacement text.
+     * @return a text replacement object for that specific replacement text.
      */
     @NotNull
     public static <V> TextReplacement<V> fromString(@NotNull String textToReplace) {
@@ -140,7 +192,7 @@ public class TextReplacement<T> {
      *
      * @param htmlContent   HTML content that should be the base text for replacements.
      * @param <V>           Context-dependent object class that is used to get the replaced text.
-     * @return              a text replacement object for HTML content.
+     * @return a text replacement object for HTML content.
      */
     @NotNull
     public static <V> TextReplacement<V> fromHTML(@NotNull String htmlContent) {
@@ -148,22 +200,7 @@ public class TextReplacement<T> {
         return new TextReplacement<>(removeComments(htmlContent));
     }
 
-
-    private static class KVPair<L, R> {
-        final L key;
-        final R value;
-
-        KVPair(L key, R value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        boolean hasKey() {
-            return key != null;
-        }
-
-        boolean hasRight() {
-            return value != null;
-        }
+    // Represents a single replacement location in the text
+    private record ReplacementLoc<T>(int replacementTxtIdx, String key, Function<T, String> replacementFunc) {
     }
 }
