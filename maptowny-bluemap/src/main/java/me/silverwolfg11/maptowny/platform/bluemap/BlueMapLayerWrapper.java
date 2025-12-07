@@ -127,6 +127,8 @@ public class BlueMapLayerWrapper implements MapLayer {
                 .lineWidth(markerOptions.strokeWeight())
                 .fillColor(toBMColor(markerOptions.fillColor(), markerOptions.fillOpacity()))
                 .detail(markerOptions.clickTooltip())
+                // Don't show shapes in marker listing
+                .listed(false)
                 .build();
 
         markerSet.getMarkers().put(markerKey, shapeMarker);
@@ -168,8 +170,8 @@ public class BlueMapLayerWrapper implements MapLayer {
         Objects.requireNonNull(polygon);
         Objects.requireNonNull(markerOptions);
 
-        if (polygon instanceof SegmentedPolygon) {
-            addSegmentedPoly(markerKey, (SegmentedPolygon) polygon, markerOptions);
+        if (polygon instanceof SegmentedPolygon segmentedPolygon) {
+            addSegmentedPoly(markerKey, segmentedPolygon, markerOptions);
         }
         else {
             addNonSegmentedPoly(markerKey, polygon.getPoints(), markerOptions);
