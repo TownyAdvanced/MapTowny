@@ -24,23 +24,27 @@ package me.silverwolfg11.maptowny.objects.groups;
 
 import com.palmergames.bukkit.towny.object.TownBlock;
 import com.palmergames.bukkit.towny.object.TownBlockType;
+import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.awt.Color;
+import java.util.function.Consumer;
 
 /**
  * A grouping strategy that only accepts townblocks
  * of a particular {@link com.palmergames.bukkit.towny.object.TownBlockType}.
  *
- * The group data contains the townblock type name.
+ * The strategy applies custom colors for the townblock type when rendering.
  */
 public class TownblockTypeStrategy extends GroupingStrategy {
-    private final String dataKey;
     private final String townblockTypeName;
+    private final Color fillColor;
+    private final Color strokeColor;
 
-    public TownblockTypeStrategy(String dataKey, String townblockTypeName) {
-        this.dataKey = dataKey;
+    public TownblockTypeStrategy(String townblockTypeName, Color fillColor, Color strokeColor) {
         this.townblockTypeName = townblockTypeName;
+        this.fillColor = fillColor;
+        this.strokeColor = strokeColor;
     }
 
     @Override
@@ -50,7 +54,15 @@ public class TownblockTypeStrategy extends GroupingStrategy {
     }
 
     @Override
-    public @NotNull Map<String, Object> provideGroupData() {
-        return Map.of(dataKey, townblockTypeName);
+    public @NotNull Consumer<MarkerOptions.Builder> postGroupingStyling() {
+        return builder -> {
+            // Apply townblock type colors if they are set
+            if (fillColor != null) {
+                builder.fillColor(fillColor);
+            }
+            if (strokeColor != null) {
+                builder.strokeColor(strokeColor);
+            }
+        };
     }
 }

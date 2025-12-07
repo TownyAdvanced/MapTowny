@@ -22,19 +22,20 @@
 
 package me.silverwolfg11.maptowny.objects.groups;
 
+import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.StaticTB;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * TBGroups are a collection of townblocks grouped by unique properties.
- * These properties may be embedded within group data.
+ * Each group has an associated styling function that can modify marker options
+ * when the group is rendered.
  * <br><br>
  * Methods will return an immutable view to the data.
  * <br></br>
@@ -42,24 +43,25 @@ import java.util.Map;
  * <br>- There must be at least one townblock within the group.
  * <br>- All {@link StaticTB}s within the group must be in the same world.
  */
-public record TBGroup(@NotNull List<StaticTB> townblocks, @NotNull Map<String, Object> groupData) implements Cloneable {
+public record TBGroup(@NotNull List<StaticTB> townblocks,
+                      @NotNull Consumer<MarkerOptions.Builder> postGroupingStyling) implements Cloneable {
 
     @Override
     public TBGroup clone() {
-        return new TBGroup(new ArrayList<>(this.townblocks), new HashMap<>(this.groupData));
+        return new TBGroup(new ArrayList<>(this.townblocks), this.postGroupingStyling);
     }
 
     public static class Builder implements Cloneable {
         private List<StaticTB> townblocks = new ArrayList<>();
-        private Map<String, Object> groupData = new HashMap<>();
+        private Consumer<MarkerOptions.Builder> postGroupingStyling = builder -> {};
 
         private Builder() {
         }
 
         // All parameters in this constructor are copied.
-        private Builder(List<StaticTB> townblocks, Map<String, Object> groupData) {
+        private Builder(List<StaticTB> townblocks, Consumer<MarkerOptions.Builder> postGroupingStyling) {
             this.townblocks = new ArrayList<>(townblocks);
-            this.groupData = new HashMap<>(groupData);
+            this.postGroupingStyling = postGroupingStyling;
         }
 
         public Builder addTownblock(StaticTB townblock) {
@@ -72,26 +74,18 @@ public record TBGroup(@NotNull List<StaticTB> townblocks, @NotNull Map<String, O
             return this;
         }
 
-        public Builder addData(String key, Object value) {
-            this.groupData.put(key, value);
-            return this;
-        }
-
-        public Builder addData(@NotNull Map<String, Object> data) {
-            if ((data != null) && (!data.isEmpty())) {
-                this.groupData.putAll(data);
-            }
-
+        public Builder postGroupingStyling(@NotNull Consumer<MarkerOptions.Builder> stylingFunc) {
+            this.postGroupingStyling = stylingFunc;
             return this;
         }
 
         public TBGroup build() {
-            return new TBGroup(Collections.unmodifiableList(townblocks), Collections.unmodifiableMap(groupData));
+            return new TBGroup(Collections.unmodifiableList(townblocks), postGroupingStyling);
         }
 
         @Override
         protected Object clone() throws CloneNotSupportedException {
-            return new Builder(townblocks, groupData);
+            return new Builder(townblocks, postGroupingStyling);
         }
     }
 

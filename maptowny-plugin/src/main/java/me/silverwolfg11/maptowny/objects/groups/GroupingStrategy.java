@@ -23,9 +23,10 @@
 package me.silverwolfg11.maptowny.objects.groups;
 
 import com.palmergames.bukkit.towny.object.TownBlock;
+import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A grouping strategy is used to determine
@@ -41,18 +42,18 @@ public abstract class GroupingStrategy {
      */
     public abstract boolean accept(@NotNull TownBlock townblock);
 
+
     /**
-     * Group data that will be applied to the {@link TBGroup} that
-     * imbues properties of the strategy to the group.
-     *
-     * @return data related to the strategy.
+     * Provide a post-grouping styling function that can modify
+     * styling of the resulting {@link me.silverwolfg11.maptowny.objects.PolygonGroup}
+     * after default styling is provided.
      */
     @NotNull
-    public abstract Map<String, Object> provideGroupData();
+    public abstract Consumer<MarkerOptions.Builder> postGroupingStyling();
 
     /**
      * A default grouping strategy that accepts
-     * all townblocks and provides no group data.
+     * all townblocks.
      *
      * @return a default strategy.
      */
@@ -65,8 +66,8 @@ public abstract class GroupingStrategy {
             }
 
             @Override
-            public @NotNull Map<String, Object> provideGroupData() {
-                return Map.of();
+            public @NotNull Consumer<MarkerOptions.Builder> postGroupingStyling() {
+                return builder -> {}; // No-op styling function
             }
         };
     }

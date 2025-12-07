@@ -44,8 +44,6 @@ import java.util.stream.Collectors;
 
 // Provide the colors and sources for a town's fill and stroke.
 public class ColorProvider {
-    private final static String GROUP_TOWNBLOCK_KEY = "maptowny_townblock_type";
-
     private final List<ColorSource> fillSources;
     private final List<ColorSource> strokeSources;
     private final Map<String, ColorGroup> tbColors;
@@ -99,8 +97,12 @@ public class ColorProvider {
             return Collections.emptyList();
         }
 
-        return tbColors.keySet().stream()
-                .map(tbTypeName -> new TownblockTypeStrategy(GROUP_TOWNBLOCK_KEY, tbTypeName))
+        return tbColors.entrySet().stream()
+                .map(entry -> {
+                    String tbTypeName = entry.getKey();
+                    ColorGroup colors = entry.getValue();
+                    return new TownblockTypeStrategy(tbTypeName, colors.fillColor, colors.strokeColor);
+                })
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -147,30 +149,6 @@ public class ColorProvider {
     // that are configured to have separate colors.
     public List<GroupingStrategy> getTownblockTypeStrategies() {
         return tbColorGroupingStrats;
-    }
-
-    public ColorGroup getGroupColors(TBGroup group, TownColoring townColoring) {
-        Color baseFill = townColoring.colors().fillColor;
-        Color baseStroke = townColoring.colors().strokeColor;
-
-        Color finalFill = baseFill;
-        Color finalStroke = baseStroke;
-
-        String tbType = (String) group.groupData().get(GROUP_TOWNBLOCK_KEY);
-
-        if (tbType != null && tbColors.containsKey(tbType)) {
-            ColorGroup tbTypeColors = tbColors.get(tbType);
-
-            if (townColoring.usesTownblockFillColors() && tbTypeColors.fillColor != null) {
-                finalFill = tbTypeColors.fillColor;
-            }
-
-            if (townColoring.usesTownblockStrokeColors() && tbTypeColors.strokeColor != null) {
-                finalStroke = tbTypeColors.strokeColor;
-            }
-        }
-
-        return ColorGroup.of(finalFill, finalStroke);
     }
 
     @Nullable

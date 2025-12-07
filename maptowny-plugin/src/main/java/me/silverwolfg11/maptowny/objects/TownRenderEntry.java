@@ -223,8 +223,9 @@ public class TownRenderEntry {
         }
 
         strategyBuilders.forEach(strategyBuilder -> {
-            // Imbue strategy data to the group
-            strategyBuilder.right().addData(strategyBuilder.left().provideGroupData());
+            // Imbue strategy styling function to the group
+            strategyBuilder.right()
+                    .postGroupingStyling(strategyBuilder.left().postGroupingStyling());
         });
 
         return strategyBuilders.stream()

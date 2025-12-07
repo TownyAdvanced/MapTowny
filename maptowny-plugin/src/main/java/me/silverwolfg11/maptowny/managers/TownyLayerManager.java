@@ -321,10 +321,9 @@ public class TownyLayerManager implements LayerManager {
                 if (polyParts.isEmpty())
                     continue;
 
-                var groupColors = colorProvider.getGroupColors(tbGroup, townColoring);
-                var groupOptions = optionsBuilder.clone()
-                        .fillColor(groupColors.fillColor)
-                        .strokeColor(groupColors.strokeColor);
+                var groupOptions = optionsBuilder.clone();
+                // Apply the post-grouping styling function from the strategy
+                tbGroup.postGroupingStyling().accept(groupOptions);
 
                 PolygonGroup pg = new PolygonGroup(polyParts, groupOptions.build());
                 polygonGroups.add(pg);
