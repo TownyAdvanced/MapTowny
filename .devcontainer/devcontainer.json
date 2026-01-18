@@ -1,0 +1,44 @@
+{
+  "name": "Java Dev (Maven + Gradle)",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
+
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "additionalVersions": "17",
+      "installMaven": true,
+      "installGradle": true
+    }
+  },
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+
+  "mounts": [
+    "source=${localEnv:HOME}/.m2,target=/home/vscode/.m2,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.gradle,target=/home/vscode/.gradle,type=bind,consistency=cached"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.java",
+        "vscjava.vscode-maven",
+        "vscjava.vscode-gradle",
+        "vscjava.vscode-java-debug",
+        "vscjava.vscode-java-test",
+      ],
+      "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.format.settings.url": ".vscode/java-formatter.xml",
+        "java.format.enabled": true,
+        "java.autobuild.enabled": true
+      }
+    }
+  },
+
+  "postCreateCommand": "java -version && mvn -version && gradle -version",
+  "postStartCommand": "bash -lc 'sudo cp .devcontainer/set-java-homes.sh /usr/local/bin/set-java-homes.sh && sudo chmod +x /usr/local/bin/set-java-homes.sh && echo \"source /usr/local/bin/set-java-homes.sh >/dev/null 2>&1 || true\" >> $HOME/.bashrc'"
+}
