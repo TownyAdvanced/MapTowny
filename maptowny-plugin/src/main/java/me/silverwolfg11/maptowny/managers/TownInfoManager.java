@@ -26,6 +26,8 @@ import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.TownyEconomyHandler;
 import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.object.Government;
+import com.palmergames.bukkit.towny.object.Nation;
+import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyObject;
 import me.silverwolfg11.maptowny.objects.TextReplacement;
@@ -100,7 +102,7 @@ public class TownInfoManager {
     // Replacement Registration Methods
     private void registerReplacements() {
         register("town", TownyObject::getName);
-        register("mayor", t -> t.getMayor().getName());
+        register("mayor", this::getMayorName);
         register("firespread", t -> String.valueOf(t.getPermissions().fire));
         register("pvp", t -> String.valueOf(t.getPermissions().pvp));
         register("explosion", t -> String.valueOf(t.getPermissions().explosion));
@@ -134,16 +136,20 @@ public class TownInfoManager {
         });
 
         registerParenthesesReplacement("nation",
-                t-> t.hasNation() ? TownyAPI.getInstance().getTownNationOrNull(t).getName() : ""
+                t -> {
+                    Nation nation = TownyAPI.getInstance().getTownNationOrNull(t);
+                    return nation != null ? nation.getName() : "";
+                }
         );
 
         registerParenthesesReplacement("nationstatus",
                 t -> {
-                    if (!t.hasNation()) {
+                    Nation nation = TownyAPI.getInstance().getTownNationOrNull(t);
+                    if (nation == null) {
                         return "";
                     }
 
-                    final String nationName = TownyAPI.getInstance().getTownNationOrNull(t).getName();
+                    final String nationName = nation.getName();
                     return t.isCapital() ? "Capital of " + nationName : "Member of " + nationName;
                 }
         );
@@ -173,6 +179,11 @@ public class TownInfoManager {
         // Sort replacements
         clickReplacements.sortReplacements();
         hoverReplacements.sortReplacements();
+    }
+
+    private String getMayorName(Town town) {
+        Resident mayor = town.getMayor();
+        return mayor != null ? mayor.getName() : "";
     }
 
     // Register a replacement that will replace parenthesis if empty.
