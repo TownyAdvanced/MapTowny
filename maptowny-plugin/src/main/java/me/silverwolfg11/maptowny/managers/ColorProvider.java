@@ -27,12 +27,13 @@ import com.palmergames.util.Pair;
 import me.silverwolfg11.maptowny.objects.ColorSource;
 import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.objects.groups.GroupingStrategy;
-import me.silverwolfg11.maptowny.objects.groups.TBGroup;
 import me.silverwolfg11.maptowny.objects.groups.TownblockTypeStrategy;
+
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,8 +63,22 @@ public class ColorProvider {
         this.defaultGroup = ColorGroup.of(config.getDefaultFillColor(),
                 config.getDefaultStrokeColor());
 
+        // Map townblock type -> color group
         this.tbColors = populateTypeMap(config);
         this.tbColorGroupingStrats = populateGroupingStrats(this.tbColors);
+    }
+
+    public TownColoring getTownColorSource(Town town) {
+        Pair<Color, Boolean> fillResult = resolveColor(fillSources, town);
+        Pair<Color, Boolean> strokeResult = resolveColor(strokeSources, town);
+
+        Color finalFillColor = fillResult.left() != null ? fillResult.left() : defaultGroup.fillColor;
+        Color finalStrokeColor = strokeResult.left() != null ? strokeResult.left() : defaultGroup.strokeColor;
+
+        return new TownColoring(
+                ColorGroup.of(finalFillColor, finalStrokeColor),
+                fillResult.right(),
+                strokeResult.right());
     }
 
     private Map<String, ColorGroup> populateTypeMap(MapConfig config) {
@@ -80,15 +95,13 @@ public class ColorProvider {
                     final Color strokeColor = config.getStrokeColor(tbType);
                     return new AbstractMap.SimpleEntry<>(
                             tbType,
-                            ColorGroup.of(fillColor, strokeColor)
-                    );
+                            ColorGroup.of(fillColor, strokeColor));
                 })
                 .filter(entry -> entry.getValue().fillColor != null ||
                         entry.getValue().strokeColor != null)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        Map.Entry::getValue
-                ));
+                        Map.Entry::getValue));
     }
 
     // Generate townblock type grouping strategies
@@ -106,22 +119,6 @@ public class ColorProvider {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    public TownColoring getTownColorSource(Town town) {
-        Pair<Color, Boolean> fillResult = resolveColor(fillSources, town);
-        Pair<Color, Boolean> strokeResult = resolveColor(strokeSources, town);
-
-        Color finalFillColor = fillResult.left() != null ?
-                fillResult.left() : defaultGroup.fillColor;
-        Color finalStrokeColor = strokeResult.left() != null ?
-                strokeResult.left() : defaultGroup.strokeColor;
-
-        return new TownColoring(
-                ColorGroup.of(finalFillColor, finalStrokeColor),
-                fillResult.right(),
-                strokeResult.right()
-        );
-    }
-
     // Identify two things:
     // - Whether the town should be colored with townblock type coloring
     // - Colors for the town stroke, fill
@@ -132,10 +129,20 @@ public class ColorProvider {
         for (ColorSource source : sources) {
             if (source == ColorSource.TOWNBLOCK_TYPE) {
                 usesTownblockType = true;
+                // Fall-through for townblock type to
+                // get the next color source in case
+                // the town-block type colors are missing / not set.
                 continue;
             }
 
-            Color color = fetchColorFromTown(source, town);
+            String hexCode = null;
+            if (source == ColorSource.NATION) {
+                hexCode = town.getMapColorHexCode();
+            } else if (source == ColorSource.TOWN) {
+                hexCode = town.getNationMapColorHexCode();
+            }
+            Color color = convertTownHexCodeToColor(hexCode, town.getName());
+
             if (color != null) {
                 resolvedColor = color;
                 break;
@@ -151,49 +158,22 @@ public class ColorProvider {
         return tbColorGroupingStrats;
     }
 
-    @Nullable
-    private Color fetchColorFromTown(ColorSource source, Town town) {
-        if (source == ColorSource.TOWN) {
-            return getTownColor(town);
-        } else if (source == ColorSource.NATION) {
-            return getNationColor(town);
-        }
-
-        return null;
-    }
-
     // Convert given town hex code to color with error handling.
     @Nullable
-    private Color convertTownHexCodeToColor(String hex, Town town) {
-        if (!hex.isEmpty()) {
+    @Contract("null, _ -> null")
+    private Color convertTownHexCodeToColor(@Nullable String hex, String townName) {
+        if (hex != null && !hex.isEmpty()) {
             if (hex.charAt(0) != '#')
                 hex = "#" + hex;
 
             try {
                 return Color.decode(hex);
             } catch (NumberFormatException ex) {
-                String name = town.getName();
-                pluginLogger.warning("Error loading town " + name + "'s map color: " + hex + "!");
+                pluginLogger.warning("Error loading town " + townName + "'s map color: " + hex + "!");
             }
         }
 
         return null;
-    }
-
-    // Gets the nation color from a town if:
-    // config set to use nation colors and town has a valid nation color.
-    @Nullable
-    private Color getNationColor(@NotNull Town town) {
-        final String hex = town.getNationMapColorHexCode();
-        return hex == null ? null : convertTownHexCodeToColor(hex, town);
-    }
-
-    // Gets the town color from a town if:
-    // config set to use town colors
-    @Nullable
-    private Color getTownColor(@NotNull Town town) {
-        final String hex = town.getMapColorHexCode();
-        return hex == null ? null : convertTownHexCodeToColor(hex, town);
     }
 
     // Create an ordered list guaranteeing unique elements
@@ -207,13 +187,13 @@ public class ColorProvider {
         public final Color fillColor, strokeColor;
 
         private ColorGroup(@Nullable Color fillColor,
-                           @Nullable Color strokeColor) {
+                @Nullable Color strokeColor) {
             this.fillColor = fillColor;
             this.strokeColor = strokeColor;
         }
 
         private static ColorGroup of(@Nullable Color fillColor,
-                                     @Nullable Color strokeColor) {
+                @Nullable Color strokeColor) {
             return new ColorGroup(fillColor, strokeColor);
         }
     }
@@ -221,8 +201,7 @@ public class ColorProvider {
     public record TownColoring(
             @NotNull ColorGroup colors,
             boolean usesTownblockFillColors,
-            boolean usesTownblockStrokeColors
-    ) {
+            boolean usesTownblockStrokeColors) {
         public boolean usesTownblockColors() {
             return usesTownblockFillColors || usesTownblockStrokeColors;
         }

@@ -313,6 +313,15 @@ public class TownyLayerManager implements LayerManager {
                     .clickTooltip(clickTooltip)
                     .hoverTooltip(hoverTooltip);
 
+            // Apply default colors
+            if (townColoring.colors().fillColor != null) {
+                optionsBuilder.fillColor(townColoring.colors().fillColor);
+            }
+
+            if (townColoring.colors().strokeColor != null) {
+                optionsBuilder.fillColor(townColoring.colors().strokeColor);
+            }
+
             // Create polygon groups from each townblock group
             List<PolygonGroup> polygonGroups = new ArrayList<>();
             for (TBGroup tbGroup : tbGroups) {
@@ -566,6 +575,4 @@ public class TownyLayerManager implements LayerManager {
                 .hoverTooltip(hoverText)
                 .build();
     }
-
-    // =====
 }
