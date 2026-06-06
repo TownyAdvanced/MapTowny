@@ -319,7 +319,7 @@ public class TownyLayerManager implements LayerManager {
             }
 
             if (townColoring.colors().strokeColor != null) {
-                optionsBuilder.fillColor(townColoring.colors().strokeColor);
+                optionsBuilder.strokeColor(townColoring.colors().strokeColor);
             }
 
             // Create polygon groups from each townblock group

@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 
 // Provide the colors and sources for a town's fill and stroke.
 public class ColorProvider {
+
     private final List<ColorSource> fillSources;
     private final List<ColorSource> strokeSources;
     private final Map<String, ColorGroup> tbColors;
@@ -135,13 +136,12 @@ public class ColorProvider {
                 continue;
             }
 
-            String hexCode = null;
-            if (source == ColorSource.NATION) {
-                hexCode = town.getMapColorHexCode();
-            } else if (source == ColorSource.TOWN) {
-                hexCode = town.getNationMapColorHexCode();
+            Color color = null;
+            if (source == ColorSource.TOWN) {
+                color = town.getMapColor();
+            } else if (source == ColorSource.NATION && town.hasNation()) {
+                color = town.getNationOrNull().getMapColor();
             }
-            Color color = convertTownHexCodeToColor(hexCode, town.getName());
 
             if (color != null) {
                 resolvedColor = color;
@@ -183,6 +183,7 @@ public class ColorProvider {
     }
 
     public static class ColorGroup {
+
         @Nullable
         public final Color fillColor, strokeColor;
 
