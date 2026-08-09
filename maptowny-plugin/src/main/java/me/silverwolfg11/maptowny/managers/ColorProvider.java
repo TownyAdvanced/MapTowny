@@ -26,10 +26,8 @@ import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.util.Pair;
 import me.silverwolfg11.maptowny.objects.ColorSource;
 import me.silverwolfg11.maptowny.objects.MapConfig;
-import me.silverwolfg11.maptowny.objects.groups.GroupingStrategy;
 import me.silverwolfg11.maptowny.objects.groups.TownblockTypeStrategy;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +46,7 @@ public class ColorProvider {
 
     private final List<ColorSource> fillSources;
     private final List<ColorSource> strokeSources;
-    private final Map<String, ColorGroup> tbColors;
-    private final List<GroupingStrategy> tbColorGroupingStrats;
+    private final List<TownblockTypeStrategy> tbColorGroupingStrats;
 
     private final ColorGroup defaultGroup;
     private final Logger pluginLogger;
@@ -65,8 +62,8 @@ public class ColorProvider {
                 config.getDefaultStrokeColor());
 
         // Map townblock type -> color group
-        this.tbColors = populateTypeMap(config);
-        this.tbColorGroupingStrats = populateGroupingStrats(this.tbColors);
+        Map<String, ColorGroup> tbColors = populateTypeMap(config);
+        this.tbColorGroupingStrats = populateGroupingStrats(tbColors);
     }
 
     public TownColoring getTownColorSource(Town town) {
@@ -106,7 +103,7 @@ public class ColorProvider {
     }
 
     // Generate townblock type grouping strategies
-    private List<GroupingStrategy> populateGroupingStrats(Map<String, ColorGroup> tbColors) {
+    private List<TownblockTypeStrategy> populateGroupingStrats(Map<String, ColorGroup> tbColors) {
         if (tbColors.isEmpty()) {
             return Collections.emptyList();
         }
@@ -154,26 +151,31 @@ public class ColorProvider {
 
     // Get the townblock grouping strategies based on the townblock types
     // that are configured to have separate colors.
-    public List<GroupingStrategy> getTownblockTypeStrategies() {
+    public List<TownblockTypeStrategy> getTownblockTypeStrategies() {
         return tbColorGroupingStrats;
     }
 
-    // Convert given town hex code to color with error handling.
-    @Nullable
-    @Contract("null, _ -> null")
-    private Color convertTownHexCodeToColor(@Nullable String hex, String townName) {
-        if (hex != null && !hex.isEmpty()) {
-            if (hex.charAt(0) != '#')
-                hex = "#" + hex;
-
-            try {
-                return Color.decode(hex);
-            } catch (NumberFormatException ex) {
-                pluginLogger.warning("Error loading town " + townName + "'s map color: " + hex + "!");
-            }
+    // Modifies townblock grouping strategies to handle partial coloring.
+    // i.e. if a town uses townblock type coloring for a single color source (e.g fill), but not both sources (e.g. stroke & fill).
+    public List<TownblockTypeStrategy> getTownblockTypeStrategies(TownColoring townColoring) {
+        if (townColoring.usesTownblockFillColors() && townColoring.usesTownblockStrokeColors()) {
+            return getTownblockTypeStrategies();
+        } else if (!townColoring.usesTownblockColors()) {
+            return Collections.emptyList();
         }
 
-        return null;
+        var baseStrategies = getTownblockTypeStrategies();
+        List<TownblockTypeStrategy> strategies = new ArrayList<>(baseStrategies.size());
+        // Partial coloring
+        for (var tbStrategy : getTownblockTypeStrategies()) {
+            strategies.add(new TownblockTypeStrategy(
+                    tbStrategy.getTownblockTypeName(),
+                    townColoring.usesTownblockFillColors() ? tbStrategy.getFillColor() : null,
+                    townColoring.usesTownblockStrokeColors() ? tbStrategy.getStrokeColor() : null
+            ));
+        }
+
+        return strategies;
     }
 
     // Create an ordered list guaranteeing unique elements
@@ -188,13 +190,13 @@ public class ColorProvider {
         public final Color fillColor, strokeColor;
 
         private ColorGroup(@Nullable Color fillColor,
-                @Nullable Color strokeColor) {
+                           @Nullable Color strokeColor) {
             this.fillColor = fillColor;
             this.strokeColor = strokeColor;
         }
 
         private static ColorGroup of(@Nullable Color fillColor,
-                @Nullable Color strokeColor) {
+                                     @Nullable Color strokeColor) {
             return new ColorGroup(fillColor, strokeColor);
         }
     }

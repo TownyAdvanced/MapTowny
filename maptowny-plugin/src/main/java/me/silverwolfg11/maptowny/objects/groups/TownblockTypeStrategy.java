@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  *
  * The strategy applies custom colors for the townblock type when rendering.
  */
-public class TownblockTypeStrategy extends GroupingStrategy {
+public class TownblockTypeStrategy extends GroupingStrategy implements Cloneable {
     private final String townblockTypeName;
     private final Color fillColor;
     private final Color strokeColor;
@@ -45,6 +45,18 @@ public class TownblockTypeStrategy extends GroupingStrategy {
         this.townblockTypeName = townblockTypeName;
         this.fillColor = fillColor;
         this.strokeColor = strokeColor;
+    }
+
+    public String getTownblockTypeName() {
+        return townblockTypeName;
+    }
+
+    public Color getFillColor() {
+        return fillColor;
+    }
+
+    public Color getStrokeColor() {
+        return strokeColor;
     }
 
     @Override
@@ -64,5 +76,10 @@ public class TownblockTypeStrategy extends GroupingStrategy {
                 builder.strokeColor(strokeColor);
             }
         };
+    }
+
+    @Override
+    public @NotNull TownblockTypeStrategy clone() {
+        return new TownblockTypeStrategy(townblockTypeName, fillColor, strokeColor);
     }
 }

@@ -208,7 +208,7 @@ public class TownyLayerManager implements LayerManager {
         // Provide how to group the town's townblocks.
         List<GroupingStrategy> groupingStrategies = new ArrayList<>();
         if (townColoring.usesTownblockColors()) {
-            groupingStrategies.addAll(colorProvider.getTownblockTypeStrategies());
+            groupingStrategies.addAll(colorProvider.getTownblockTypeStrategies(townColoring));
         }
         // Always add a default strategy last
         // to capture remaining townblocks.
