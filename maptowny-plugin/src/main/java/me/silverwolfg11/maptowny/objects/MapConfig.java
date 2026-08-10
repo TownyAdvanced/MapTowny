@@ -74,17 +74,12 @@ public class MapConfig {
     @Node("icon-info")
     private IconInfo iconInfo = new IconInfo();
 
-    @Comment("")
-    @Node("townblock-types")
-    private TownBlockTypes townBlockTypes = new TownBlockTypes();
-
-    @Comment({"", "Priorities for how color for claims should be applied.",
-              "The valid list options are \"NATION\", \"TOWN\", and \"TOWNBLOCK_TYPE\".",
-              "If one option doesn't have a color for the respective area, then it will move onto the next option.",
-              "Only if the stroke or fill for a town uses the \"TOWNBLOCK_TYPE\" source will the claims be separated by townblock types.",
-              "Default stroke and fill colors are always the last priority."})
-    @Node("color-priorities")
-    private ColorPriorities colorPriorities = new ColorPriorities();
+    @Comment({"", "Default townblock types can be found on " +
+            "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java.",
+            "Each type requires a \"fill-color\" and \"stroke-color\".",
+            "If the color is not being used, set its value to \"none\"."})
+    @Node("townblock-colors")
+    private Map<String, TownBlockColor> townblockTypeColors = new HashMap<>();
 
     @SerializableConfig
     private static class LayerInfo {
@@ -119,6 +114,14 @@ public class MapConfig {
         @Node("fill-opacity")
         private double fillOpacity = 0.2;
 
+        @Comment({"", "Priorities for how color for claims should be applied.",
+                "The valid list options are \"NATION\", \"TOWN\", and \"TOWNBLOCK_TYPE\".",
+                "If one option doesn't have a color for the respective area, then it will move onto the next option.",
+                "Claims will be separated by townblock types if \"TOWNBLOCK_TYPE\" is listed as a priority.",
+                "The default fill color is last priority."})
+        @Node("fill-priorities")
+        private List<ColorSource> fillPriorities = new ArrayList<>();
+
         @Comment({"", "Whether to draw a stroke along the claim path."})
         private boolean stroke = true;
 
@@ -131,6 +134,11 @@ public class MapConfig {
 
         @Node("stroke-opacity")
         private double strokeOpacity = 1.0;
+
+        @Comment({"", "Priorities for how color for claims should be applied.",
+                "See fill-priorities for more information."})
+        @Node("stroke-priorities")
+        private List<ColorSource> strokePriorities = new ArrayList<>();
 
         private transient Color awtFillColor, awtStrokeColor;
     }
@@ -185,36 +193,15 @@ public class MapConfig {
         }
     }
 
-    @SerializableConfig
-    private static class TownBlockTypes {
-        @Comment({"Default townblock types can be found on " +
-                    "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java.",
-                  "Each type requires a \"fill-color\" and \"stroke-color\".",
-                  "If the color is not being used, set its value to \"none\"."})
-        @Node("types")
-        private Map<String, TownBlockColor> typeColors = new HashMap<>();
+    // Sets default values for the config.
+    public MapConfig() {
+        townblockTypeColors.put("Shop", new TownBlockColor());
 
-        public TownBlockTypes() {
-            typeColors.put("Shop", new TownBlockColor());
-        }
-    }
-
-    @SerializableConfig
-    private static class ColorPriorities {
-        @Node("stroke")
-        private List<ColorSource> strokePriorities = new ArrayList<>();
-
-        @Node("fill")
-        private List<ColorSource> fillPriorities = new ArrayList<>();
-
-        public ColorPriorities() {
-            List<ColorSource> defaultPriorities = Arrays.asList(
-                    ColorSource.TOWN, ColorSource.NATION
-            );
-
-            strokePriorities.addAll(defaultPriorities);
-            fillPriorities.addAll(defaultPriorities);
-        }
+        List<ColorSource> defaultPriorities = Arrays.asList(
+                ColorSource.TOWN, ColorSource.NATION
+        );
+        fillStyle.strokePriorities.addAll(defaultPriorities);
+        fillStyle.fillPriorities.addAll(defaultPriorities);
     }
 
 
@@ -335,14 +322,14 @@ public class MapConfig {
     }
 
     public Collection<String> getConfigTownBlockTypeNames() {
-        return townBlockTypes.typeColors.keySet();
+        return townblockTypeColors.keySet();
     }
 
     private TownBlockColor getTownBlockTypeColors(String typeName) {
-        if (townBlockTypes.typeColors == null)
+        if (townblockTypeColors == null || townblockTypeColors.isEmpty())
             return null;
 
-        TownBlockColor tbColor = townBlockTypes.typeColors.getOrDefault(typeName, null);
+        TownBlockColor tbColor = townblockTypeColors.getOrDefault(typeName, null);
 
         if (tbColor == null) {
             return null;
@@ -365,11 +352,11 @@ public class MapConfig {
     }
 
     public List<ColorSource> getStrokeColorPriorities() {
-        return Collections.unmodifiableList(colorPriorities.strokePriorities);
+        return Collections.unmodifiableList(fillStyle.strokePriorities);
     }
 
     public List<ColorSource> getFillColorPriorities() {
-        return Collections.unmodifiableList(colorPriorities.fillPriorities);
+        return Collections.unmodifiableList(fillStyle.fillPriorities);
     }
 
 
