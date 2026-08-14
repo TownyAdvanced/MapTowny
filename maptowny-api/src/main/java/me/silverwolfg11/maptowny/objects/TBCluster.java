@@ -218,12 +218,13 @@ public class TBCluster {
             while (!visited.isEmpty()) {
                 long hash = visited.pop();
 
-                StaticTB townBlock = hashedMap.remove(hash);
+                StaticTB townBlock = hashedMap.get(hash);
 
                 // Townblock may have already been visited
                 if (townBlock == null)
                     continue;
 
+                hashedMap.remove(hash);
                 cluster.add(hash, townBlock);
 
                 for (int i = 0; i < 2; ++i) {
@@ -303,5 +304,20 @@ public class TBCluster {
             tbMap.put(tb.toLong(), tb);
         }
         return tbMap;
+    }
+
+    /**
+     * A functional interface for testing whether a townblock should be accepted into a cluster or not.
+     */
+    @FunctionalInterface
+    public interface ClusterConstraint {
+        /**
+         *
+         * @param testingTB Townblock that is attempted to being added to the cluster.
+         * @param clusterTB The last townblock added to the cluster. Can be {@code null} in
+         *                  cases where no townblocks have been added yet.
+         * @return whether the townblock should be added to the cluster or not.
+         */
+        boolean testConstraint(@NotNull StaticTB testingTB, @Nullable StaticTB clusterTB);;
     }
 }

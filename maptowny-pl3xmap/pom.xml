@@ -37,6 +37,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <jdk.version>21</jdk.version>
+        <toolchain.jdk.version>[21,22)</toolchain.jdk.version>
     </properties>
 
     <repositories>

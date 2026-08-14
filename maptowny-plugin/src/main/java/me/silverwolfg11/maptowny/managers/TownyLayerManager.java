@@ -31,10 +31,12 @@ import me.silverwolfg11.maptowny.objects.MapConfig;
 import me.silverwolfg11.maptowny.objects.MarkerOptions;
 import me.silverwolfg11.maptowny.objects.Point2D;
 import me.silverwolfg11.maptowny.objects.Polygon;
+import me.silverwolfg11.maptowny.objects.PolygonGroup;
 import me.silverwolfg11.maptowny.objects.SegmentedPolygon;
-import me.silverwolfg11.maptowny.objects.StaticTB;
 import me.silverwolfg11.maptowny.objects.TBCluster;
 import me.silverwolfg11.maptowny.objects.TownRenderEntry;
+import me.silverwolfg11.maptowny.objects.groups.GroupingStrategy;
+import me.silverwolfg11.maptowny.objects.groups.TBGroup;
 import me.silverwolfg11.maptowny.platform.MapLayer;
 import me.silverwolfg11.maptowny.platform.MapPlatform;
 import me.silverwolfg11.maptowny.platform.MapPlatformObserver;
@@ -47,7 +49,6 @@ import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,6 +69,7 @@ public class TownyLayerManager implements LayerManager {
     private final TownInfoManager townInfoManager;
     private final MapPlatform mapPlatform;
     private final MapPlatformObserver layerPlatformObserver;
+    private final ColorProvider colorProvider;
 
     private final Map<String, MapLayer> worldProviders = new ConcurrentHashMap<>();
     private final Collection<UUID> renderedTowns = ConcurrentHashMap.newKeySet();
@@ -93,6 +95,7 @@ public class TownyLayerManager implements LayerManager {
         this.plugin = plugin;
         this.townInfoManager = new TownInfoManager(plugin.getDataFolder(), plugin.getLogger());
         this.mapPlatform = platform;
+        this.colorProvider = new ColorProvider(plugin.getLogger(), plugin.config());
 
         this.layerPlatformObserver = createLayerPlatformObserver();
         this.mapPlatform.registerObserver(layerPlatformObserver);
@@ -190,8 +193,7 @@ public class TownyLayerManager implements LayerManager {
         if (outpostIcon != null) {
             platform.registerIcon(OUTPOST_ICON, outpostIcon, iconHeight, iconWidth);
             usingOutposts = true;
-        }
-        else {
+        } else {
             usingOutposts = false;
         }
     }
@@ -201,15 +203,65 @@ public class TownyLayerManager implements LayerManager {
     public TownRenderEntry buildTownEntry(Town town) {
         // Get all objects that must be fetched synchronously
         // This includes anything that uses the Towny or Bukkit API.
+        ColorProvider.TownColoring townColoring = colorProvider.getTownColorSource(town);
 
-        Color nationColor = getNationColor(town).orElse(null);
-        Color townColor = getTownColor(town).orElse(null);
+        // Provide how to group the town's townblocks.
+        List<GroupingStrategy> groupingStrategies = new ArrayList<>();
+        if (townColoring.usesTownblockColors()) {
+            groupingStrategies.addAll(colorProvider.getTownblockTypeStrategies(townColoring));
+        }
+        // Always add a default strategy last
+        // to capture remaining townblocks.
+        groupingStrategies.add(GroupingStrategy.defaultStrategy());
 
         Logger logger = plugin.getLogger();
         String clickText = townInfoManager.getClickTooltip(town, logger);
         String hoverText = townInfoManager.getHoverTooltip(town, logger);
 
-        return new TownRenderEntry(town, usingOutposts, nationColor, townColor, clickText, hoverText);
+        return new TownRenderEntry(town, usingOutposts, groupingStrategies,
+                townColoring, clickText, hoverText);
+    }
+
+    private List<Polygon> getPolygonsFromGroup(String townName, TBGroup tbGroup, int tbSize) {
+        List<TBCluster> clusters = TBCluster.findClusters(tbGroup.townblocks());
+        List<Polygon> parts = new ArrayList<>();
+
+        for (TBCluster cluster : clusters) {
+            PolygonUtil.PolyFormResult result = PolygonUtil.getPolyInfoFromCluster(cluster, tbSize);
+
+            List<List<Point2D>> negativeSpace = new ArrayList<>();
+            List<List<Point2D>> segmentedSpace = new ArrayList<>();
+
+            // Handle enclosed space within the polygon
+            if (!result.getNegativeSpaceClusters().isEmpty()) {
+                negativeSpace = result.getNegativeSpaceClusters().stream()
+                        .map(negCluster -> PolygonUtil.getPolyInfoFromCluster(negCluster, tbSize, false).getPolygonPoints())
+                        .collect(Collectors.toList());
+
+                if (mapPlatform.usesSegmentedPolygons()) {
+                    segmentedSpace = PolygonUtil.segmentPolygon(cluster, result.getNegativeSpaceClusters(), tbSize);
+                }
+            }
+
+            // Form the main polygon
+            List<Point2D> poly = result.getPolygonPoints();
+
+            if (!poly.isEmpty()) {
+                Polygon part;
+
+                if (!segmentedSpace.isEmpty()) {
+                    part = new SegmentedPolygon(poly, negativeSpace, segmentedSpace);
+                } else {
+                    part = new Polygon(poly, negativeSpace);
+                }
+
+                parts.add(part);
+            } else {
+                plugin.getLogger().warning("Error rendering part of town " + townName);
+            }
+        }
+
+        return parts;
     }
 
     // Thread-Safe
@@ -232,130 +284,106 @@ public class TownyLayerManager implements LayerManager {
         final String townIconKey = TOWN_ICON_KEY_PREFIX + tre.getTownUUID();
 
         String homeBlockWorld = tre.getHomeBlockWorld();
-        Optional<Color> nationColor = tre.getNationColor();
-        Optional<Color> townColor = tre.getTownColor();
+        ColorProvider.TownColoring townColoring = tre.getTownColoring();
 
         String clickTooltip = tre.getClickText();
         String hoverTooltip = tre.getHoverText();
 
         // Actual Rendering
-        Map<String, ? extends Collection<StaticTB>> worldBlocks = tre.getWorldBlocks();
+        Map<String, List<TBGroup>> worldGroups = tre.getWorldGroups();
 
-        for (Map.Entry<String, ? extends Collection<StaticTB>> entry : worldBlocks.entrySet()) {
+        for (Map.Entry<String, List<TBGroup>> entry : worldGroups.entrySet()) {
             final String worldName = entry.getKey();
-            final Collection<StaticTB> blocks = entry.getValue();
+            final List<TBGroup> tbGroups = entry.getValue();
 
             MapLayer worldProvider = worldProviders.get(worldName);
 
             // If no world provider, then we can discard rendering
             if (worldProvider == null)
                 continue;
-            // Sort the townblocks into clusters
-            List<TBCluster> clusters = TBCluster.findClusters(blocks);
-            List<Polygon> parts = new ArrayList<>();
 
-            for (TBCluster cluster : clusters) {
-                PolygonUtil.PolyFormResult result = PolygonUtil.getPolyInfoFromCluster(cluster, townblockSize);
+            // Unrender previous town markers
+            worldProvider.removeMarkers(
+                    (markerKey) -> markerKey.contains(TOWN_KEY_PREFIX + tre.getTownName())
+                            || markerKey.contains(TOWN_ICON_KEY_PREFIX + tre.getTownName())
+            );
 
-                List<List<Point2D>> negativeSpace = new ArrayList<>();
-                List<List<Point2D>> segmentedSpace = new ArrayList<>();
+            MarkerOptions.Builder optionsBuilder = config.buildMarkerOptions()
+                    .name(tre.getTownName())
+                    .clickTooltip(clickTooltip)
+                    .hoverTooltip(hoverTooltip);
 
-                // Handle enclosed space within the polygon
-                if (!result.getNegativeSpaceClusters().isEmpty()) {
-                    negativeSpace = result.getNegativeSpaceClusters().stream()
-                            .map(negCluster -> PolygonUtil.getPolyInfoFromCluster(negCluster, townblockSize, false).getPolygonPoints())
-                            .collect(Collectors.toList());
-
-                    if (mapPlatform.usesSegmentedPolygons()) {
-                        segmentedSpace = PolygonUtil.segmentPolygon(cluster, result.getNegativeSpaceClusters(), townblockSize);
-                    }
-                }
-
-                // Form the main polygon
-                List<Point2D> poly = result.getPolygonPoints();
-
-                if (!poly.isEmpty()) {
-                    Polygon part;
-
-                    if (!segmentedSpace.isEmpty()) {
-                        part = new SegmentedPolygon(poly, negativeSpace, segmentedSpace);
-                    }
-                    else {
-                        part = new Polygon(poly, negativeSpace);
-                    }
-
-                    parts.add(part);
-                }
-                else {
-                    plugin.getLogger().warning("Error rendering part of town " + tre.getTownName());
-                }
+            // Apply default colors
+            if (townColoring.colors().fillColor != null) {
+                optionsBuilder.fillColor(townColoring.colors().fillColor);
             }
 
-            if (!parts.isEmpty()) {
-                MarkerOptions.Builder optionsBuilder = config.buildMarkerOptions()
-                        .name(tre.getTownName())
-                        .clickTooltip(clickTooltip)
-                        .hoverTooltip(hoverTooltip);
+            if (townColoring.colors().strokeColor != null) {
+                optionsBuilder.strokeColor(townColoring.colors().strokeColor);
+            }
 
-                // Use nation color if present
-                if (nationColor.isPresent()) {
-                    if (config.useNationFillColor())
-                        optionsBuilder.fillColor(nationColor.get());
+            // Create polygon groups from each townblock group
+            List<PolygonGroup> polygonGroups = new ArrayList<>();
+            for (TBGroup tbGroup : tbGroups) {
+                List<Polygon> polyParts = getPolygonsFromGroup(tre.getTownName(), tbGroup, townblockSize);
 
-                    if (config.useNationStrokeColor())
-                        optionsBuilder.strokeColor(nationColor.get());
-                }
-
-                // Use town color if present.
-                // Town color options will override nation colors
-                if (townColor.isPresent()) {
-                    if (config.useTownFillColor()) {
-                        optionsBuilder.fillColor(townColor.get());
-                    }
-
-                    if (config.useTownStrokeColor()) {
-                        optionsBuilder.strokeColor(townColor.get());
-                    }
-                }
-
-                final String homeBlockIconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
-
-                // Call event
-                WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(),
-                                                                      homeBlockIconKey, OUTPOST_ICON,
-                                                                      parts, optionsBuilder);
-
-                Bukkit.getPluginManager().callEvent(event);
-
-                // Skip rendering the town for the world if it is cancelled.
-                if (event.isCancelled())
+                if (polyParts.isEmpty())
                     continue;
 
-                final MarkerOptions generalOptions = optionsBuilder.build();
+                var groupOptions = optionsBuilder.clone();
+                // Apply the post-grouping styling function from the strategy
+                tbGroup.postGroupingStyling().accept(groupOptions);
 
-                worldProvider.addMultiPolyMarker(townKey, parts, generalOptions);
+                PolygonGroup pg = new PolygonGroup(polyParts, groupOptions.build());
+                polygonGroups.add(pg);
+            }
 
-                // Add outpost markers for the current world
-                renderOutpostMarker(tre, worldName, worldProvider,
-                                    event.getOutpostIconKey(), generalOptions,
-                                    config.getIconSizeX(), config.getIconSizeY());
+            if (polygonGroups.isEmpty())
+                continue;
 
-                // Check if this is the proper world provider to add the town icon
-                if (homeBlockWorld.equals(worldName)) {
-                    // Add icon markers
-                    Optional<Point2D> homeblockPoint = tre.getHomeBlockPoint();
-                    // Check if icon exists
-                    if (homeblockPoint.isPresent() && mapPlatform.hasIcon(event.getHomeBlockIconKey())) {
-                        MarkerOptions iconOptions = MarkerOptions.builder()
-                                                                 .name(generalOptions.name())
-                                                                 .clickTooltip(generalOptions.clickTooltip())
-                                                                 .hoverTooltip(generalOptions.hoverTooltip())
-                                                                 .build();
+            final String homeBlockIconKey = tre.isCapital() ? CAPITAL_ICON : TOWN_ICON;
 
-                        worldProvider.addIconMarker(townIconKey, event.getHomeBlockIconKey(), homeblockPoint.get(),
-                                                    config.getIconSizeX(), config.getIconSizeY(),
-                                                    iconOptions);
-                    }
+            // Call event
+            WorldRenderTownEvent event = new WorldRenderTownEvent(worldName, tre.getTownName(), tre.getTownUUID(),
+                    homeBlockIconKey, OUTPOST_ICON,
+                    polygonGroups, optionsBuilder);
+
+            Bukkit.getPluginManager().callEvent(event);
+
+            // Skip rendering the town for the world if it is cancelled.
+            if (event.isCancelled())
+                continue;
+
+            // Render each polygon group
+            for (int i = 0; i < event.getPolygonGroups().size(); i++) {
+                final String groupKey = townKey + "_" + (i + 1);
+                PolygonGroup group = event.getPolygonGroups().get(i);
+                worldProvider.addMultiPolyMarker(groupKey, group.getPolygons(), group.getMarkerOptions());
+            }
+
+            MarkerOptions generalOptions = optionsBuilder.build();
+
+            // Add outpost markers for the current world
+            renderOutpostMarker(tre, worldName, worldProvider,
+                    event.getOutpostIconKey(), generalOptions,
+                    config.getIconSizeX(), config.getIconSizeY());
+
+            // Check if this is the proper world provider to add the town icon
+            if (homeBlockWorld.equals(worldName)) {
+                // Add icon markers
+                Optional<Point2D> homeblockPoint = tre.getHomeBlockPoint();
+
+                // Check if icon exists
+                if (homeblockPoint.isPresent() && mapPlatform.hasIcon(event.getHomeBlockIconKey())) {
+                    MarkerOptions iconOptions = MarkerOptions.builder()
+                            .name(generalOptions.name())
+                            .clickTooltip(generalOptions.clickTooltip())
+                            .hoverTooltip(generalOptions.hoverTooltip())
+                            .build();
+
+                    worldProvider.addIconMarker(townIconKey, event.getHomeBlockIconKey(), homeblockPoint.get(),
+                            config.getIconSizeX(), config.getIconSizeY(),
+                            iconOptions);
                 }
             }
         }
@@ -402,48 +430,6 @@ public class TownyLayerManager implements LayerManager {
         }
     }
 
-    // Convert given town hex code to color with error handling.
-    @NotNull
-    private Optional<Color> convertTownHexCodeToColor(String hex, Town town) {
-        if (!hex.isEmpty()) {
-            if (hex.charAt(0) != '#')
-                hex = "#" + hex;
-
-            try {
-                return Optional.of(Color.decode(hex));
-            } catch (NumberFormatException ex) {
-                String name = town.getName();
-                plugin.getLogger().warning("Error loading town " + name + "'s map color: " + hex + "!");
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    // Gets the nation color from a town if:
-    // config set to use nation colors and town has a valid nation color.
-    @NotNull
-    private Optional<Color> getNationColor(Town town) {
-        if (plugin.config().useNationFillColor() || plugin.config().useNationStrokeColor()) {
-            String hex = town.getNationMapColorHexCode();
-            return hex == null ? Optional.empty() : convertTownHexCodeToColor(hex, town);
-        }
-
-        return Optional.empty();
-    }
-
-    // Gets the town color from a town if:
-    // config set to use town colors
-    @NotNull
-    private Optional<Color> getTownColor(Town town) {
-        if (plugin.config().useTownFillColor() || plugin.config().useTownStrokeColor()) {
-            String hex = town.getMapColorHexCode();
-            return hex == null ? Optional.empty() : convertTownHexCodeToColor(hex, town);
-        }
-
-        return Optional.empty();
-    }
-
 
     // Thread-safe
     @NotNull
@@ -458,7 +444,7 @@ public class TownyLayerManager implements LayerManager {
         for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
             final MapLayer worldProvider = entry.getValue();
             worldProvider.removeMarkers(
-                    (markerKey) -> markerKey.contains(TOWN_KEY_PREFIX)  || markerKey.contains(TOWN_ICON_KEY_PREFIX)
+                    (markerKey) -> markerKey.contains(TOWN_KEY_PREFIX) || markerKey.contains(TOWN_ICON_KEY_PREFIX)
             );
         }
     }
@@ -525,8 +511,7 @@ public class TownyLayerManager implements LayerManager {
         if (Bukkit.isPrimaryThread()) {
             // Can only get TRE from sync thread
             syncFutures.complete(null);
-        }
-        else {
+        } else {
             plugin.getScheduler().scheduleTask(() -> syncFutures.complete(null));
         }
     }
@@ -585,11 +570,9 @@ public class TownyLayerManager implements LayerManager {
         String hoverText = townInfoManager.getHoverTooltip(town, plugin.getLogger());
 
         return MarkerOptions.builder()
-                            .name(town.getName())
-                            .clickTooltip(clickText)
-                            .hoverTooltip(hoverText)
-                            .build();
+                .name(town.getName())
+                .clickTooltip(clickText)
+                .hoverTooltip(hoverText)
+                .build();
     }
-
-    // =====
 }

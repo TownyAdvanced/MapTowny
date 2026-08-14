@@ -26,6 +26,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>${java.version}</jdk.version>
+        <toolchain.jdk.version>[17,18)</toolchain.jdk.version>
     </properties>
 
     <distributionManagement>
@@ -50,11 +51,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <toolchains>
-                        <jdk>
-                            <version>${jdk.version}</version>
-                        </jdk>
-                    </toolchains>
+                    <version>${toolchain.jdk.version}</version>
                 </configuration>
             </plugin>
             <plugin>  <!-- Create sources.jar -->

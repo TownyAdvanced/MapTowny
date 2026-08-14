@@ -26,10 +26,13 @@ import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownBlock;
+import com.palmergames.util.Pair;
+import me.silverwolfg11.maptowny.managers.ColorProvider;
+import me.silverwolfg11.maptowny.objects.groups.GroupingStrategy;
+import me.silverwolfg11.maptowny.objects.groups.TBGroup;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,8 +52,7 @@ public class TownRenderEntry {
     private final String townName;
     private final boolean capital;
 
-    private final Color nationColor;
-    private final Color townColor;
+    private final ColorProvider.TownColoring townColoring;
 
     private final String clickText;
     private final String hoverText;
@@ -58,11 +60,12 @@ public class TownRenderEntry {
     private final String homeBlockWorld;
     private final Point2D homeBlockPoint;
 
-    private final Map<String, ? extends Collection<StaticTB>> worldBlocks;
+    private final Map<String, List<TBGroup>> worldGroups;
     private final Map<String, List<Point2D>> outpostSpawns;
 
     public TownRenderEntry(Town town, boolean findOutposts,
-                           Color nationColor, Color townColor,
+                           List<GroupingStrategy> groupingStrategies,
+                           ColorProvider.TownColoring townColoring,
                            String clickText, String hoverText) {
         this.townUUID = town.getUUID();
         this.townName = town.getName();
@@ -71,13 +74,12 @@ public class TownRenderEntry {
         this.clickText = clickText;
         this.hoverText = hoverText;
 
-        this.nationColor = nationColor;
-        this.townColor = townColor;
+        this.townColoring = townColoring;
 
         this.homeBlockWorld = town.getHomeblockWorld().getName();
         this.homeBlockPoint = getHomeblockPoint(town).orElse(null);
 
-        worldBlocks = townblockByWorlds(town);
+        worldGroups = townblockByWorlds(town, groupingStrategies);
 
         outpostSpawns = findOutposts ? getOutpostSpawns(town) : Collections.emptyMap();
     }
@@ -97,13 +99,8 @@ public class TownRenderEntry {
     }
 
     @NotNull
-    public Optional<Color> getNationColor() {
-        return Optional.ofNullable(nationColor);
-    }
-
-    @NotNull
-    public Optional<Color> getTownColor() {
-        return Optional.ofNullable(townColor);
+    public ColorProvider.TownColoring getTownColoring() {
+        return townColoring;
     }
 
     @NotNull
@@ -127,12 +124,12 @@ public class TownRenderEntry {
     }
 
     public boolean hasWorldBlocks() {
-        return !worldBlocks.isEmpty();
+        return !worldGroups.isEmpty();
     }
 
     @NotNull
-    public Map<String, ? extends Collection<StaticTB>> getWorldBlocks() {
-        return Collections.unmodifiableMap(worldBlocks);
+    public Map<String, List<TBGroup>> getWorldGroups() {
+        return Collections.unmodifiableMap(worldGroups);
     }
 
     public boolean hasOutpostSpawns() {
@@ -182,12 +179,58 @@ public class TownRenderEntry {
         );
     }
 
+    // Sort the townblocks into the world groups
     @NotNull
-    private Map<String, ? extends Collection<StaticTB>> townblockByWorlds(Town town) {
-        return sortByWorld(
-                town.getTownBlocks(), tb -> StaticTB.from(tb.getX(), tb.getZ()),
+    private Map<String, List<TBGroup>> townblockByWorlds(Town town,
+                                                         final List<GroupingStrategy> strategies) {
+        Map<String, List<TownBlock>> worldTownBlocks = sortByWorld(
+                town.getTownBlocks(), Function.identity(),
                 tb -> tb.getWorld().getName()
         );
+
+        Map<String, List<TBGroup>> allWorldGroups = new HashMap<>();
+        for (Map.Entry<String, List<TownBlock>> entry : worldTownBlocks.entrySet()) {
+            final String worldName = entry.getKey();
+            final List<TownBlock> currWorldTownBlocks = entry.getValue();
+
+            allWorldGroups.put(worldName,
+                    buildTownblockGroups(currWorldTownBlocks, strategies));
+        }
+
+        worldTownBlocks.clear();
+
+        return allWorldGroups;
+    }
+
+    private List<TBGroup> buildTownblockGroups(List<TownBlock> worldTownblocks,
+                                               List<GroupingStrategy> strategies) {
+        // Create a new TBGroup for every GroupingStrategy.
+        final List<Pair<GroupingStrategy, TBGroup.Builder>> strategyBuilders = new ArrayList<>(strategies.size());
+        strategies.forEach(strategy -> strategyBuilders.add(Pair.pair(strategy, TBGroup.builder())));
+
+        for (TownBlock townBlock : worldTownblocks) {
+            StaticTB staticTB = StaticTB.from(townBlock.getX(), townBlock.getZ());
+
+            for (var strategyBuilder : strategyBuilders) {
+                final GroupingStrategy strategy = strategyBuilder.left();
+                final TBGroup.Builder groupBuilder = strategyBuilder.right();
+
+                if (strategy.accept(townBlock)) {
+                    groupBuilder.addTownblock(staticTB);
+                    break;
+                }
+            }
+        }
+
+        strategyBuilders.forEach(strategyBuilder -> {
+            // Imbue strategy styling function to the group
+            strategyBuilder.right()
+                    .postGroupingStyling(strategyBuilder.left().postGroupingStyling());
+        });
+
+        return strategyBuilders.stream()
+                .map(strategyBuilder -> strategyBuilder.right().build())
+                .toList();
     }
 
     @NotNull

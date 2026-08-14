@@ -241,7 +241,7 @@ public final class MarkerOptions {
     /**
      * Builder for {@link MarkerOptions}
      */
-    public static final class Builder {
+    public static final class Builder implements Cloneable {
 
         private String name = null;
         private boolean stroke = true;
@@ -447,6 +447,22 @@ public final class MarkerOptions {
             );
         }
 
+        @Override
+        public Builder clone() {
+            return new Builder(
+                    this.stroke,
+                    this.strokeColor,
+                    this.strokeWeight,
+                    this.strokeOpacity,
+                    this.fill,
+                    this.fillColor,
+                    this.fillOpacity,
+                    this.fillRule,
+                    this.clickTooltip,
+                    this.hoverTooltip,
+                    this.name
+            );
+        }
     }
 
 }
