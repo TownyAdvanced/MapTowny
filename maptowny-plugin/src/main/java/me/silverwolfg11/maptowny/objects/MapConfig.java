@@ -38,6 +38,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -146,21 +147,24 @@ public class MapConfig {
     @SerializableConfig
     private static class IconInfo {
         @Comment({"Icon for the town's homeblock. Icon must be a valid image URL.",
-                "Default Icon created by icon king1 licensed under Creative Commons 3.0",
-                "https://creativecommons.org/licenses/by/3.0/"})
+                "Java URLs support https, http, jar, and file protocols.",
+                "Special values: 'built-in' to use the built-in icon; 'empty' to not use an icon.",
+                "Built-in icon was created by Giraffeshroom."})
         @Node("town-icon")
-        private String townIconImage = "https://pics.freeicons.io/uploads/icons/png/20952957581537355851-512.png";
+        private String townIconImage = "built-in";
 
         @Comment({"Icon for a town if they are the capital of the nation. Icon must be a valid image URL.",
-                "Put 'default' to use the town icon image."})
+                "Special values: 'default' to use town icon image; 'built-in' to use the built-in icon; 'empty' to not use an icon.",
+                "Built-in icon was created by Giraffeshroom."
+        })
         @Node("capital-icon")
-        private String capitalIconImage = "default";
+        private String capitalIconImage = "built-in";
 
         @Comment({"Icon for an outpost claim that will appear at the location of outpost spawns. Icon must be a valid image URL.",
-                "Put 'default' to use the town icon image.",
-                "Put 'empty' to not place icons at outposts."})
+                "Special values: 'default' to use town icon image; 'built-in' to use the built-in icon; 'empty' to not place an icon.",
+                "Built-in icon was created by Giraffeshroom."})
         @Node("outpost-icon")
-        private String outpostIconImage = "default";
+        private String outpostIconImage = "built-in";
 
         @Comment("Height of the icon")
         @Node("icon-height")
@@ -288,9 +292,45 @@ public class MapConfig {
         return loadIcon("outpost", url, errorLogger);
     }
 
+    private BufferedImage loadBuiltInIcon(String type, Logger errorLogger) {
+        String iconName = null;
+        switch (type) {
+            case "town":
+                iconName = "town_icon.png";
+                break;
+            case "capital":
+                iconName = "capital_icon.png";
+                break;
+            case "outpost":
+                iconName = "outpost_icon.png";
+                break;
+        }
+
+        if (iconName == null) {
+            errorLogger.log(Level.SEVERE, "No built-in icon for type: " + type);
+            return null;
+        }
+
+        try (InputStream is = getClass().getResourceAsStream("/icons/" + iconName)) {
+            if (is == null) {
+                errorLogger.log(Level.SEVERE, "Couldn't find built-in icon in JAR resource: icons/" + iconName);
+                return null;
+            }
+
+            return ImageIO.read(is);
+        } catch (IOException e) {
+            errorLogger.log(Level.SEVERE, "Error while loading built-in " + type + " image icon!", e);
+            return null;
+        }
+    }
+
     private BufferedImage loadIcon(String type, String urlStr, Logger errorLogger) {
         if (urlStr == null || "empty".equals(urlStr) || urlStr.isEmpty())
             return null;
+
+        if (urlStr.equalsIgnoreCase("built-in")) {
+            return loadBuiltInIcon(type, errorLogger);
+        }
 
         URL url;
         try {
@@ -339,6 +379,7 @@ public class MapConfig {
 
         return tbColor;
     }
+
     @Nullable
     public Color getFillColor(String townblockTypeName) {
         TownBlockColor tbColor = getTownBlockTypeColors(townblockTypeName);
@@ -375,8 +416,7 @@ public class MapConfig {
             ParentConfigNode node = ClassSerializer.serializeClass(config);
             serializer.serializeToFile(configFile, node);
             return config;
-        }
-        else {
+        } else {
             ClassDeserializer deserializer = new ClassDeserializer();
             deserializer.setErrorLogger(errorLogger);
             return deserializer.deserializeClassAndUpdate(configFile, MapConfig.class, serializer);
