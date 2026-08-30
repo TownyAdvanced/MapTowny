@@ -75,10 +75,12 @@ public class MapConfig {
     @Node("icon-info")
     private IconInfo iconInfo = new IconInfo();
 
-    @Comment({"", "Default townblock types can be found on " +
+    @Comment({ "",
+            "Townblock Type Styling Properties.",
+            "Default townblock types can be found on ",
             "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java.",
             "Each type requires a \"fill-color\" and \"stroke-color\".",
-            "If the color is not being used, set its value to \"none\"."})
+            "If the color is not being used, set its value to \"none\"." })
     @Node("townblock-colors")
     private Map<String, TownBlockColor> townblockTypeColors = new HashMap<>();
 
@@ -106,6 +108,14 @@ public class MapConfig {
 
     @SerializableConfig
     private static class FillStyle {
+        // Default styling options
+        public FillStyle() {
+            List<ColorSource> defaultPriorities = Arrays.asList(
+                    ColorSource.TOWN, ColorSource.NATION);
+            this.strokePriorities.addAll(defaultPriorities);
+            this.fillPriorities.addAll(defaultPriorities);
+        }
+
         @Comment("Whether to fill the claim with color")
         private boolean fill = true;
 
@@ -200,12 +210,6 @@ public class MapConfig {
     // Sets default values for the config.
     public MapConfig() {
         townblockTypeColors.put("Shop", new TownBlockColor());
-
-        List<ColorSource> defaultPriorities = Arrays.asList(
-                ColorSource.TOWN, ColorSource.NATION
-        );
-        fillStyle.strokePriorities.addAll(defaultPriorities);
-        fillStyle.fillPriorities.addAll(defaultPriorities);
     }
 
 
