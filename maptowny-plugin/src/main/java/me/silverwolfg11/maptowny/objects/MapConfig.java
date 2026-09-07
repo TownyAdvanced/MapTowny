@@ -75,10 +75,12 @@ public class MapConfig {
     @Node("icon-info")
     private IconInfo iconInfo = new IconInfo();
 
-    @Comment({"", "Default townblock types can be found on " +
-            "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java.",
+    @Comment({ "",
+            "Townblock Type Styling Properties.",
+            "Default townblock types can be found on ",
+            "https://github.com/TownyAdvanced/Towny/blob/master/Towny/src/main/java/com/palmergames/bukkit/towny/object/TownBlockType.java .",
             "Each type requires a \"fill-color\" and \"stroke-color\".",
-            "If the color is not being used, set its value to \"none\"."})
+            "If the color is not being used, set its value to \"none\"." })
     @Node("townblock-colors")
     private Map<String, TownBlockColor> townblockTypeColors = new HashMap<>();
 
@@ -106,10 +108,19 @@ public class MapConfig {
 
     @SerializableConfig
     private static class FillStyle {
+        // Default styling options
+        public FillStyle() {
+            List<ColorSource> defaultPriorities = Arrays.asList(
+                    ColorSource.TOWN, ColorSource.NATION);
+            this.strokePriorities.addAll(defaultPriorities);
+            this.fillPriorities.addAll(defaultPriorities);
+        }
+
         @Comment("Whether to fill the claim with color")
         private boolean fill = true;
 
         @Node("fill-color")
+        @Comment({"Default fill color.", "Used if no other fill priority is valid for a claim."})
         private String fillColor = "#3388ff";
 
         @Node("fill-opacity")
@@ -119,7 +130,7 @@ public class MapConfig {
                 "The valid list options are \"NATION\", \"TOWN\", and \"TOWNBLOCK_TYPE\".",
                 "If one option doesn't have a color for the respective area, then it will move onto the next option.",
                 "Claims will be separated by townblock types if \"TOWNBLOCK_TYPE\" is listed as a priority.",
-                "The default fill color is last priority."})
+                "The default fill color will be used if no option has a color for the claim."})
         @Node("fill-priorities")
         private List<ColorSource> fillPriorities = new ArrayList<>();
 
@@ -200,12 +211,6 @@ public class MapConfig {
     // Sets default values for the config.
     public MapConfig() {
         townblockTypeColors.put("Shop", new TownBlockColor());
-
-        List<ColorSource> defaultPriorities = Arrays.asList(
-                ColorSource.TOWN, ColorSource.NATION
-        );
-        fillStyle.strokePriorities.addAll(defaultPriorities);
-        fillStyle.fillPriorities.addAll(defaultPriorities);
     }
 
 
