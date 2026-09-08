@@ -302,11 +302,7 @@ public class TownyLayerManager implements LayerManager {
             if (worldProvider == null)
                 continue;
 
-            // Unrender previous town markers
-            worldProvider.removeMarkers(
-                    (markerKey) -> markerKey.contains(TOWN_KEY_PREFIX + tre.getTownName())
-                            || markerKey.contains(TOWN_ICON_KEY_PREFIX + tre.getTownName())
-            );
+            removeWorldTownMarker(worldProvider, tre.getTownUUID());
 
             MarkerOptions.Builder optionsBuilder = config.buildMarkerOptions()
                     .name(tre.getTownName())
@@ -454,18 +450,26 @@ public class TownyLayerManager implements LayerManager {
         return removeTownMarker(town.getUUID());
     }
 
+    private boolean removeWorldTownMarker(MapLayer world, UUID townUUID) {
+        final String townKey = TOWN_KEY_PREFIX + townUUID;
+        final String townIconKey = TOWN_ICON_KEY_PREFIX + townUUID;
+        // Use marker key prefixes since polygon groups
+        // create marker keys with index suffixes.
+        return world.removeMarkers(
+                (markerKey) -> markerKey.startsWith(townKey)
+                        || markerKey.startsWith(townIconKey)
+        ) > 0;
+    }
+
     // Returns if the town was successfully unrendered
     @Override
     public boolean removeTownMarker(@NotNull UUID townUUID) {
         boolean unrendered = false;
-        final String townKey = TOWN_KEY_PREFIX + townUUID;
-        final String townIconKey = TOWN_ICON_KEY_PREFIX + townUUID;
 
         for (Map.Entry<String, MapLayer> entry : worldProviders.entrySet()) {
             final String worldName = entry.getKey();
             final MapLayer mapLayer = entry.getValue();
-            unrendered |= mapLayer.removeMarker(townKey);
-            mapLayer.removeMarker(townIconKey);
+            unrendered |= removeWorldTownMarker(mapLayer, townUUID);
             unrenderOutpostMarkers(mapLayer, worldName, townUUID);
         }
         renderedTowns.remove(townUUID);
