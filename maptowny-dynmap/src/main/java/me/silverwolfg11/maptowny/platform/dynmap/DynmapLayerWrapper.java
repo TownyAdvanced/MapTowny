@@ -308,7 +308,7 @@ public class DynmapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
+    public int removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
         List<GenericMarker> markersToRemove = new ArrayList<>();
 
         // Dynmap stores different types of markers separately
@@ -336,6 +336,7 @@ public class DynmapLayerWrapper implements MapLayer {
 
         // Handle local data
         parentPolys.keySet().removeIf(markerKeyFilter);
+        return markersToRemove.size();
     }
 
     @Override

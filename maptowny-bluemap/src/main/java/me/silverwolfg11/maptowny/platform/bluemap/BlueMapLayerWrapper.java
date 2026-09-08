@@ -259,10 +259,12 @@ public class BlueMapLayerWrapper implements MapLayer {
     }
 
     @Override
-    public void removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
-        new ArrayList<>(markerSet.getMarkers().keySet()).stream()
-                        .filter(markerKeyFilter)
-                        .forEach(removeKey -> markerSet.getMarkers().remove(removeKey));
+    public int removeMarkers(@NotNull Predicate<String> markerKeyFilter) {
+        List<String> markersToRemove = new ArrayList<>(markerSet.getMarkers().keySet().stream().filter(markerKeyFilter).toList());
+        int numMarkersToRemove = markersToRemove.size();
+
+        markersToRemove.forEach(removeKey -> markerSet.getMarkers().remove(removeKey));
+        return numMarkersToRemove;
     }
 
     private MarkerOptions optionsFromMarker(Marker marker) {
