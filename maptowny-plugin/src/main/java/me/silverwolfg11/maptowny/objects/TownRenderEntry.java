@@ -51,6 +51,7 @@ public class TownRenderEntry {
     private final UUID townUUID;
     private final String townName;
     private final boolean capital;
+    private final boolean hasNation;
 
     private final ColorProvider.TownColoring townColoring;
 
@@ -69,6 +70,7 @@ public class TownRenderEntry {
                            String clickText, String hoverText) {
         this.townUUID = town.getUUID();
         this.townName = town.getName();
+        this.hasNation = town.hasNation();
         this.capital = town.isCapital();
 
         this.clickText = clickText;
@@ -92,6 +94,10 @@ public class TownRenderEntry {
     @NotNull
     public String getTownName() {
         return townName;
+    }
+
+    public boolean hasNation() {
+        return hasNation;
     }
 
     public boolean isCapital() {

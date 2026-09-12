@@ -164,6 +164,11 @@ public class MapConfig {
         @Node("town-icon")
         private String townIconImage = "built-in";
 
+        @Comment({"Icon for a town if they are part of a nation AND are not the capital. Icon must be a valid image URL.",
+                "Special values: 'town' to use town icon image; 'capital' to use the capital icon image; 'empty' to not use an icon."})
+        @Node("nation-icon")
+        private String nationIconImage = "town";
+
         @Comment({"Icon for a town if they are the capital of the nation. Icon must be a valid image URL.",
                 "Special values: 'default' to use town icon image; 'built-in' to use the built-in icon; 'empty' to not use an icon.",
                 "Built-in icon was created by Giraffeshroom."
@@ -281,18 +286,34 @@ public class MapConfig {
     public BufferedImage loadCapitalIcon(Logger errorLogger) {
         String url = iconInfo.capitalIconImage;
 
-        if (url.equalsIgnoreCase("default"))
-            url = iconInfo.townIconImage;
+        if (url.equalsIgnoreCase("default")) {
+            return loadTownIcon(errorLogger);
+        }
 
         return loadIcon("capital", url, errorLogger);
+    }
+
+    @Nullable
+    public BufferedImage loadNationIcon(Logger errorLogger) {
+        String url = iconInfo.nationIconImage;
+
+        if (url.equalsIgnoreCase("town")) {
+            return loadTownIcon(errorLogger);
+        }
+        else if (url.equalsIgnoreCase("capital")) {
+           return loadCapitalIcon(errorLogger);
+        }
+
+        return loadIcon("nation", url, errorLogger);
     }
 
     @Nullable
     public BufferedImage loadOutpostIcon(Logger errorLogger) {
         String url = iconInfo.outpostIconImage;
 
-        if (url.equalsIgnoreCase("default"))
-            url = iconInfo.townIconImage;
+        if (url.equalsIgnoreCase("default")) {
+            return loadTownIcon(errorLogger);
+        }
 
         return loadIcon("outpost", url, errorLogger);
     }
