@@ -31,11 +31,14 @@ The plugin should be ready for use out of the box. The one thing that may need t
 See [this wiki page](https://github.com/TownyAdvanced/MapTowny/wiki/MapTowny-API) for more info.
 
 ## Building
-This plugin is a standard maven project that utilizes the [maven toolchains plugin](https://maven.apache.org/plugins/maven-toolchains-plugin/) in order to build against multiple JDK versions. 
-In order to use the maven toolchains plugin, you must have a `toolchains.xml` file in your `.m2` folder properly configured with at least JDK versions 17 and 21 .
-See [this guide](https://maven.apache.org/guides/mini/guide-using-toolchains.html#using-toolchains-in-your-project) for more info on setting up a `toolchains.xml` file. 
+This plugin is a standard Maven project that uses the [Maven Toolchains Plugin](https://maven.apache.org/plugins/maven-toolchains-plugin/) to build modules against multiple JDK versions.
+JDK versions 17 and 21 are required to build the project.
+* Note: The devcontainer already installs both.
 
-Once that is setup, the project can be compiled with the command `mvn clean package` or `mvn clean install` ran in the project directory.
+The project will attempt to auto-detect paths to the JDKs, however for non-standard paths, a `toolchains.xml` file in your `.m2` folder is recommended.
+See [this guide](https://maven.apache.org/guides/mini/guide-using-toolchains.html#using-toolchains-in-your-project) for more info on setting up a `toolchains.xml` file.
+
+Once Maven and the JDK versions are installed, the project can be compiled with the command `mvn clean package` or `mvn clean install` ran in the project directory.
 
 ## Licensing
 This plugin is licensed under the MIT license. While highly permissible, I do kindly hope that you create pull-requests for any bug fixes or useful features so they can help the entire community.
